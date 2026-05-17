@@ -39,7 +39,6 @@ The YAML vars list is defined by us, so the mapping below is authoritative.
 
 import argparse
 import csv
-import os
 import sys
 import time
 from datetime import datetime
@@ -54,23 +53,7 @@ from crazyflie_py.uav_trajectory import Trajectory
 
 DATA_DIR = Path(__file__).parent / "data"
 
-# Override log directory via environment variable (recommended for lab PC):
-#   echo 'export FLIGHT_LOGS_DIR=~/flying_robots_course/Controls/logs' >> ~/.bashrc
-# Falls back to auto-detection if not set.
-def _find_logs_dir() -> Path:
-    if env := os.environ.get("FLIGHT_LOGS_DIR"):
-        return Path(env).expanduser()
-    candidates = [
-        Path.home() / "flying_robots_course/Controls/logs",
-        Path.home() / "Desktop/flying_robot_course/Controls/logs",
-    ]
-    for p in candidates:
-        if p.parent.parent.exists():  # check repo root (two levels up from logs/)
-            return p
-    return candidates[1]  # fallback: home PC path
-
-LOGS_DIR = _find_logs_dir()
-print(f"[log] Logs directory: {LOGS_DIR}")
+LOGS_DIR = Path("/PASTE_EXACT_PATH_HERE")
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
