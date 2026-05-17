@@ -218,6 +218,11 @@ def main():
         LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb,     10)
     print(f"[log] Subscribed to {cf_name}/state, {cf_name}/attitude, {cf_name}/gyro_acc")
 
+    # ── Wait for EKF to converge on mocap poses ──────────────────────────────
+    print("[flight] Waiting for EKF to converge on mocap poses...")
+    th.sleep(3.0)
+    print("[flight] EKF ready. Taking off...")
+
     # ── Takeoff and position ─────────────────────────────────────────────────
     allcfs.takeoff(targetHeight=args.height, duration=2.0)
     th.sleep(2.5)
