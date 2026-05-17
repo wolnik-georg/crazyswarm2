@@ -241,22 +241,28 @@ def main():
     _logging_active = True
     print("[flight] Starting trajectory...")
 
-    for rep in range(args.reps):
-        if rep > 0:
-            th.sleep(1.0)
-        allcfs.startTrajectory(0, timescale=args.speed)
-        th.sleep(traj.duration * args.speed + 1.0)
+    try:
+        for rep in range(args.reps):
+            if rep > 0:
+                th.sleep(1.0)
+            allcfs.startTrajectory(0, timescale=args.speed)
+            th.sleep(traj.duration * args.speed + 1.0)
 
-    print("[flight] Done. Landing...")
-    _logging_active = False
+        print("[flight] Done. Landing...")
+        _logging_active = False
 
-    # ── Land ─────────────────────────────────────────────────────────────────
-    allcfs.land(targetHeight=0.06, duration=2.0)
-    th.sleep(3.0)
+        # ── Land ─────────────────────────────────────────────────────────────
+        allcfs.land(targetHeight=0.06, duration=2.0)
+        th.sleep(3.0)
 
-    # ── Save log ─────────────────────────────────────────────────────────────
-    _save_log(args.trajectory, args.mode, args.kt, args.speed,
-              args.reps, traj.duration)
+    finally:
+        # ── Save log (always — even if flight was interrupted by crash/Ctrl+C) ─
+        _logging_active = False
+        if _log_rows:
+            _save_log(args.trajectory, args.mode, args.kt, args.speed,
+                      args.reps, traj.duration)
+        else:
+            print("[log] No rows collected — log not saved.")
 
 
 if __name__ == "__main__":
