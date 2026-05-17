@@ -58,30 +58,30 @@ LOGS_DIR = Path.home() / "Desktop/flying_robot_course/Controls/logs"
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
-_log_rows      = []     # accumulated rows during flight
-_log_t0        = None   # wall-clock at trajectory start (None = not logging yet)
-_logging_active = False  # set True during trajectory, False otherwise
-_latest_gyro   = {}     # most recent gyro_acc values (cached between state callbacks)
+_log_rows       = []   # accumulated rows during flight
+_log_t0         = None # wall-clock at trajectory start (None = not logging yet)
+_logging_active = False
+_latest_att     = {}   # most recent attitude/thrust/vbat values
+_latest_gyro    = {}   # most recent gyro_acc values
 
-# Variable names in the order they appear in crazyflies.yaml custom_topics.
-# Values in LogDataGeneric.values follow this exact order.
-_STATE_VARS = [
-    "stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
-    "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz",
-    "stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
-    "stabilizer.thrust", "pm.vbat",
-]
-_GYRO_VARS = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
+# Variable order must match crazyflies.yaml custom_topics vars lists exactly.
+# Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
+_STATE_VARS    = ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
+                  "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
+_ATTITUDE_VARS = ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
+                  "stabilizer.thrust", "pm.vbat"]
+_GYRO_VARS     = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
 
 
 def _state_cb(msg: LogDataGeneric):
-    """Fires at 20 Hz during timeHelper.sleep(). Appends one log row."""
+    """Fires at 20 Hz. Appends one log row using latest cached attitude + gyro."""
     if not _logging_active:
         return
     if len(msg.values) != len(_STATE_VARS):
-        return  # unexpected message, skip
+        return
 
     s = dict(zip(_STATE_VARS, msg.values))
+    a = _latest_att
     g = _latest_gyro
 
     _log_rows.append({
@@ -92,11 +92,11 @@ def _state_cb(msg: LogDataGeneric):
         "vx":        s["stateEstimate.vx"],
         "vy":        s["stateEstimate.vy"],
         "vz":        s["stateEstimate.vz"],
-        "roll_deg":  s["stabilizer.roll"],
-        "pitch_deg": s["stabilizer.pitch"],
-        "yaw_deg":   s["stabilizer.yaw"],
-        "thrust":    s["stabilizer.thrust"],
-        "vbat":      s["pm.vbat"],
+        "roll_deg":  a.get("stabilizer.roll",   float("nan")),
+        "pitch_deg": a.get("stabilizer.pitch",  float("nan")),
+        "yaw_deg":   a.get("stabilizer.yaw",    float("nan")),
+        "thrust":    a.get("stabilizer.thrust", float("nan")),
+        "vbat":      a.get("pm.vbat",           float("nan")),
         "gyro_x":    g.get("gyro.x",  float("nan")),
         "gyro_y":    g.get("gyro.y",  float("nan")),
         "gyro_z":    g.get("gyro.z",  float("nan")),
@@ -104,6 +104,14 @@ def _state_cb(msg: LogDataGeneric):
         "acc_y":     g.get("acc.y",   float("nan")),
         "acc_z":     g.get("acc.z",   float("nan")),
     })
+
+
+def _attitude_cb(msg: LogDataGeneric):
+    """Fires at 20 Hz. Caches latest attitude/thrust/vbat for the next state row."""
+    if len(msg.values) != len(_ATTITUDE_VARS):
+        return
+    for name, val in zip(_ATTITUDE_VARS, msg.values):
+        _latest_att[name] = val
 
 
 def _gyro_cb(msg: LogDataGeneric):
@@ -203,10 +211,12 @@ def main():
     cf_name = cf.prefix.lstrip("/") # e.g. "cf231"
 
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/state",    _state_cb, 10)
+        LogDataGeneric, f"{cf_name}/state",    _state_cb,    10)
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb,  10)
-    print(f"[log] Subscribed to {cf_name}/state and {cf_name}/gyro_acc")
+        LogDataGeneric, f"{cf_name}/attitude", _attitude_cb, 10)
+    allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb,     10)
+    print(f"[log] Subscribed to {cf_name}/state, {cf_name}/attitude, {cf_name}/gyro_acc")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
     allcfs.takeoff(targetHeight=args.height, duration=2.0)

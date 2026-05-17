@@ -96,14 +96,17 @@ all:
       status:
         frequency: 1 # Hz
     custom_topics:
-      # /cf231/state — pos, vel, attitude, thrust, battery (matches Rust log columns)
+      # /cf231/state — pos + vel (6 floats = 24 bytes, fits in one CRTP log packet)
       state:
         frequency: 20 # Hz
         vars: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
-               "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz",
-               "stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
+               "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
+      # /cf231/attitude — attitude + thrust + battery (5 floats = 20 bytes)
+      attitude:
+        frequency: 20 # Hz
+        vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                "stabilizer.thrust", "pm.vbat"]
-      # /cf231/gyro_acc — gyro and accelerometer
+      # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes)
       gyro_acc:
         frequency: 20 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
