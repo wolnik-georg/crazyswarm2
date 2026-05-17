@@ -54,7 +54,19 @@ from crazyflie_py.uav_trajectory import Trajectory
 DATA_DIR = Path(__file__).parent / "data"
 
 # Same folder as Rust onboard scripts → analyze_flight.py works unchanged
-LOGS_DIR = Path.home() / "Desktop/flying_robot_course/Controls/logs"
+# Home PC:  ~/Desktop/flying_robot_course/Controls/logs
+# Lab PC:   ~/flying_robots_course/Controls/logs
+def _find_logs_dir() -> Path:
+    candidates = [
+        Path.home() / "Desktop/flying_robot_course/Controls/logs",
+        Path.home() / "flying_robots_course/Controls/logs",
+    ]
+    for p in candidates:
+        if p.parent.exists():
+            return p
+    return candidates[0]  # fallback — will be created on first save
+
+LOGS_DIR = _find_logs_dir()
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
