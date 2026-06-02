@@ -110,6 +110,19 @@ all:
       gyro_acc:
         frequency: 20 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
+      # /cf231/indi_state — INDI torque base + alpha_meas (6 floats = 24 bytes)
+      # Only meaningful when CONTROLLER_MODE = 1 in firmware_app/src/lib.rs.
+      # tau_{x,y,z}: τ_prev [Nm].  alp_{x,y,z}: α_meas [rad/s²].
+      indi_state:
+        frequency: 20 # Hz
+        vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
+               "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
+      # Requires RPM deck fitted. Used to verify deck is reading and for
+      # post-flight KT_MOTOR validation (thrust vs RPM²).
+      rpm:
+        frequency: 20 # Hz
+        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:

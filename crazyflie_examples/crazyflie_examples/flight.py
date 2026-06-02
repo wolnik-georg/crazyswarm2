@@ -236,7 +236,10 @@ def main():
         c.uploadTrajectory(0, 0, traj)
 
     # ── Fly ──────────────────────────────────────────────────────────────────
-    _log_t0 = time.monotonic()
+    # _log_t0 is set right before startTrajectory (not here) so the log t=0
+    # corresponds to the moment the command is issued, minimising the apparent
+    # phase offset in post-flight analysis.  A small residual (~20-50 ms radio
+    # latency) still exists, which the phase-alignment grid search handles.
     _logging_active = True
     print("[flight] Starting trajectory...")
 
@@ -244,6 +247,7 @@ def main():
         for rep in range(args.reps):
             if rep > 0:
                 th.sleep(1.0)
+            _log_t0 = time.monotonic()   # clock zero = trajectory command issued
             allcfs.startTrajectory(0, timescale=args.speed)
             th.sleep(traj.duration * args.speed + 1.0)
 
