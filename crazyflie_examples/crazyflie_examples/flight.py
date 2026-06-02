@@ -62,6 +62,7 @@ _log_t0         = None # wall-clock at trajectory start (None = not logging yet)
 _logging_active = False
 _latest_att     = {}   # most recent attitude/thrust/vbat values
 _latest_gyro    = {}   # most recent gyro_acc values
+_latest_rpm     = {}   # most recent per-motor RPM values
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -70,6 +71,7 @@ _STATE_VARS    = ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
 _ATTITUDE_VARS = ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                   "stabilizer.thrust", "pm.vbat"]
 _GYRO_VARS     = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
+_RPM_VARS      = ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
 
 
 def _state_cb(msg: LogDataGeneric):
@@ -102,6 +104,10 @@ def _state_cb(msg: LogDataGeneric):
         "acc_x":     g.get("acc.x",   float("nan")),
         "acc_y":     g.get("acc.y",   float("nan")),
         "acc_z":     g.get("acc.z",   float("nan")),
+        "rpm_m1":    _latest_rpm.get("rpm.m1", float("nan")),
+        "rpm_m2":    _latest_rpm.get("rpm.m2", float("nan")),
+        "rpm_m3":    _latest_rpm.get("rpm.m3", float("nan")),
+        "rpm_m4":    _latest_rpm.get("rpm.m4", float("nan")),
     })
 
 
@@ -119,6 +125,14 @@ def _gyro_cb(msg: LogDataGeneric):
         return
     for name, val in zip(_GYRO_VARS, msg.values):
         _latest_gyro[name] = val
+
+
+def _rpm_cb(msg: LogDataGeneric):
+    """Fires at 20 Hz. Caches latest per-motor RPM for the next state row."""
+    if len(msg.values) != len(_RPM_VARS):
+        return
+    for name, val in zip(_RPM_VARS, msg.values):
+        _latest_rpm[name] = val
 
 
 # ── Filename helpers ────────────────────────────────────────────────────────
@@ -156,6 +170,7 @@ def _save_log(trajectory: str, mode: int, kt: float, speed: float,
         "time_s", "x", "y", "z", "vx", "vy", "vz",
         "roll_deg", "pitch_deg", "yaw_deg", "thrust", "vbat",
         "gyro_x", "gyro_y", "gyro_z", "acc_x", "acc_y", "acc_z",
+        "rpm_m1", "rpm_m2", "rpm_m3", "rpm_m4",
     ]
     kt_str = f"{kt:.6f}".rstrip("0").rstrip(".")
     with open(path, "w", newline="") as f:
@@ -215,7 +230,9 @@ def main():
         LogDataGeneric, f"{cf_name}/attitude", _attitude_cb, 10)
     allcfs.create_subscription(
         LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb,     10)
-    print(f"[log] Subscribed to {cf_name}/state, {cf_name}/attitude, {cf_name}/gyro_acc")
+    allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/rpm",      _rpm_cb,      10)
+    print(f"[log] Subscribed to {cf_name}/state, {cf_name}/attitude, {cf_name}/gyro_acc, {cf_name}/rpm")
 
     # ── Wait for EKF to converge on mocap poses ──────────────────────────────
     print("[flight] Waiting for EKF to converge on mocap poses...")
