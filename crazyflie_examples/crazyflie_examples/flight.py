@@ -195,24 +195,30 @@ def main():
 
     parser = argparse.ArgumentParser(description="Generic CS2 flight script")
     parser.add_argument("--trajectory", default="figure8",
-                        choices=["figure8", "circle"])
+                        choices=["figure8", "circle", "hover"])
     parser.add_argument("--mode", type=int, default=0, choices=[0, 1, 2, 3])
     parser.add_argument("--kt",    type=float, default=None)
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--reps",  type=int,   default=1)
     parser.add_argument("--height", type=float, default=1.0)
+    parser.add_argument("--duration", type=float, default=20.0,
+                        help="Hover duration in seconds (hover trajectory only)")
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
         args.kt = 0.1 if args.trajectory == "circle" else 0.008
 
-    csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
-    print(f"[flight] {csv_path.name}  mode={args.mode} kt={args.kt} "
-          f"speed={args.speed} reps={args.reps}")
-
-    traj = Trajectory()
-    traj.loadcsv(csv_path)
-    print(f"[flight] Duration per rep: {traj.duration:.2f}s")
+    hover_mode = (args.trajectory == "hover")
+    traj = None
+    if not hover_mode:
+        csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
+        print(f"[flight] {csv_path.name}  mode={args.mode} kt={args.kt} "
+              f"speed={args.speed} reps={args.reps}")
+        traj = Trajectory()
+        traj.loadcsv(csv_path)
+        print(f"[flight] Duration per rep: {traj.duration:.2f}s")
+    else:
+        print(f"[flight] hover mode — {args.duration:.0f}s at {args.height:.2f}m")
 
     # ── Init CS2 ────────────────────────────────────────────────────────────
     # swarm.allcfs IS the ROS2 node (CrazyflieServer inherits rclpy.node.Node).
@@ -248,39 +254,41 @@ def main():
         c.goTo(pos, 0, 2.0)
     th.sleep(2.5)
 
-    # ── Upload trajectory ────────────────────────────────────────────────────
-    for c in allcfs.crazyflies:
-        c.uploadTrajectory(0, 0, traj)
-
-    # ── Fly ──────────────────────────────────────────────────────────────────
-    # _log_t0 is set right before startTrajectory (not here) so the log t=0
-    # corresponds to the moment the command is issued, minimising the apparent
-    # phase offset in post-flight analysis.  A small residual (~20-50 ms radio
-    # latency) still exists, which the phase-alignment grid search handles.
     _logging_active = True
-    print("[flight] Starting trajectory...")
+    _log_t0 = time.monotonic()
 
     try:
-        for rep in range(args.reps):
-            if rep > 0:
-                th.sleep(1.0)
-            _log_t0 = time.monotonic()   # clock zero = trajectory command issued
-            allcfs.startTrajectory(0, timescale=args.speed)
-            th.sleep(traj.duration * args.speed + 1.0)
+        if hover_mode:
+            # ── Hover: no trajectory upload, just hold position ───────────────
+            print(f"[flight] Hovering for {args.duration:.0f}s...")
+            th.sleep(args.duration)
+            print("[flight] Done. Landing...")
+        else:
+            # ── Upload and fly trajectory ─────────────────────────────────────
+            for c in allcfs.crazyflies:
+                c.uploadTrajectory(0, 0, traj)
 
-        print("[flight] Done. Landing...")
+            print("[flight] Starting trajectory...")
+            for rep in range(args.reps):
+                if rep > 0:
+                    th.sleep(1.0)
+                _log_t0 = time.monotonic()
+                allcfs.startTrajectory(0, timescale=args.speed)
+                th.sleep(traj.duration * args.speed + 1.0)
+
+            print("[flight] Done. Landing...")
+
         _logging_active = False
-
-        # ── Land ─────────────────────────────────────────────────────────────
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
 
     finally:
-        # ── Save log (always — even if flight was interrupted by crash/Ctrl+C) ─
+        # ── Save log (always — even on crash/Ctrl+C) ──────────────────────────
         _logging_active = False
         if _log_rows:
+            dur = args.duration if hover_mode else traj.duration
             _save_log(args.trajectory, args.mode, args.kt, args.speed,
-                      args.reps, traj.duration)
+                      args.reps, dur)
         else:
             print("[log] No rows collected — log not saved.")
 
