@@ -53,7 +53,7 @@ from crazyflie_py.uav_trajectory import Trajectory
 
 DATA_DIR = Path(__file__).parent / "data"
 
-LOGS_DIR = Path("/PASTE_EXACT_PATH_HERE")
+LOGS_DIR = Path(__file__).resolve().parents[3] / "flying_robot_course" / "Controls" / "logs"
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
