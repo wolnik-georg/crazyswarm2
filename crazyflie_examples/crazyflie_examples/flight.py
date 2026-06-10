@@ -246,6 +246,9 @@ def main():
     print("[flight] EKF ready. Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
+    _logging_active = True
+    _log_t0 = time.monotonic()
+
     allcfs.takeoff(targetHeight=args.height, duration=2.0)
     th.sleep(2.5)
 
@@ -253,9 +256,6 @@ def main():
         pos = np.array(c.initialPosition) + np.array([0, 0, args.height])
         c.goTo(pos, 0, 2.0)
     th.sleep(2.5)
-
-    _logging_active = True
-    _log_t0 = time.monotonic()
 
     try:
         if hover_mode:
