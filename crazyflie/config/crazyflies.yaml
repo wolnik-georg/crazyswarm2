@@ -113,6 +113,7 @@ all:
       # /cf231/indi_state — INDI torque base + alpha_meas (6 floats = 24 bytes)
       # Only meaningful when CONTROLLER_MODE = 1 in firmware_app/src/lib.rs.
       # tau_{x,y,z}: τ_prev [Nm].  alp_{x,y,z}: α_meas [rad/s²].
+      # /cf231/indi_state — zeros when OOT is off, real values when CONTROLLER_MODE=1
       indi_state:
         frequency: 20 # Hz
         vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
@@ -130,7 +131,7 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      controller: 6 # 1: PID, 2: mellinger, 6: geometric SE(3)
+      controller: 2 # 1: PID, 2: mellinger, 6: geometric SE(3) (OOT — requires CONFIG_CONTROLLER_OOT=y)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
