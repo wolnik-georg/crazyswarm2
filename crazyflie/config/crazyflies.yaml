@@ -140,6 +140,9 @@ all:
     #   headlightEnable: 0
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
+    indi_gains:
+      kw: 21.0      # KW reduced 30% from 30.0 (gyro_std > danger threshold)
+      fc_bw: 80.0   # Butterworth pre-filter raised from 60 Hz (script requires >= 80)
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
