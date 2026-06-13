@@ -64,6 +64,7 @@ _latest_att     = {}   # most recent attitude/thrust/vbat values
 _latest_gyro    = {}   # most recent gyro_acc values
 _latest_rpm     = {}   # most recent per-motor RPM values
 _latest_indi    = {}   # most recent INDI values (from indi_state OR indi_filter_char)
+_controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -165,6 +166,36 @@ def _indi_filter_cb(msg: LogDataGeneric):
         _latest_indi[name] = val
 
 
+# ── Controller / ctrl_mode helpers ─────────────────────────────────────────
+
+def _read_controller_params(cf) -> tuple[int, int]:
+    """Read stabilizer.controller and indi_gains.ctrl_mode from firmware."""
+    try:
+        raw = cf.getParam("stabilizer.controller")
+        controller = int(raw) if raw == raw else -1  # nan check
+    except (ValueError, TypeError):
+        controller = -1
+    try:
+        raw = cf.getParam("indi_gains.ctrl_mode")
+        ctrl_mode = int(raw) if raw == raw else -1
+    except (ValueError, TypeError):
+        ctrl_mode = -1
+    return controller, ctrl_mode
+
+
+def _log_controller_phase(cf, phase: str, expected_ctrl_mode: int | None = None):
+    """Read back firmware params, print, and store for CSV meta."""
+    controller, ctrl_mode = _read_controller_params(cf)
+    _controller_meta[phase] = (controller, ctrl_mode)
+    msg = (f"[flight] {phase}: stabilizer.controller={controller}  "
+           f"indi_gains.ctrl_mode={ctrl_mode}")
+    if expected_ctrl_mode is not None:
+        status = "ok" if ctrl_mode == expected_ctrl_mode else "MISMATCH"
+        msg += f"  (expected ctrl_mode={expected_ctrl_mode} — {status})"
+    print(msg)
+    return controller, ctrl_mode
+
+
 # ── Filename helpers ────────────────────────────────────────────────────────
 
 def _csv_label(trajectory: str, mode: int, kt: float, speed: float) -> str:
@@ -214,6 +245,15 @@ def _save_log(trajectory: str, mode: int, kt: float, speed: float,
         f.write(f"# meta:run_speed={speed}\n")
         f.write(f"# meta:run_reps={reps}\n")
         f.write(f"# meta:run_lap_time_s={lap_time_s:.4f}\n")
+        if "yaml" in _controller_meta:
+            c, m = _controller_meta["yaml"]
+            f.write(f"# meta:yaml_stabilizer_controller={c}\n")
+            f.write(f"# meta:yaml_ctrl_mode={m}\n")
+        for phase in ("takeoff", "trajectory", "landing"):
+            if phase in _controller_meta:
+                c, m = _controller_meta[phase]
+                f.write(f"# meta:{phase}_stabilizer_controller={c}\n")
+                f.write(f"# meta:{phase}_ctrl_mode={m}\n")
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(_log_rows)
@@ -281,22 +321,24 @@ def main():
     print("[flight] Waiting for EKF to converge on mocap poses...")
     th.sleep(3.0)
 
-    # ── Read trajectory controller mode (set by CS2 from yaml firmware_params) ──
-    # Takeoff and landing always use geometric (Lee, controller_mode=0) for safety.
-    # The configured mode is restored only for the trajectory itself.
-    try:
-        raw = cf.getParam('indi_gains.ctrl_mode')
-        traj_ctrl_mode = int(raw) if raw == raw else 0  # nan check
-    except (ValueError, TypeError):
-        traj_ctrl_mode = 0
-    print(f"[flight] Trajectory ctrl_mode={traj_ctrl_mode}  "
-          f"(0=geometric, 2=att INDI, 3=full INDI)")
+    # ── Read controller config (set by CS2 from crazyflies.yaml firmware_params) ──
+    # stabilizer.controller: 1=PID, 2=mellinger, 6=geometric SE(3)
+    # indi_gains.ctrl_mode:  0=geometric, 2=att INDI, 3=full INDI
+    # Takeoff and landing always use ctrl_mode=0 for safety; yaml value is used
+    # only during the trajectory/hover segment.
+    yaml_controller, yaml_ctrl_mode = _read_controller_params(cf)
+    _controller_meta["yaml"] = (yaml_controller, yaml_ctrl_mode)
+    traj_ctrl_mode = yaml_ctrl_mode if yaml_ctrl_mode >= 0 else 0
+    print(f"[flight] YAML config: stabilizer.controller={yaml_controller}  "
+          f"indi_gains.ctrl_mode={yaml_ctrl_mode}  "
+          f"(trajectory will use ctrl_mode={traj_ctrl_mode})")
 
-    # Force geometric for takeoff regardless of yaml setting
+    # Force geometric ctrl_mode for takeoff regardless of yaml setting
     for c in allcfs.crazyflies:
-        c.setParam('indi_gains.ctrl_mode', 0)
+        c.setParam("indi_gains.ctrl_mode", 0)
     th.sleep(1.0)
-    print("[flight] controller_mode=0 (geometric/Lee) — taking off...")
+    _log_controller_phase(cf, "takeoff", expected_ctrl_mode=0)
+    print("[flight] Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
     _logging_active = True
@@ -316,11 +358,12 @@ def main():
             # Restore configured controller_mode for the hover itself
             if traj_ctrl_mode != 0:
                 for c in allcfs.crazyflies:
-                    c.setParam('indi_gains.ctrl_mode', traj_ctrl_mode)
+                    c.setParam("indi_gains.ctrl_mode", traj_ctrl_mode)
                 th.sleep(1.0)
-                print(f"[flight] controller_mode={traj_ctrl_mode} — hovering for {args.duration:.0f}s...")
+                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=traj_ctrl_mode)
             else:
-                print(f"[flight] Hovering for {args.duration:.0f}s...")
+                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
+            print(f"[flight] Hovering for {args.duration:.0f}s...")
             th.sleep(args.duration)
             print("[flight] Done. Landing...")
         else:
@@ -331,11 +374,12 @@ def main():
             # Switch to configured controller_mode for the trajectory
             if traj_ctrl_mode != 0:
                 for c in allcfs.crazyflies:
-                    c.setParam('indi_gains.ctrl_mode', traj_ctrl_mode)
+                    c.setParam("indi_gains.ctrl_mode", traj_ctrl_mode)
                 th.sleep(1.0)
-                print(f"[flight] controller_mode={traj_ctrl_mode} — starting trajectory...")
+                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=traj_ctrl_mode)
             else:
-                print("[flight] Starting trajectory...")
+                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
+            print("[flight] Starting trajectory...")
 
             for rep in range(args.reps):
                 if rep > 0:
@@ -350,9 +394,10 @@ def main():
         _logging_active = False
         if traj_ctrl_mode != 0:
             for c in allcfs.crazyflies:
-                c.setParam('indi_gains.ctrl_mode', 0)
+                c.setParam("indi_gains.ctrl_mode", 0)
             th.sleep(1.0)
-            print("[flight] controller_mode=0 (geometric/Lee) — landing...")
+        _log_controller_phase(cf, "landing", expected_ctrl_mode=0)
+        print("[flight] Landing...")
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
 
