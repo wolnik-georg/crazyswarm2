@@ -168,6 +168,9 @@ def _indi_filter_cb(msg: LogDataGeneric):
 
 # ── Controller / ctrl_mode helpers ─────────────────────────────────────────
 
+_CTRL_SETTLE_S = 1.0  # wait after each ctrl_mode change before proceeding
+
+
 def _read_controller_params(cf) -> tuple[int, int]:
     """Read stabilizer.controller and indi_gains.ctrl_mode from firmware."""
     try:
@@ -194,6 +197,14 @@ def _log_controller_phase(cf, phase: str, expected_ctrl_mode: int | None = None)
         msg += f"  (expected ctrl_mode={expected_ctrl_mode} — {status})"
     print(msg)
     return controller, ctrl_mode
+
+
+def _apply_ctrl_mode(allcfs, cf, th, phase: str, ctrl_mode: int):
+    """Set indi_gains.ctrl_mode on all drones, settle, then verify+log."""
+    for c in allcfs.crazyflies:
+        c.setParam("indi_gains.ctrl_mode", ctrl_mode)
+    th.sleep(_CTRL_SETTLE_S)
+    _log_controller_phase(cf, phase, expected_ctrl_mode=ctrl_mode)
 
 
 # ── Filename helpers ────────────────────────────────────────────────────────
@@ -334,10 +345,7 @@ def main():
           f"(trajectory will use ctrl_mode={traj_ctrl_mode})")
 
     # Force geometric ctrl_mode for takeoff regardless of yaml setting
-    for c in allcfs.crazyflies:
-        c.setParam("indi_gains.ctrl_mode", 0)
-    th.sleep(1.0)
-    _log_controller_phase(cf, "takeoff", expected_ctrl_mode=0)
+    _apply_ctrl_mode(allcfs, cf, th, "takeoff", 0)
     print("[flight] Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
@@ -355,12 +363,9 @@ def main():
     try:
         if hover_mode:
             # ── Hover: no trajectory upload, just hold position ───────────────
-            # Restore configured controller_mode for the hover itself
+            # Restore configured ctrl_mode for the hover itself
             if traj_ctrl_mode != 0:
-                for c in allcfs.crazyflies:
-                    c.setParam("indi_gains.ctrl_mode", traj_ctrl_mode)
-                th.sleep(1.0)
-                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=traj_ctrl_mode)
+                _apply_ctrl_mode(allcfs, cf, th, "trajectory", traj_ctrl_mode)
             else:
                 _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
             print(f"[flight] Hovering for {args.duration:.0f}s...")
@@ -371,12 +376,9 @@ def main():
             for c in allcfs.crazyflies:
                 c.uploadTrajectory(0, 0, traj)
 
-            # Switch to configured controller_mode for the trajectory
+            # Switch to configured ctrl_mode for the trajectory
             if traj_ctrl_mode != 0:
-                for c in allcfs.crazyflies:
-                    c.setParam("indi_gains.ctrl_mode", traj_ctrl_mode)
-                th.sleep(1.0)
-                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=traj_ctrl_mode)
+                _apply_ctrl_mode(allcfs, cf, th, "trajectory", traj_ctrl_mode)
             else:
                 _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
             print("[flight] Starting trajectory...")
@@ -390,13 +392,9 @@ def main():
 
             print("[flight] Done. Landing...")
 
-        # Switch back to geometric for landing
+        # Switch back to geometric for landing (always set + settle, even if already 0)
         _logging_active = False
-        if traj_ctrl_mode != 0:
-            for c in allcfs.crazyflies:
-                c.setParam("indi_gains.ctrl_mode", 0)
-            th.sleep(1.0)
-        _log_controller_phase(cf, "landing", expected_ctrl_mode=0)
+        _apply_ctrl_mode(allcfs, cf, th, "landing", 0)
         print("[flight] Landing...")
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
