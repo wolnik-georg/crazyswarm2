@@ -45,6 +45,8 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import yaml
+from ament_index_python.packages import get_package_share_directory
 from crazyflie_interfaces.msg import LogDataGeneric
 from crazyflie_py import Crazyswarm
 from crazyflie_py.uav_trajectory import Trajectory
@@ -57,27 +59,50 @@ LOGS_DIR = Path("/home/flyingrobots/georg/flying_robot_course/Controls/logs")
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
-_log_rows       = []   # accumulated rows during flight
-_log_t0         = None # wall-clock at trajectory start (None = not logging yet)
+_log_rows = []  # accumulated rows during flight
+_log_t0 = None  # wall-clock at trajectory start (None = not logging yet)
 _logging_active = False
-_latest_att     = {}   # most recent attitude/thrust/vbat values
-_latest_gyro    = {}   # most recent gyro_acc values
-_latest_rpm     = {}   # most recent per-motor RPM values
-_latest_indi    = {}   # most recent INDI values (from indi_state OR indi_filter_char)
+_latest_att = {}  # most recent attitude/thrust/vbat values
+_latest_gyro = {}  # most recent gyro_acc values
+_latest_rpm = {}  # most recent per-motor RPM values
+_latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
-_STATE_VARS    = ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
-                  "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
-_ATTITUDE_VARS = ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
-                  "stabilizer.thrust", "pm.vbat"]
-_GYRO_VARS     = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
-_RPM_VARS      = ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
-_INDI_STATE_VARS  = ["indi.tau_x",     "indi.tau_y",     "indi.tau_z",
-                     "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
-_INDI_FILTER_VARS = ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
-                     "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+_STATE_VARS = [
+    "stateEstimate.x",
+    "stateEstimate.y",
+    "stateEstimate.z",
+    "stateEstimate.vx",
+    "stateEstimate.vy",
+    "stateEstimate.vz",
+]
+_ATTITUDE_VARS = [
+    "stabilizer.roll",
+    "stabilizer.pitch",
+    "stabilizer.yaw",
+    "stabilizer.thrust",
+    "pm.vbat",
+]
+_GYRO_VARS = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
+_RPM_VARS = ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+_INDI_STATE_VARS = [
+    "indi.tau_x",
+    "indi.tau_y",
+    "indi.tau_z",
+    "indi.alp_x",
+    "indi.alp_y",
+    "indi.alp_z",
+]
+_INDI_FILTER_VARS = [
+    "indi.alp_raw_x",
+    "indi.alp_raw_y",
+    "indi.alp_raw_z",
+    "indi.alp_x",
+    "indi.alp_y",
+    "indi.alp_z",
+]
 
 
 def _state_cb(msg: LogDataGeneric):
@@ -91,39 +116,41 @@ def _state_cb(msg: LogDataGeneric):
     a = _latest_att
     g = _latest_gyro
 
-    _log_rows.append({
-        "time_s":    round(time.monotonic() - _log_t0, 4),
-        "x":         s["stateEstimate.x"],
-        "y":         s["stateEstimate.y"],
-        "z":         s["stateEstimate.z"],
-        "vx":        s["stateEstimate.vx"],
-        "vy":        s["stateEstimate.vy"],
-        "vz":        s["stateEstimate.vz"],
-        "roll_deg":  a.get("stabilizer.roll",   float("nan")),
-        "pitch_deg": a.get("stabilizer.pitch",  float("nan")),
-        "yaw_deg":   a.get("stabilizer.yaw",    float("nan")),
-        "thrust":    a.get("stabilizer.thrust", float("nan")),
-        "vbat":      a.get("pm.vbat",           float("nan")),
-        "gyro_x":    g.get("gyro.x",  float("nan")),
-        "gyro_y":    g.get("gyro.y",  float("nan")),
-        "gyro_z":    g.get("gyro.z",  float("nan")),
-        "acc_x":     g.get("acc.x",   float("nan")),
-        "acc_y":     g.get("acc.y",   float("nan")),
-        "acc_z":     g.get("acc.z",   float("nan")),
-        "rpm_m1":    _latest_rpm.get("rpm.m1", float("nan")),
-        "rpm_m2":    _latest_rpm.get("rpm.m2", float("nan")),
-        "rpm_m3":    _latest_rpm.get("rpm.m3", float("nan")),
-        "rpm_m4":    _latest_rpm.get("rpm.m4", float("nan")),
-        "tau_x":     _latest_indi.get("indi.tau_x",     float("nan")),
-        "tau_y":     _latest_indi.get("indi.tau_y",     float("nan")),
-        "tau_z":     _latest_indi.get("indi.tau_z",     float("nan")),
-        "alp_x":     _latest_indi.get("indi.alp_x",     float("nan")),
-        "alp_y":     _latest_indi.get("indi.alp_y",     float("nan")),
-        "alp_z":     _latest_indi.get("indi.alp_z",     float("nan")),
-        "alp_raw_x": _latest_indi.get("indi.alp_raw_x", float("nan")),
-        "alp_raw_y": _latest_indi.get("indi.alp_raw_y", float("nan")),
-        "alp_raw_z": _latest_indi.get("indi.alp_raw_z", float("nan")),
-    })
+    _log_rows.append(
+        {
+            "time_s": round(time.monotonic() - _log_t0, 4),
+            "x": s["stateEstimate.x"],
+            "y": s["stateEstimate.y"],
+            "z": s["stateEstimate.z"],
+            "vx": s["stateEstimate.vx"],
+            "vy": s["stateEstimate.vy"],
+            "vz": s["stateEstimate.vz"],
+            "roll_deg": a.get("stabilizer.roll", float("nan")),
+            "pitch_deg": a.get("stabilizer.pitch", float("nan")),
+            "yaw_deg": a.get("stabilizer.yaw", float("nan")),
+            "thrust": a.get("stabilizer.thrust", float("nan")),
+            "vbat": a.get("pm.vbat", float("nan")),
+            "gyro_x": g.get("gyro.x", float("nan")),
+            "gyro_y": g.get("gyro.y", float("nan")),
+            "gyro_z": g.get("gyro.z", float("nan")),
+            "acc_x": g.get("acc.x", float("nan")),
+            "acc_y": g.get("acc.y", float("nan")),
+            "acc_z": g.get("acc.z", float("nan")),
+            "rpm_m1": _latest_rpm.get("rpm.m1", float("nan")),
+            "rpm_m2": _latest_rpm.get("rpm.m2", float("nan")),
+            "rpm_m3": _latest_rpm.get("rpm.m3", float("nan")),
+            "rpm_m4": _latest_rpm.get("rpm.m4", float("nan")),
+            "tau_x": _latest_indi.get("indi.tau_x", float("nan")),
+            "tau_y": _latest_indi.get("indi.tau_y", float("nan")),
+            "tau_z": _latest_indi.get("indi.tau_z", float("nan")),
+            "alp_x": _latest_indi.get("indi.alp_x", float("nan")),
+            "alp_y": _latest_indi.get("indi.alp_y", float("nan")),
+            "alp_z": _latest_indi.get("indi.alp_z", float("nan")),
+            "alp_raw_x": _latest_indi.get("indi.alp_raw_x", float("nan")),
+            "alp_raw_y": _latest_indi.get("indi.alp_raw_y", float("nan")),
+            "alp_raw_z": _latest_indi.get("indi.alp_raw_z", float("nan")),
+        }
+    )
 
 
 def _attitude_cb(msg: LogDataGeneric):
@@ -168,46 +195,57 @@ def _indi_filter_cb(msg: LogDataGeneric):
 
 # ── Controller / ctrl_mode helpers ─────────────────────────────────────────
 
-_CTRL_SETTLE_S = 1.0  # wait after each ctrl_mode change before proceeding
+_CTRL_SETTLE_S = 1.0  # wait after each controller/ctrl_mode change before proceeding
+_RAMP_CONTROLLER = 2  # mellinger — takeoff and landing (hardcoded)
+_RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 
 
-def _read_controller_params(cf) -> tuple[int, int]:
-    """Read stabilizer.controller and indi_gains.ctrl_mode from firmware."""
+def _load_firmware_controller_config() -> tuple[int, int]:
+    """Read stabilizer.controller and indi_gains.ctrl_mode from crazyflies.yaml firmware_params."""
+    path = Path(get_package_share_directory("crazyflie")) / "config" / "crazyflies.yaml"
     try:
-        raw = cf.getParam("stabilizer.controller")
-        controller = int(raw) if raw == raw else -1  # nan check
-    except (ValueError, TypeError):
-        controller = -1
-    try:
-        raw = cf.getParam("indi_gains.ctrl_mode")
-        ctrl_mode = int(raw) if raw == raw else -1
-    except (ValueError, TypeError):
-        ctrl_mode = -1
-    return controller, ctrl_mode
+        with open(path) as f:
+            cfg = yaml.safe_load(f)
+    except Exception as exc:
+        print(f"[flight] ERROR: could not read {path}: {exc}")
+        sys.exit(1)
+
+    fp = cfg.get("all", {}).get("firmware_params", {})
+    stabilizer = fp.get("stabilizer", {})
+    indi = fp.get("indi_gains", {})
+    if "controller" not in stabilizer:
+        print(
+            "[flight] ERROR: missing all.firmware_params.stabilizer.controller in crazyflies.yaml"
+        )
+        sys.exit(1)
+    if "ctrl_mode" not in indi:
+        print(
+            "[flight] ERROR: missing all.firmware_params.indi_gains.ctrl_mode in crazyflies.yaml"
+        )
+        sys.exit(1)
+    return int(stabilizer["controller"]), int(indi["ctrl_mode"])
 
 
-def _log_controller_phase(cf, phase: str, expected_ctrl_mode: int | None = None):
-    """Read back firmware params, print, and store for CSV meta."""
-    controller, ctrl_mode = _read_controller_params(cf)
+def _log_phase(phase: str, controller: int, ctrl_mode: int):
+    """Record and print the controller settings applied for this flight phase."""
     _controller_meta[phase] = (controller, ctrl_mode)
-    msg = (f"[flight] {phase}: stabilizer.controller={controller}  "
-           f"indi_gains.ctrl_mode={ctrl_mode}")
-    if expected_ctrl_mode is not None:
-        status = "ok" if ctrl_mode == expected_ctrl_mode else "MISMATCH"
-        msg += f"  (expected ctrl_mode={expected_ctrl_mode} — {status})"
-    print(msg)
-    return controller, ctrl_mode
+    print(
+        f"[flight] {phase}: stabilizer.controller={controller}  "
+        f"indi_gains.ctrl_mode={ctrl_mode}"
+    )
 
 
-def _apply_ctrl_mode(allcfs, cf, th, phase: str, ctrl_mode: int):
-    """Set indi_gains.ctrl_mode on all drones, settle, then verify+log."""
+def _apply_flight_settings(allcfs, th, phase: str, controller: int, ctrl_mode: int):
+    """Set stabilizer.controller + indi_gains.ctrl_mode on all drones, settle, then log."""
     for c in allcfs.crazyflies:
+        c.setParam("stabilizer.controller", controller)
         c.setParam("indi_gains.ctrl_mode", ctrl_mode)
     th.sleep(_CTRL_SETTLE_S)
-    _log_controller_phase(cf, phase, expected_ctrl_mode=ctrl_mode)
+    _log_phase(phase, controller, ctrl_mode)
 
 
 # ── Filename helpers ────────────────────────────────────────────────────────
+
 
 def _csv_label(trajectory: str, mode: int, kt: float, speed: float) -> str:
     """Consistent label matching export_poly4d naming convention."""
@@ -225,27 +263,54 @@ def _find_csv(trajectory: str, mode: int, kt: float, speed: float) -> Path:
     if not path.exists():
         print(f"[error] CSV not found: {path}")
         print(f"  Generate it with (from flying_drone_stack/):")
-        print(f"    cargo run --release --bin export_poly4d -- "
-              f"--trajectory {trajectory} --mode {mode} --kt {kt}")
+        print(
+            f"    cargo run --release --bin export_poly4d -- "
+            f"--trajectory {trajectory} --mode {mode} --kt {kt}"
+        )
         sys.exit(1)
     return path
 
 
-def _save_log(trajectory: str, mode: int, kt: float, speed: float,
-               reps: int, lap_time_s: float):
+def _save_log(
+    trajectory: str, mode: int, kt: float, speed: float, reps: int, lap_time_s: float
+):
     LOGS_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     label = _csv_label(trajectory, mode, kt, speed)
     path = LOGS_DIR / f"{label}_{ts}.csv"
 
     fieldnames = [
-        "time_s", "x", "y", "z", "vx", "vy", "vz",
-        "roll_deg", "pitch_deg", "yaw_deg", "thrust", "vbat",
-        "gyro_x", "gyro_y", "gyro_z", "acc_x", "acc_y", "acc_z",
-        "rpm_m1", "rpm_m2", "rpm_m3", "rpm_m4",
-        "tau_x", "tau_y", "tau_z",
-        "alp_x", "alp_y", "alp_z",
-        "alp_raw_x", "alp_raw_y", "alp_raw_z",
+        "time_s",
+        "x",
+        "y",
+        "z",
+        "vx",
+        "vy",
+        "vz",
+        "roll_deg",
+        "pitch_deg",
+        "yaw_deg",
+        "thrust",
+        "vbat",
+        "gyro_x",
+        "gyro_y",
+        "gyro_z",
+        "acc_x",
+        "acc_y",
+        "acc_z",
+        "rpm_m1",
+        "rpm_m2",
+        "rpm_m3",
+        "rpm_m4",
+        "tau_x",
+        "tau_y",
+        "tau_z",
+        "alp_x",
+        "alp_y",
+        "alp_z",
+        "alp_raw_x",
+        "alp_raw_y",
+        "alp_raw_z",
     ]
     kt_str = f"{kt:.6f}".rstrip("0").rstrip(".")
     with open(path, "w", newline="") as f:
@@ -274,30 +339,38 @@ def _save_log(trajectory: str, mode: int, kt: float, speed: float,
 
 # ── Main ────────────────────────────────────────────────────────────────────
 
+
 def main():
     global _log_t0, _logging_active
 
     parser = argparse.ArgumentParser(description="Generic CS2 flight script")
-    parser.add_argument("--trajectory", default="figure8",
-                        choices=["figure8", "circle", "hover"])
+    parser.add_argument(
+        "--trajectory", default="figure8", choices=["figure8", "circle", "hover"]
+    )
     parser.add_argument("--mode", type=int, default=0, choices=[0, 1, 2, 3])
-    parser.add_argument("--kt",    type=float, default=None)
+    parser.add_argument("--kt", type=float, default=None)
     parser.add_argument("--speed", type=float, default=1.0)
-    parser.add_argument("--reps",  type=int,   default=1)
+    parser.add_argument("--reps", type=int, default=1)
     parser.add_argument("--height", type=float, default=1.0)
-    parser.add_argument("--duration", type=float, default=20.0,
-                        help="Hover duration in seconds (hover trajectory only)")
+    parser.add_argument(
+        "--duration",
+        type=float,
+        default=20.0,
+        help="Hover duration in seconds (hover trajectory only)",
+    )
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
         args.kt = 0.1 if args.trajectory == "circle" else 0.008
 
-    hover_mode = (args.trajectory == "hover")
+    hover_mode = args.trajectory == "hover"
     traj = None
     if not hover_mode:
         csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
-        print(f"[flight] {csv_path.name}  mode={args.mode} kt={args.kt} "
-              f"speed={args.speed} reps={args.reps}")
+        print(
+            f"[flight] {csv_path.name}  mode={args.mode} kt={args.kt} "
+            f"speed={args.speed} reps={args.reps}"
+        )
         traj = Trajectory()
         traj.loadcsv(csv_path)
         print(f"[flight] Duration per rep: {traj.duration:.2f}s")
@@ -308,44 +381,45 @@ def main():
     # swarm.allcfs IS the ROS2 node (CrazyflieServer inherits rclpy.node.Node).
     # Subscriptions created here are processed by timeHelper.sleep(), which
     # calls rclpy.spin_once() in a loop — no extra threads required.
-    swarm   = Crazyswarm()
-    th      = swarm.timeHelper
-    allcfs  = swarm.allcfs          # this IS the node
-    cf      = allcfs.crazyflies[0]
-    cf_name = cf.prefix.lstrip("/") # e.g. "cf231"
+    swarm = Crazyswarm()
+    th = swarm.timeHelper
+    allcfs = swarm.allcfs  # this IS the node
+    cf = allcfs.crazyflies[0]
+    cf_name = cf.prefix.lstrip("/")  # e.g. "cf231"
 
+    allcfs.create_subscription(LogDataGeneric, f"{cf_name}/state", _state_cb, 10)
+    allcfs.create_subscription(LogDataGeneric, f"{cf_name}/attitude", _attitude_cb, 10)
+    allcfs.create_subscription(LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb, 10)
+    allcfs.create_subscription(LogDataGeneric, f"{cf_name}/rpm", _rpm_cb, 10)
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/state",            _state_cb,        10)
+        LogDataGeneric, f"{cf_name}/indi_state", _indi_state_cb, 10
+    )
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/attitude",         _attitude_cb,     10)
-    allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/gyro_acc",         _gyro_cb,         10)
-    allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/rpm",              _rpm_cb,          10)
-    allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/indi_state",       _indi_state_cb,   10)
-    allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/indi_filter_char", _indi_filter_cb,  10)
-    print(f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_filter_char")
+        LogDataGeneric, f"{cf_name}/indi_filter_char", _indi_filter_cb, 10
+    )
+    print(
+        f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_filter_char"
+    )
 
     # ── Wait for EKF to converge on mocap poses ──────────────────────────────
     print("[flight] Waiting for EKF to converge on mocap poses...")
     th.sleep(3.0)
 
-    # ── Read controller config (set by CS2 from crazyflies.yaml firmware_params) ──
-    # stabilizer.controller: 1=PID, 2=mellinger, 6=geometric SE(3)
-    # indi_gains.ctrl_mode:  0=geometric, 2=att INDI, 3=full INDI
-    # Takeoff and landing always use ctrl_mode=0 for safety; yaml value is used
-    # only during the trajectory/hover segment.
-    yaml_controller, yaml_ctrl_mode = _read_controller_params(cf)
-    _controller_meta["yaml"] = (yaml_controller, yaml_ctrl_mode)
-    traj_ctrl_mode = yaml_ctrl_mode if yaml_ctrl_mode >= 0 else 0
-    print(f"[flight] YAML config: stabilizer.controller={yaml_controller}  "
-          f"indi_gains.ctrl_mode={yaml_ctrl_mode}  "
-          f"(trajectory will use ctrl_mode={traj_ctrl_mode})")
+    # ── Controller config from crazyflies.yaml firmware_params ─────────────
+    # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
+    # Takeoff/landing use hardcoded ramp settings (controller=2, ctrl_mode=0).
+    yaml_controller, traj_ctrl_mode = _load_firmware_controller_config()
+    _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
+    print(
+        f"[flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller}  "
+        f"indi_gains.ctrl_mode={traj_ctrl_mode}"
+    )
+    print(
+        f"[flight] ramp (takeoff/landing): stabilizer.controller={_RAMP_CONTROLLER}  "
+        f"indi_gains.ctrl_mode={_RAMP_CTRL_MODE}"
+    )
 
-    # Force geometric ctrl_mode for takeoff regardless of yaml setting
-    _apply_ctrl_mode(allcfs, cf, th, "takeoff", 0)
+    _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
     print("[flight] Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
@@ -364,10 +438,12 @@ def main():
         if hover_mode:
             # ── Hover: no trajectory upload, just hold position ───────────────
             # Restore configured ctrl_mode for the hover itself
-            if traj_ctrl_mode != 0:
-                _apply_ctrl_mode(allcfs, cf, th, "trajectory", traj_ctrl_mode)
+            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+                _apply_flight_settings(
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                )
             else:
-                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
+                _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
             print(f"[flight] Hovering for {args.duration:.0f}s...")
             th.sleep(args.duration)
             print("[flight] Done. Landing...")
@@ -377,10 +453,12 @@ def main():
                 c.uploadTrajectory(0, 0, traj)
 
             # Switch to configured ctrl_mode for the trajectory
-            if traj_ctrl_mode != 0:
-                _apply_ctrl_mode(allcfs, cf, th, "trajectory", traj_ctrl_mode)
+            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+                _apply_flight_settings(
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                )
             else:
-                _log_controller_phase(cf, "trajectory", expected_ctrl_mode=0)
+                _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
             print("[flight] Starting trajectory...")
 
             for rep in range(args.reps):
@@ -394,7 +472,7 @@ def main():
 
         # Switch back to geometric for landing (always set + settle, even if already 0)
         _logging_active = False
-        _apply_ctrl_mode(allcfs, cf, th, "landing", 0)
+        _apply_flight_settings(allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
         print("[flight] Landing...")
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
@@ -404,8 +482,7 @@ def main():
         _logging_active = False
         if _log_rows:
             dur = args.duration if hover_mode else traj.duration
-            _save_log(args.trajectory, args.mode, args.kt, args.speed,
-                      args.reps, dur)
+            _save_log(args.trajectory, args.mode, args.kt, args.speed, args.reps, dur)
         else:
             print("[log] No rows collected — log not saved.")
 
