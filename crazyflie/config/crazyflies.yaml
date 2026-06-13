@@ -149,7 +149,7 @@ all:
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
-      controller_mode: 0  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
+      ctrl_mode: 0  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
       kw: 30.0            # safe start: KR=100, KW=30 → ζ=1.5 (reset from stale 21.0)
       fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
     locSrv:

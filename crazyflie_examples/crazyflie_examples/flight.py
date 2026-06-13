@@ -247,13 +247,13 @@ def main():
     # ── Read trajectory controller mode (set by CS2 from yaml firmware_params) ──
     # Takeoff and landing always use geometric (Lee, controller_mode=0) for safety.
     # The configured mode is restored only for the trajectory itself.
-    traj_ctrl_mode = int(cf.getParam('indi_gains.controller_mode'))
+    traj_ctrl_mode = int(cf.getParam('indi_gains.ctrl_mode'))
     print(f"[flight] Trajectory controller_mode={traj_ctrl_mode}  "
           f"(0=geometric, 2=att INDI, 3=full INDI)")
 
     # Force geometric for takeoff regardless of yaml setting
     for c in allcfs.crazyflies:
-        c.setParam('indi_gains.controller_mode', 0)
+        c.setParam('indi_gains.ctrl_mode', 0)
     th.sleep(1.0)
     print("[flight] controller_mode=0 (geometric/Lee) — taking off...")
 
@@ -275,7 +275,7 @@ def main():
             # Restore configured controller_mode for the hover itself
             if traj_ctrl_mode != 0:
                 for c in allcfs.crazyflies:
-                    c.setParam('indi_gains.controller_mode', traj_ctrl_mode)
+                    c.setParam('indi_gains.ctrl_mode', traj_ctrl_mode)
                 th.sleep(1.0)
                 print(f"[flight] controller_mode={traj_ctrl_mode} — hovering for {args.duration:.0f}s...")
             else:
@@ -290,7 +290,7 @@ def main():
             # Switch to configured controller_mode for the trajectory
             if traj_ctrl_mode != 0:
                 for c in allcfs.crazyflies:
-                    c.setParam('indi_gains.controller_mode', traj_ctrl_mode)
+                    c.setParam('indi_gains.ctrl_mode', traj_ctrl_mode)
                 th.sleep(1.0)
                 print(f"[flight] controller_mode={traj_ctrl_mode} — starting trajectory...")
             else:
@@ -309,7 +309,7 @@ def main():
         _logging_active = False
         if traj_ctrl_mode != 0:
             for c in allcfs.crazyflies:
-                c.setParam('indi_gains.controller_mode', 0)
+                c.setParam('indi_gains.ctrl_mode', 0)
             th.sleep(1.0)
             print("[flight] controller_mode=0 (geometric/Lee) — landing...")
         allcfs.land(targetHeight=0.06, duration=2.0)
