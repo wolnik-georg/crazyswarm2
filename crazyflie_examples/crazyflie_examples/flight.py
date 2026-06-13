@@ -247,8 +247,12 @@ def main():
     # ── Read trajectory controller mode (set by CS2 from yaml firmware_params) ──
     # Takeoff and landing always use geometric (Lee, controller_mode=0) for safety.
     # The configured mode is restored only for the trajectory itself.
-    traj_ctrl_mode = int(cf.getParam('indi_gains.ctrl_mode'))
-    print(f"[flight] Trajectory controller_mode={traj_ctrl_mode}  "
+    try:
+        raw = cf.getParam('indi_gains.ctrl_mode')
+        traj_ctrl_mode = int(raw) if raw == raw else 0  # nan check
+    except (ValueError, TypeError):
+        traj_ctrl_mode = 0
+    print(f"[flight] Trajectory ctrl_mode={traj_ctrl_mode}  "
           f"(0=geometric, 2=att INDI, 3=full INDI)")
 
     # Force geometric for takeoff regardless of yaml setting
