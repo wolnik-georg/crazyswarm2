@@ -113,19 +113,19 @@ all:
       # /cf231/indi_state — INDI torques + filtered alpha (normal operation, 20 Hz)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
       # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
-      indi_state:
-        frequency: 20 # Hz
-        vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
-               "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # indi_state:  # commented out — swap with indi_filter_char below for filter char step
+      #   frequency: 20 # Hz
+      #   vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
+      #          "indi.alp_x", "indi.alp_y", "indi.alp_z"]
       # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
       # Uncomment this block + comment out indi_state when running plot_indi_filters.py.
       # Logs raw alpha (pre-BW) + filtered alpha at 100 Hz for offline fc_bw sweep.
       # Works in mode=0 geometric hover — no INDI needed, filter runs passively.
       # After characterisation: re-comment this, uncomment indi_state above.
-      # indi_filter_char:
-      #   frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
-      #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
-      #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+      indi_filter_char:
+        frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
+        vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+               "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
       # Requires RPM deck fitted. Used to verify deck is reading and for
       # post-flight KT_MOTOR validation (thrust vs RPM²).
