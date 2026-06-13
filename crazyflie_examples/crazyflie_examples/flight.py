@@ -63,6 +63,7 @@ _logging_active = False
 _latest_att     = {}   # most recent attitude/thrust/vbat values
 _latest_gyro    = {}   # most recent gyro_acc values
 _latest_rpm     = {}   # most recent per-motor RPM values
+_latest_indi    = {}   # most recent INDI values (from indi_state OR indi_filter_char)
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -72,6 +73,10 @@ _ATTITUDE_VARS = ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                   "stabilizer.thrust", "pm.vbat"]
 _GYRO_VARS     = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
 _RPM_VARS      = ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+_INDI_STATE_VARS  = ["indi.tau_x",     "indi.tau_y",     "indi.tau_z",
+                     "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+_INDI_FILTER_VARS = ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+                     "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
 
 
 def _state_cb(msg: LogDataGeneric):
@@ -108,6 +113,15 @@ def _state_cb(msg: LogDataGeneric):
         "rpm_m2":    _latest_rpm.get("rpm.m2", float("nan")),
         "rpm_m3":    _latest_rpm.get("rpm.m3", float("nan")),
         "rpm_m4":    _latest_rpm.get("rpm.m4", float("nan")),
+        "tau_x":     _latest_indi.get("indi.tau_x",     float("nan")),
+        "tau_y":     _latest_indi.get("indi.tau_y",     float("nan")),
+        "tau_z":     _latest_indi.get("indi.tau_z",     float("nan")),
+        "alp_x":     _latest_indi.get("indi.alp_x",     float("nan")),
+        "alp_y":     _latest_indi.get("indi.alp_y",     float("nan")),
+        "alp_z":     _latest_indi.get("indi.alp_z",     float("nan")),
+        "alp_raw_x": _latest_indi.get("indi.alp_raw_x", float("nan")),
+        "alp_raw_y": _latest_indi.get("indi.alp_raw_y", float("nan")),
+        "alp_raw_z": _latest_indi.get("indi.alp_raw_z", float("nan")),
     })
 
 
@@ -133,6 +147,22 @@ def _rpm_cb(msg: LogDataGeneric):
         return
     for name, val in zip(_RPM_VARS, msg.values):
         _latest_rpm[name] = val
+
+
+def _indi_state_cb(msg: LogDataGeneric):
+    """Caches tau_x/y/z + alp_x/y/z from indi_state topic (normal operation, 20 Hz)."""
+    if len(msg.values) != len(_INDI_STATE_VARS):
+        return
+    for name, val in zip(_INDI_STATE_VARS, msg.values):
+        _latest_indi[name] = val
+
+
+def _indi_filter_cb(msg: LogDataGeneric):
+    """Caches alp_raw_x/y/z + alp_x/y/z from indi_filter_char topic (100 Hz, filter char step)."""
+    if len(msg.values) != len(_INDI_FILTER_VARS):
+        return
+    for name, val in zip(_INDI_FILTER_VARS, msg.values):
+        _latest_indi[name] = val
 
 
 # ── Filename helpers ────────────────────────────────────────────────────────
@@ -171,6 +201,9 @@ def _save_log(trajectory: str, mode: int, kt: float, speed: float,
         "roll_deg", "pitch_deg", "yaw_deg", "thrust", "vbat",
         "gyro_x", "gyro_y", "gyro_z", "acc_x", "acc_y", "acc_z",
         "rpm_m1", "rpm_m2", "rpm_m3", "rpm_m4",
+        "tau_x", "tau_y", "tau_z",
+        "alp_x", "alp_y", "alp_z",
+        "alp_raw_x", "alp_raw_y", "alp_raw_z",
     ]
     kt_str = f"{kt:.6f}".rstrip("0").rstrip(".")
     with open(path, "w", newline="") as f:
@@ -231,14 +264,18 @@ def main():
     cf_name = cf.prefix.lstrip("/") # e.g. "cf231"
 
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/state",    _state_cb,    10)
+        LogDataGeneric, f"{cf_name}/state",            _state_cb,        10)
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/attitude", _attitude_cb, 10)
+        LogDataGeneric, f"{cf_name}/attitude",         _attitude_cb,     10)
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/gyro_acc", _gyro_cb,     10)
+        LogDataGeneric, f"{cf_name}/gyro_acc",         _gyro_cb,         10)
     allcfs.create_subscription(
-        LogDataGeneric, f"{cf_name}/rpm",      _rpm_cb,      10)
-    print(f"[log] Subscribed to {cf_name}/state, {cf_name}/attitude, {cf_name}/gyro_acc, {cf_name}/rpm")
+        LogDataGeneric, f"{cf_name}/rpm",              _rpm_cb,          10)
+    allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/indi_state",       _indi_state_cb,   10)
+    allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/indi_filter_char", _indi_filter_cb,  10)
+    print(f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_filter_char")
 
     # ── Wait for EKF to converge on mocap poses ──────────────────────────────
     print("[flight] Waiting for EKF to converge on mocap poses...")
