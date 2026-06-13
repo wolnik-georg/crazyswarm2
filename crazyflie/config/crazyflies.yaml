@@ -110,14 +110,22 @@ all:
       gyro_acc:
         frequency: 20 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
-      # /cf231/indi_state — INDI torque base + alpha_meas (6 floats = 24 bytes)
-      # Only meaningful when CONTROLLER_MODE = 1 in firmware_app/src/lib.rs.
-      # tau_{x,y,z}: τ_prev [Nm].  alp_{x,y,z}: α_meas [rad/s²].
-      # /cf231/indi_state — zeros when OOT is off, real values when CONTROLLER_MODE=1
+      # /cf231/indi_state — INDI torques + filtered alpha (normal operation, 20 Hz)
+      # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
+      # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
       indi_state:
         frequency: 20 # Hz
         vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
                "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
+      # Uncomment this block + comment out indi_state when running plot_indi_filters.py.
+      # Logs raw alpha (pre-BW) + filtered alpha at 100 Hz for offline fc_bw sweep.
+      # Works in mode=0 geometric hover — no INDI needed, filter runs passively.
+      # After characterisation: re-comment this, uncomment indi_state above.
+      # indi_filter_char:
+      #   frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
+      #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+      #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
       # Requires RPM deck fitted. Used to verify deck is reading and for
       # post-flight KT_MOTOR validation (thrust vs RPM²).
@@ -141,8 +149,9 @@ all:
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
-      kw: 21.0      # KW reduced 30% from 30.0 (gyro_std > danger threshold)
-      fc_bw: 80.0   # Butterworth pre-filter raised from 60 Hz (script requires >= 80)
+      controller_mode: 0  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
+      kw: 30.0            # safe start: KR=100, KW=30 → ζ=1.5 (reset from stale 21.0)
+      fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1

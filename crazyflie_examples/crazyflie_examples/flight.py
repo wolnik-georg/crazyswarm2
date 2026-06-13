@@ -243,7 +243,19 @@ def main():
     # ── Wait for EKF to converge on mocap poses ──────────────────────────────
     print("[flight] Waiting for EKF to converge on mocap poses...")
     th.sleep(3.0)
-    print("[flight] EKF ready. Taking off...")
+
+    # ── Read trajectory controller mode (set by CS2 from yaml firmware_params) ──
+    # Takeoff and landing always use geometric (Lee, controller_mode=0) for safety.
+    # The configured mode is restored only for the trajectory itself.
+    traj_ctrl_mode = int(cf.getParam('indi_gains.controller_mode'))
+    print(f"[flight] Trajectory controller_mode={traj_ctrl_mode}  "
+          f"(0=geometric, 2=att INDI, 3=full INDI)")
+
+    # Force geometric for takeoff regardless of yaml setting
+    for c in allcfs.crazyflies:
+        c.setParam('indi_gains.controller_mode', 0)
+    th.sleep(1.0)
+    print("[flight] controller_mode=0 (geometric/Lee) — taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
     _logging_active = True
@@ -260,7 +272,14 @@ def main():
     try:
         if hover_mode:
             # ── Hover: no trajectory upload, just hold position ───────────────
-            print(f"[flight] Hovering for {args.duration:.0f}s...")
+            # Restore configured controller_mode for the hover itself
+            if traj_ctrl_mode != 0:
+                for c in allcfs.crazyflies:
+                    c.setParam('indi_gains.controller_mode', traj_ctrl_mode)
+                th.sleep(1.0)
+                print(f"[flight] controller_mode={traj_ctrl_mode} — hovering for {args.duration:.0f}s...")
+            else:
+                print(f"[flight] Hovering for {args.duration:.0f}s...")
             th.sleep(args.duration)
             print("[flight] Done. Landing...")
         else:
@@ -268,7 +287,15 @@ def main():
             for c in allcfs.crazyflies:
                 c.uploadTrajectory(0, 0, traj)
 
-            print("[flight] Starting trajectory...")
+            # Switch to configured controller_mode for the trajectory
+            if traj_ctrl_mode != 0:
+                for c in allcfs.crazyflies:
+                    c.setParam('indi_gains.controller_mode', traj_ctrl_mode)
+                th.sleep(1.0)
+                print(f"[flight] controller_mode={traj_ctrl_mode} — starting trajectory...")
+            else:
+                print("[flight] Starting trajectory...")
+
             for rep in range(args.reps):
                 if rep > 0:
                     th.sleep(1.0)
@@ -278,7 +305,13 @@ def main():
 
             print("[flight] Done. Landing...")
 
+        # Switch back to geometric for landing
         _logging_active = False
+        if traj_ctrl_mode != 0:
+            for c in allcfs.crazyflies:
+                c.setParam('indi_gains.controller_mode', 0)
+            th.sleep(1.0)
+            print("[flight] controller_mode=0 (geometric/Lee) — landing...")
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
 
