@@ -153,7 +153,7 @@ all:
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
-      ctrl_mode: 2  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
+      ctrl_mode: 3  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
       kr: 784.0           # KR=784 → ωn=28.0 rad/s, τ_dom=101ms — gain ceiling at fc_bw=25Hz
       kw: 79.0            # KW=79 → ζ=1.4; KR=1019 caused oscillation (ringing, 0dB filter atten)
       kr_z: 784.0
