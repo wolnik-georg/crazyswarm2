@@ -154,8 +154,10 @@ all:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
       ctrl_mode: 2  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
-      kw: 200.0           # KW=200 > KR=100 → Routh stable (roll/pitch)
-      kw_z: 200.0         # KW_Z=200 > KR_Z=100 → Routh stable (yaw) — default was 30, was UNSTABLE
+      kr: 603.0           # KR=603 = KR_geo/J = 0.010/16.57e-6 → ωn=24.6 rad/s (matches geometric BW)
+      kw: 66.0            # KW=66 → ζ=1.34, τ_dom=91ms (matches geometric 92ms) — was 200 (τ_dom=2s, TOO SLOW)
+      kr_z: 603.0         # same BW for yaw
+      kw_z: 66.0          # same ζ for yaw
       fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
     locSrv:
       extPosStdDev: 1e-3
