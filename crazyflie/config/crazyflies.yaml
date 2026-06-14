@@ -98,7 +98,7 @@ all:
     custom_topics:
       # /cf231/state — pos + vel (6 floats = 24 bytes, fits in one CRTP log packet)
       state:
-        frequency: 20 # Hz
+        frequency: 100 # Hz
         vars: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
                "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
       # /cf231/attitude — attitude + thrust + battery (5 floats = 20 bytes)
@@ -110,28 +110,32 @@ all:
       gyro_acc:
         frequency: 20 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
-      # /cf231/indi_state — INDI torques + filtered alpha (normal operation, 20 Hz)
+      # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
       # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
-      # indi_state:  # commented out — swap with indi_filter_char below for filter char step
-      #   frequency: 20 # Hz
-      #   vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
-      #          "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      indi_state:
+        frequency: 100 # Hz
+        vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
+               "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # /cf231/indi_alp_raw — pre-filter angular accel (3 floats = 12 bytes, separate packet)
+      indi_alp_raw:
+        frequency: 100 # Hz
+        vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
       # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
       # Uncomment this block + comment out indi_state when running plot_indi_filters.py.
       # Logs raw alpha (pre-BW) + filtered alpha at 100 Hz for offline fc_bw sweep.
       # Works in mode=0 geometric hover — no INDI needed, filter runs passively.
       # After characterisation: re-comment this, uncomment indi_state above.
-      indi_filter_char:
-        frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
-        vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
-               "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+      # indi_filter_char:
+      #   frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
+      #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+      #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
       # Requires RPM deck fitted. Used to verify deck is reading and for
       # post-flight KT_MOTOR validation (thrust vs RPM²).
-      # rpm:  # commented out — needs CONFIG_DECK_FORCE="bcRpm" in app-config to guarantee registration
-      #   frequency: 20 # Hz
-      #   vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      rpm:
+        frequency: 20 # Hz
+        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
@@ -150,7 +154,8 @@ all:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
       ctrl_mode: 2  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
-      kw: 30.0            # safe start: KR=100, KW=30 → ζ=1.5 (reset from stale 21.0)
+      kw: 200.0           # KW=200 > KR=100 → Routh stable (roll/pitch)
+      kw_z: 200.0         # KW_Z=200 > KR_Z=100 → Routh stable (yaw) — default was 30, was UNSTABLE
       fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
     locSrv:
       extPosStdDev: 1e-3
