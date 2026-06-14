@@ -154,10 +154,10 @@ all:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
       ctrl_mode: 3  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
-      kr: 784.0           # KR=784 → ωn=28.0 rad/s, τ_dom=101ms — gain ceiling at fc_bw=25Hz
-      kw: 79.0            # KW=79 → ζ=1.4; KR=1019 caused oscillation (ringing, 0dB filter atten)
-      kr_z: 784.0
-      kw_z: 79.0
+      kr: 1019.0          # KR=1019 → ωn=31.9 rad/s, τ_dom=93ms (testing in ctrl_mode=3)
+      kw: 95.0            # KW=95 → ζ=1.5
+      kr_z: 1019.0
+      kw_z: 95.0
       fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
     locSrv:
       extPosStdDev: 1e-3
