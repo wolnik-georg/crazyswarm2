@@ -95,6 +95,11 @@ _INDI_STATE_VARS = [
     "indi.alp_y",
     "indi.alp_z",
 ]
+_INDI_ALPraw_VARS = [
+    "indi.alp_raw_x",
+    "indi.alp_raw_y",
+    "indi.alp_raw_z",
+]
 _INDI_FILTER_VARS = [
     "indi.alp_raw_x",
     "indi.alp_raw_y",
@@ -182,6 +187,14 @@ def _indi_state_cb(msg: LogDataGeneric):
     if len(msg.values) != len(_INDI_STATE_VARS):
         return
     for name, val in zip(_INDI_STATE_VARS, msg.values):
+        _latest_indi[name] = val
+
+
+def _indi_alp_raw_cb(msg: LogDataGeneric):
+    """Caches alp_raw_x/y/z from indi_alp_raw topic (100 Hz, normal operation)."""
+    if len(msg.values) != len(_INDI_ALPraw_VARS):
+        return
+    for name, val in zip(_INDI_ALPraw_VARS, msg.values):
         _latest_indi[name] = val
 
 
@@ -395,10 +408,13 @@ def main():
         LogDataGeneric, f"{cf_name}/indi_state", _indi_state_cb, 10
     )
     allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/indi_alp_raw", _indi_alp_raw_cb, 10
+    )
+    allcfs.create_subscription(
         LogDataGeneric, f"{cf_name}/indi_filter_char", _indi_filter_cb, 10
     )
     print(
-        f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_filter_char"
+        f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_alp_raw, indi_filter_char"
     )
 
     # ── Wait for EKF to converge on mocap poses ──────────────────────────────
