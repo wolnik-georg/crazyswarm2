@@ -154,11 +154,11 @@ all:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
       ctrl_mode: 3  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
-      kr: 1325.0          # KR=1325 → ωn=36.4 rad/s, τ_dom=86ms
-      kw: 114.0           # KW=114 → ζ=1.6
+      kr: 1325.0          # KR=1325 → ωn=36.4 rad/s, τ_dom=86ms (practical limit)
+      kw: 145.0           # KW=145 → ζ=2.0 (raised from 114 for more damping, less wobble)
       kr_z: 1325.0
-      kw_z: 114.0
-      fc_bw: 25.0         # start LOW for filter tuning; raise in Steps per plot_indi_filters.py
+      kw_z: 145.0
+      fc_bw: 25.0         # 25 Hz is sweet spot — 15 adds too much lag, higher adds too much noise
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
