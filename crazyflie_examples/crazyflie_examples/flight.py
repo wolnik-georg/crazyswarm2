@@ -213,8 +213,8 @@ _RAMP_CONTROLLER = 2  # mellinger — takeoff and landing (hardcoded)
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 
 
-def _load_firmware_controller_config() -> tuple[int, int]:
-    """Read stabilizer.controller and indi_gains.ctrl_mode from crazyflies.yaml firmware_params."""
+def _load_firmware_controller_config() -> tuple[int, int, dict]:
+    """Read stabilizer.controller, indi_gains.ctrl_mode, and indi gains from crazyflies.yaml."""
     path = Path(get_package_share_directory("crazyflie")) / "config" / "crazyflies.yaml"
     try:
         with open(path) as f:
@@ -236,7 +236,8 @@ def _load_firmware_controller_config() -> tuple[int, int]:
             "[flight] ERROR: missing all.firmware_params.indi_gains.ctrl_mode in crazyflies.yaml"
         )
         sys.exit(1)
-    return int(stabilizer["controller"]), int(indi["ctrl_mode"])
+    indi_gains = {k: indi[k] for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw") if k in indi}
+    return int(stabilizer["controller"]), int(indi["ctrl_mode"]), indi_gains
 
 
 def _log_phase(phase: str, controller: int, ctrl_mode: int):
@@ -334,6 +335,9 @@ def _save_log(
         f.write(f"# meta:run_speed={speed}\n")
         f.write(f"# meta:run_reps={reps}\n")
         f.write(f"# meta:run_lap_time_s={lap_time_s:.4f}\n")
+        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw"):
+            if k in _yaml_indi_gains:
+                f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
         if "yaml" in _controller_meta:
             c, m = _controller_meta["yaml"]
             f.write(f"# meta:yaml_stabilizer_controller={c}\n")
@@ -424,7 +428,7 @@ def main():
     # ── Controller config from crazyflies.yaml firmware_params ─────────────
     # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
     # Takeoff/landing use hardcoded ramp settings (controller=2, ctrl_mode=0).
-    yaml_controller, traj_ctrl_mode = _load_firmware_controller_config()
+    yaml_controller, traj_ctrl_mode, _yaml_indi_gains = _load_firmware_controller_config()
     _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
     print(
         f"[flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller}  "
