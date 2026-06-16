@@ -67,6 +67,7 @@ _latest_gyro = {}  # most recent gyro_acc values
 _latest_rpm = {}  # most recent per-motor RPM values
 _latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
+_yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw read from crazyflies.yaml at startup
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -428,7 +429,8 @@ def main():
     # ── Controller config from crazyflies.yaml firmware_params ─────────────
     # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
     # Takeoff/landing use hardcoded ramp settings (controller=2, ctrl_mode=0).
-    yaml_controller, traj_ctrl_mode, _yaml_indi_gains = _load_firmware_controller_config()
+    yaml_controller, traj_ctrl_mode, indi_gains_from_yaml = _load_firmware_controller_config()
+    _yaml_indi_gains.update(indi_gains_from_yaml)
     _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
     print(
         f"[flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller}  "
