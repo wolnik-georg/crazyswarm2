@@ -577,11 +577,14 @@ def main():
             # ── Mode D: OOT traj params, 500 Hz onboard eval ─────────────────
             # Trajectory was already uploaded before takeoff (see above) so that
             # traj.cw commits ran inside controllerOutOfTree while OOT was active.
-            # Program HLC to hover indefinitely — keeps sp.position.z > 0.05 so
-            # the OOT arming check passes throughout the trajectory.
+            #
+            # Keepalive: send cmdFullState(hover_pos, 0, 0) at 20 Hz in the
+            # trajectory loop — exactly what the Rust onboard_figure8.rs does.
+            # This continuously refreshes sp.position.z (arming check) and avoids
+            # any HLC-generated non-zero sp.velocity/sp.acceleration interfering
+            # with the armed state or commander priority.
             hover_pos = np.array(cf.initialPosition) + np.array([0, 0, args.height])
-            cf.goTo(hover_pos, 0, 999.9)
-            th.sleep(0.2)  # let goTo take effect before switching mode
+            _zero3 = np.zeros(3)
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
@@ -599,8 +602,12 @@ def main():
                 _log_t0 = time.monotonic()
                 cf.setParam("traj.mode", 1)
                 cf.setParam("traj.start", 1)
-                th.sleep(traj_dur + 1.0)
+                t_end = th.time() + traj_dur + 1.0
+                while not th.isShutdown() and th.time() < t_end:
+                    cf.cmdFullState(hover_pos, _zero3, _zero3, 0.0, _zero3)
+                    th.sleepForRate(20)
 
+            cf.notifySetpointsStop()  # let HLC take over for landing
             cf.setParam("traj.mode", 0)  # return to passthrough before landing
             print("[flight] Done. Landing...")
 
