@@ -49,6 +49,7 @@ import rclpy
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from crazyflie_interfaces.msg import LogDataGeneric
+from crazyflie_interfaces.srv import NotifySetpointsStop
 from crazyflie_py import Crazyswarm
 from crazyflie_py.uav_trajectory import Trajectory
 from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
@@ -424,6 +425,41 @@ def _set_param_sync(cf, th, name: str, value):
         th.sleep(0.001)
 
 
+def _notify_setpoints_stop_sync(cf, th, remain_ms: int = 100):
+    """Blocking notify_setpoints_stop — required before HLC takeoff after cmdFullState."""
+    req = NotifySetpointsStop.Request()
+    req.remain_valid_millisecs = remain_ms
+    req.group_mask = 0
+    future = cf.notifySetpointsStopService.call_async(req)
+    while rclpy.ok() and not future.done():
+        th.sleep(0.001)
+
+
+def _kalman_reset_pulse(cf, th):
+    """Rust kalman_reset(): pulse resetEstimation so back-to-back flights start clean."""
+    if "kalman.resetEstimation" not in cf.paramTypeDict:
+        print("[flight] WARN: kalman.resetEstimation not in TOC — skipping EKF reset.")
+        return
+    _set_param_sync(cf, th, "kalman.resetEstimation", 1)
+    th.sleep(0.2)
+    _set_param_sync(cf, th, "kalman.resetEstimation", 0)
+    print("[flight] Kalman reset pulse sent.")
+
+
+def _firmware_idle_reset(cf, th):
+    """Return firmware to idle so the next ros2 run can use HLC takeoff/land.
+
+    After onboard flights the drone stays in low-level cmdFullState mode until
+    notify_setpoints_stop is called. traj.start must be cleared so the next
+    Mode D arm gets a fresh T0 latch.
+    """
+    _set_param_sync(cf, th, "traj.mode", 0)
+    _set_param_sync(cf, th, "traj.start", 0)
+    _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+    _notify_setpoints_stop_sync(cf, th)
+    th.sleep(0.2)
+
+
 def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
     """Upload trajectory segments to OOT traj params (Mode D).
 
@@ -564,6 +600,8 @@ def _onboard_stream_land(cf, th, hover_pos, hold_s: float = 1.0):
         cf.cmdFullState(disarm_pos, zero3, zero3, 0.0, zero3)
         th.sleepForRate(_LAND_STREAM_HZ)
     th.sleep(0.2)
+    # Exit low-level streaming so the next takeoff() / finally cleanup can use HLC.
+    _notify_setpoints_stop_sync(cf, th)
 
 
 def _apply_onboard_traj_origin(cf, th, ox: float, oy: float, height: float):
@@ -662,7 +700,10 @@ def main():
         f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_alp_raw, indi_filter_char"
     )
 
-    # ── Wait for EKF to converge on mocap poses ──────────────────────────────
+    # ── Wait for EKF + clear stale state from any previous run ───────────────
+    print("[flight] Preflight: idle reset + Kalman pulse (place drone on pad)...")
+    _firmware_idle_reset(cf, th)
+    _kalman_reset_pulse(cf, th)
     print("[flight] Waiting for EKF to converge on mocap poses...")
     th.sleep(3.0)
 
@@ -742,6 +783,7 @@ def main():
             for rep in range(args.reps):
                 if rep > 0:
                     _stream_hover_hold(cf, th, keepalive_pos, 1.0)
+                    _set_param_sync(cf, th, "traj.start", 0)
                     _set_param_sync(cf, th, "traj.mode", 0)
                     th.sleep(0.1)
                 ox, oy = _sample_origin(th, fallback_xy)
@@ -751,6 +793,7 @@ def main():
                 keepalive_pos = np.array([ox, oy, max(z_hover, _Z_CMD_MIN_AIRBORNE)])
 
                 _log_t0 = time.monotonic()
+                _set_param_sync(cf, th, "traj.start", 0)
                 _set_param_sync(cf, th, "traj.mode", 1)
                 th.sleep(_TRAJ_ARM_DELAY_S)
                 _set_param_sync(cf, th, "traj.start", 1)
@@ -762,6 +805,7 @@ def main():
                     th.sleepForRate(20)
 
             # Passthrough off, brief hover at origin, then streamed descent (Rust pattern).
+            _set_param_sync(cf, th, "traj.start", 0)
             _set_param_sync(cf, th, "traj.mode", 0)
             print("[flight] Done. Landing...")
             _onboard_stream_land(cf, th, keepalive_pos)
@@ -800,8 +844,13 @@ def main():
             th.sleep(3.0)
 
     finally:
-        # ── Save log (always — even on crash/Ctrl+C) ──────────────────────────
+        # ── Save log + always return firmware to HLC-idle (even on Ctrl+C) ─
         _logging_active = False
+        try:
+            _firmware_idle_reset(cf, th)
+            print("[flight] Cleanup done — ready for another run.")
+        except Exception as exc:
+            print(f"[flight] WARN: cleanup failed: {exc}")
         if _log_rows:
             _save_log(args.trajectory, args.mode, args.kt, args.speed, args.reps, traj_dur)
         else:
