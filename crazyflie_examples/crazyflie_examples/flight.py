@@ -481,6 +481,11 @@ def _sample_origin(th, fallback_xy) -> tuple[float, float]:
     return ox, oy
 
 
+# Firmware armed iff sp.position.z > 0.05 (see controllerOutOfTree). Never stream z <= 0.05
+# while airborne — that disarms instantly even if the drone is still at 0.8 m.
+_Z_SETPOINT_MIN = 0.08
+
+
 def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = 20.0):
     """Stream cmdFullState hover keepalive — firmware armed while sp.position.z > 0.05."""
     zero3 = np.zeros(3)
@@ -488,6 +493,56 @@ def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = 20
     while not th.isShutdown() and th.time() < t_end:
         cf.cmdFullState(hover_pos, zero3, zero3, 0.0, zero3)
         th.sleepForRate(rate_hz)
+
+
+def _onboard_stream_land(
+    cf, th, hover_pos, hold_s: float = 1.0, steps: int = 50, step_dt: float = 0.08
+):
+    """Streamed descent after onboard traj.
+
+    Uses actual EKF height (not args.height) and never commands sp.z <= 0.05 while
+    still flying — the OOT arming gate reads the *setpoint* z, so z=0.05 disarms
+    immediately even if stateEstimate.z is still ~0.8 m (the 'hover then cut' bug).
+    """
+    zero3 = np.zeros(3)
+    xy = np.array(hover_pos[:2])
+
+    _wait_for_state(th)
+    z_actual = float(_latest_state.get("stateEstimate.z", hover_pos[2]))
+    hold_z = max(z_actual, _Z_SETPOINT_MIN)
+    hold_pos = np.array([xy[0], xy[1], hold_z])
+    print(f"[flight] Post-traj hold at z={hold_z:.2f}m (actual={z_actual:.2f}m) for {hold_s:.1f}s...")
+    _stream_hover_hold(cf, th, hold_pos, hold_s)
+
+    _wait_for_state(th)
+    z_start = float(_latest_state.get("stateEstimate.z", hold_z))
+    z_end = _Z_SETPOINT_MIN
+    dur = steps * step_dt
+    print(f"[flight] Streamed landing {z_start:.2f}m -> {z_end:.2f}m over {dur:.1f}s...")
+    for i in range(steps + 1):
+        frac = i / steps
+        z = z_start + (z_end - z_start) * frac
+        z = max(z, _Z_SETPOINT_MIN)
+        pos = np.array([xy[0], xy[1], z])
+        cf.cmdFullState(pos, zero3, zero3, 0.0, zero3)
+        th.sleep(step_dt)
+
+    # Hold low setpoint until the drone actually descends (or timeout).
+    ground_pos = np.array([xy[0], xy[1], _Z_SETPOINT_MIN])
+    print(f"[flight] Ground hold (setpoint z={_Z_SETPOINT_MIN:.2f}m) until z < 0.15m...")
+    t0 = th.time()
+    while th.time() - t0 < 6.0 and not th.isShutdown():
+        cf.cmdFullState(ground_pos, zero3, zero3, 0.0, zero3)
+        th.sleepForRate(20)
+        if _latest_state.get("stateEstimate.z", 9.0) < 0.15:
+            print(f"[flight] On ground (z={_latest_state['stateEstimate.z']:.2f}m)")
+            break
+
+    cf.notifySetpointsStop(remainValidMillisecs=500)
+    th.sleep(0.3)
+    print("[flight] HLC land...")
+    cf.land(targetHeight=0.05, duration=2.0)
+    th.sleep(2.5)
 
 
 def _apply_onboard_traj_origin(cf, th, ox: float, oy: float, height: float):
@@ -650,14 +705,10 @@ def main():
             # Trajectory was already uploaded before takeoff (see above) so that
             # traj.cw commits ran inside controllerOutOfTree while OOT was active.
             #
-            # Keepalive: send cmdFullState(hover_pos, 0, 0) at 20 Hz in the
-            # trajectory loop — exactly what the Rust onboard_figure8.rs does.
-            # This continuously refreshes sp.position.z (arming check) and avoids
-            # any HLC-generated non-zero sp.velocity/sp.acceleration interfering
-            # with the armed state or commander priority.
+            # Keepalive: cmdFullState at 20 Hz with actual EKF z (arming reads setpoint z).
             _zero3 = np.zeros(3)
             fallback_xy = cf.initialPosition[:2]
-            hover_pos = None
+            keepalive_pos = None
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
@@ -669,12 +720,14 @@ def main():
 
             for rep in range(args.reps):
                 if rep > 0:
-                    _stream_hover_hold(cf, th, hover_pos, 1.0)
+                    _stream_hover_hold(cf, th, keepalive_pos, 1.0)
                     _set_param_sync(cf, th, "traj.mode", 0)
                     th.sleep(0.1)
                 ox, oy = _sample_origin(th, fallback_xy)
                 _apply_onboard_traj_origin(cf, th, ox, oy, args.height)
-                hover_pos = np.array([ox, oy, args.height])
+                _wait_for_state(th)
+                z_hover = float(_latest_state.get("stateEstimate.z", args.height))
+                keepalive_pos = np.array([ox, oy, max(z_hover, _Z_SETPOINT_MIN)])
 
                 _log_t0 = time.monotonic()
                 _set_param_sync(cf, th, "traj.mode", 1)
@@ -684,25 +737,14 @@ def main():
                 # Do NOT add +1s — firmware wraps t at total_dur and would restart the path.
                 t_end = th.time() + traj_dur
                 while not th.isShutdown() and th.time() < t_end:
-                    cf.cmdFullState(hover_pos, _zero3, _zero3, 0.0, _zero3)
+                    cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
 
-            # Passthrough off while still streaming hover — keeps armed until HLC land().
+            # Passthrough off, brief hover at origin, then streamed descent (Rust pattern).
             _set_param_sync(cf, th, "traj.mode", 0)
-            _stream_hover_hold(cf, th, hover_pos, 0.3)
-            cf.notifySetpointsStop()
             print("[flight] Done. Landing...")
-
-            # Stream keepalive through landing ctrl_mode settle (no setpoint gap).
-            for c in allcfs.crazyflies:
-                _set_param_sync(c, th, "stabilizer.controller", _RAMP_CONTROLLER)
-                _set_param_sync(c, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
-            _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-            _stream_hover_hold(cf, th, hover_pos, _CTRL_SETTLE_S)
+            _onboard_stream_land(cf, th, keepalive_pos)
             _logging_active = False
-            print("[flight] Landing...")
-            allcfs.land(targetHeight=0.06, duration=2.0)
-            th.sleep(3.0)
             onboard_landed = True
 
         else:
