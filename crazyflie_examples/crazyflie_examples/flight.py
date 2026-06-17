@@ -533,6 +533,18 @@ def main():
         f"indi_gains.ctrl_mode={_RAMP_CTRL_MODE}"
     )
 
+    # ── Mode D: upload trajectory BEFORE takeoff (Rust pattern) ──────────────
+    # Must happen while OOT controller (stabilizer.controller=6) is still active
+    # from firmware_params. If we upload after _apply_flight_settings("takeoff")
+    # switches to Mellinger (controller=2), the traj.cw commit handler inside
+    # controllerOutOfTree never runs → g_traj_coefs[] stays all-zero → zero
+    # segment durations → NaN in poly_eval → immediate crash on traj.start=1.
+    if onboard_mode:
+        ox = float(cf.initialPosition[0])
+        oy = float(cf.initialPosition[1])
+        print("[flight] Uploading onboard trajectory (OOT active, drone on ground)...")
+        _upload_traj_to_oot(cf, onboard_segs, args.height, ox, oy)
+
     _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
     print("[flight] Taking off...")
 
@@ -563,16 +575,10 @@ def main():
             print("[flight] Done. Landing...")
         elif onboard_mode:
             # ── Mode D: OOT traj params, 500 Hz onboard eval ─────────────────
-            # Upload normalized-time degree-8 coefficients directly to firmware.
-            # The OOT controller evaluates them at 500 Hz → full jerk/snap feedforward.
-            ox = float(cf.initialPosition[0])
-            oy = float(cf.initialPosition[1])
-            _upload_traj_to_oot(cf, onboard_segs, args.height, ox, oy)
-
-            # Program HLC to hover indefinitely. During Mode D the OOT controller
-            # ignores sp.position/velocity/acceleration for the trajectory reference
-            # but still checks sp.position.z > 0.05 for arming. The HLC goTo keeps
-            # this satisfied without sending radio packets every loop iteration.
+            # Trajectory was already uploaded before takeoff (see above) so that
+            # traj.cw commits ran inside controllerOutOfTree while OOT was active.
+            # Program HLC to hover indefinitely — keeps sp.position.z > 0.05 so
+            # the OOT arming check passes throughout the trajectory.
             hover_pos = np.array(cf.initialPosition) + np.array([0, 0, args.height])
             cf.goTo(hover_pos, 0, 999.9)
             th.sleep(0.2)  # let goTo take effect before switching mode
