@@ -481,6 +481,15 @@ def _sample_origin(th, fallback_xy) -> tuple[float, float]:
     return ox, oy
 
 
+def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = 20.0):
+    """Stream cmdFullState hover keepalive — firmware armed while sp.position.z > 0.05."""
+    zero3 = np.zeros(3)
+    t_end = th.time() + duration_s
+    while not th.isShutdown() and th.time() < t_end:
+        cf.cmdFullState(hover_pos, zero3, zero3, 0.0, zero3)
+        th.sleepForRate(rate_hz)
+
+
 def _apply_onboard_traj_origin(cf, th, ox: float, oy: float, height: float):
     """Set traj frame + attitude policy immediately before arming onboard eval."""
     _set_param_sync(cf, th, "traj.ox", ox)
@@ -622,6 +631,7 @@ def main():
         c.goTo(pos, 0, 2.0)
     th.sleep(2.5)
 
+    onboard_landed = False
     try:
         if hover_mode:
             # ── Hover: no trajectory upload, just hold position ───────────────
@@ -647,6 +657,7 @@ def main():
             # with the armed state or commander priority.
             _zero3 = np.zeros(3)
             fallback_xy = cf.initialPosition[:2]
+            hover_pos = None
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
@@ -658,8 +669,8 @@ def main():
 
             for rep in range(args.reps):
                 if rep > 0:
-                    th.sleep(1.0)
-                    cf.setParam("traj.mode", 0)  # reset TRAJ_T0 in firmware
+                    _stream_hover_hold(cf, th, hover_pos, 1.0)
+                    _set_param_sync(cf, th, "traj.mode", 0)
                     th.sleep(0.1)
                 ox, oy = _sample_origin(th, fallback_xy)
                 _apply_onboard_traj_origin(cf, th, ox, oy, args.height)
@@ -669,14 +680,30 @@ def main():
                 _set_param_sync(cf, th, "traj.mode", 1)
                 th.sleep(_TRAJ_ARM_DELAY_S)
                 _set_param_sync(cf, th, "traj.start", 1)
-                t_end = th.time() + traj_dur + 1.0
+                # Exact lap duration (Rust: one continuous run for reps=1).
+                # Do NOT add +1s — firmware wraps t at total_dur and would restart the path.
+                t_end = th.time() + traj_dur
                 while not th.isShutdown() and th.time() < t_end:
                     cf.cmdFullState(hover_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
 
-            cf.notifySetpointsStop()  # let HLC take over for landing
-            cf.setParam("traj.mode", 0)  # return to passthrough before landing
+            # Passthrough off while still streaming hover — keeps armed until HLC land().
+            _set_param_sync(cf, th, "traj.mode", 0)
+            _stream_hover_hold(cf, th, hover_pos, 0.3)
+            cf.notifySetpointsStop()
             print("[flight] Done. Landing...")
+
+            # Stream keepalive through landing ctrl_mode settle (no setpoint gap).
+            for c in allcfs.crazyflies:
+                _set_param_sync(c, th, "stabilizer.controller", _RAMP_CONTROLLER)
+                _set_param_sync(c, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+            _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+            _stream_hover_hold(cf, th, hover_pos, _CTRL_SETTLE_S)
+            _logging_active = False
+            print("[flight] Landing...")
+            allcfs.land(targetHeight=0.06, duration=2.0)
+            th.sleep(3.0)
+            onboard_landed = True
 
         else:
             # ── Mode E: HLC Poly4D upload (existing behaviour) ────────────────
@@ -701,12 +728,13 @@ def main():
 
             print("[flight] Done. Landing...")
 
-        # Switch back to geometric for landing (always set + settle, even if already 0)
-        _logging_active = False
-        _apply_flight_settings(allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-        print("[flight] Landing...")
-        allcfs.land(targetHeight=0.06, duration=2.0)
-        th.sleep(3.0)
+        # Switch back to geometric for landing (skip if onboard already landed above)
+        if not onboard_landed:
+            _logging_active = False
+            _apply_flight_settings(allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+            print("[flight] Landing...")
+            allcfs.land(targetHeight=0.06, duration=2.0)
+            th.sleep(3.0)
 
     finally:
         # ── Save log (always — even on crash/Ctrl+C) ──────────────────────────
