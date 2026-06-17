@@ -45,11 +45,14 @@ from datetime import datetime
 from pathlib import Path
 
 import numpy as np
+import rclpy
 import yaml
 from ament_index_python.packages import get_package_share_directory
 from crazyflie_interfaces.msg import LogDataGeneric
 from crazyflie_py import Crazyswarm
 from crazyflie_py.uav_trajectory import Trajectory
+from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
+from rcl_interfaces.srv import SetParameters
 
 # ── Paths ──────────────────────────────────────────────────────────────────
 
@@ -217,6 +220,7 @@ def _indi_filter_cb(msg: LogDataGeneric):
 
 _CTRL_SETTLE_S = 1.0  # wait after each controller/ctrl_mode change before proceeding
 _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start=1
+_COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
 # OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
 _RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
@@ -398,39 +402,60 @@ def _load_onboard_csv(path: Path) -> tuple:
     return segs, total_dur
 
 
-def _upload_traj_to_oot(cf, segs: list, hz: float, ox: float, oy: float):
+def _set_param_sync(cf, th, name: str, value):
+    """Blocking setParam — required for traj coefficient upload ordering.
+
+    crazyflie_py.setParam uses call_async; firing ci/cv/cw back-to-back without
+    waiting can reorder or drop writes over the ROS→CRTP path and corrupt g_traj_coefs.
+    Rust upload_coef awaits each write and sleeps 8 ms per coefficient.
+    """
+    param_name = cf.prefix[1:] + ".params." + name
+    param_type = cf.paramTypeDict[name]
+    if param_type == ParameterType.PARAMETER_INTEGER:
+        param_value = ParameterValue(type=param_type, integer_value=int(value))
+    elif param_type == ParameterType.PARAMETER_DOUBLE:
+        param_value = ParameterValue(type=param_type, double_value=float(value))
+    else:
+        raise ValueError(f"unsupported param type for {name}")
+    req = SetParameters.Request()
+    req.parameters = [Parameter(name=param_name, value=param_value)]
+    future = cf.setParamsService.call_async(req)
+    while rclpy.ok() and not future.done():
+        th.sleep(0.001)
+
+
+def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
     """Upload trajectory segments to OOT traj params (Mode D).
 
     Protocol: for each float, set traj.ci=index, traj.cv=value, traj.cw=1.
-    Firmware commits within 2 ms; cflib ACK round-trip adds ~5 ms between writes.
+    Each triplet is written synchronously with 8 ms spacing (Rust upload_coef).
     """
     n_segs = len(segs)
     n_coefs = n_segs * 19
     print(f"[traj] Uploading {n_segs} segs ({n_coefs} coefs) to OOT params...")
 
-    cf.setParam("traj.mode", 0)   # stay in passthrough during upload
-    cf.setParam("traj.nseg", n_segs)
-    cf.setParam("traj.hz", hz)
-    cf.setParam("traj.ox", ox)
-    cf.setParam("traj.oy", oy)
-    cf.setParam("traj.dz", 0.0)
-    cf.setParam("traj.z_mode", 0)
-    cf.setParam("traj.att_ctrl_mode", 1)
+    _set_param_sync(cf, th, "traj.mode", 0)   # stay in passthrough during upload
+    _set_param_sync(cf, th, "traj.nseg", n_segs)
+    _set_param_sync(cf, th, "traj.hz", hz)
+    _set_param_sync(cf, th, "traj.ox", ox)
+    _set_param_sync(cf, th, "traj.oy", oy)
+    _set_param_sync(cf, th, "traj.dz", 0.0)
+    _set_param_sync(cf, th, "traj.z_mode", 0)
+    _set_param_sync(cf, th, "traj.att_ctrl_mode", 1)
 
-    import time as _time
-    t0 = _time.monotonic()
+    t0 = time.monotonic()
     coef_idx = 0
     for seg_i, seg in enumerate(segs):
         for val in seg:
-            cf.setParam("traj.ci", coef_idx)
-            cf.setParam("traj.cv", float(val))
-            cf.setParam("traj.cw", 1)
-            _time.sleep(0.003)  # extra margin after commit flag (firmware clears within 2 ms)
+            _set_param_sync(cf, th, "traj.ci", coef_idx)
+            _set_param_sync(cf, th, "traj.cv", float(val))
+            _set_param_sync(cf, th, "traj.cw", 1)
+            th.sleep(_COEF_UPLOAD_DELAY_S)
             coef_idx += 1
         if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
             print(f"[traj]   [{seg_i + 1}/{n_segs}] segs uploaded")
 
-    print(f"[traj] Upload done in {_time.monotonic() - t0:.1f}s")
+    print(f"[traj] Upload done in {time.monotonic() - t0:.1f}s")
 
 
 def _wait_for_state(th, timeout_s: float = 3.0) -> bool:
@@ -458,13 +483,13 @@ def _sample_origin(th, fallback_xy) -> tuple[float, float]:
     return ox, oy
 
 
-def _apply_onboard_traj_origin(cf, ox: float, oy: float, height: float):
+def _apply_onboard_traj_origin(cf, th, ox: float, oy: float, height: float):
     """Set traj frame + attitude policy immediately before arming onboard eval."""
-    cf.setParam("traj.ox", ox)
-    cf.setParam("traj.oy", oy)
-    cf.setParam("traj.hz", float(height))
+    _set_param_sync(cf, th, "traj.ox", ox)
+    _set_param_sync(cf, th, "traj.oy", oy)
+    _set_param_sync(cf, th, "traj.hz", float(height))
     # Hybrid: polynomial omega_d feedforward + flatness-derived attitude (Rust default).
-    cf.setParam("traj.att_ctrl_mode", 1)
+    _set_param_sync(cf, th, "traj.att_ctrl_mode", 1)
 
 
 # ── Main ────────────────────────────────────────────────────────────────────
@@ -582,7 +607,7 @@ def main():
         ox = float(cf.initialPosition[0])
         oy = float(cf.initialPosition[1])
         print("[flight] Uploading onboard trajectory (OOT active, drone on ground)...")
-        _upload_traj_to_oot(cf, onboard_segs, args.height, ox, oy)
+        _upload_traj_to_oot(cf, th, onboard_segs, args.height, ox, oy)
 
     _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
     print("[flight] Taking off...")
@@ -639,13 +664,13 @@ def main():
                     cf.setParam("traj.mode", 0)  # reset TRAJ_T0 in firmware
                     th.sleep(0.1)
                 ox, oy = _sample_origin(th, fallback_xy)
-                _apply_onboard_traj_origin(cf, ox, oy, args.height)
+                _apply_onboard_traj_origin(cf, th, ox, oy, args.height)
                 hover_pos = np.array([ox, oy, args.height])
 
                 _log_t0 = time.monotonic()
-                cf.setParam("traj.mode", 1)
+                _set_param_sync(cf, th, "traj.mode", 1)
                 th.sleep(_TRAJ_ARM_DELAY_S)
-                cf.setParam("traj.start", 1)
+                _set_param_sync(cf, th, "traj.start", 1)
                 t_end = th.time() + traj_dur + 1.0
                 while not th.isShutdown() and th.time() < t_end:
                     cf.cmdFullState(hover_pos, _zero3, _zero3, 0.0, _zero3)
