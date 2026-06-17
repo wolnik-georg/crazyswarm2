@@ -492,6 +492,25 @@ def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = 20
         th.sleepForRate(rate_hz)
 
 
+def _onboard_stream_land(cf, th, hover_pos, hold_s: float = 0.5, steps: int = 40, step_dt: float = 0.1):
+    """Streamed descent like Rust hold_and_land — no HLC land() after cmdFullState."""
+    zero3 = np.zeros(3)
+    _stream_hover_hold(cf, th, hover_pos, hold_s)
+    z_start = float(hover_pos[2])
+    print(f"[flight] Streamed landing from {z_start:.2f}m...")
+    for step in range(steps, -1, -1):
+        z = max(z_start * step / steps, 0.05)
+        pos = np.array([hover_pos[0], hover_pos[1], z])
+        cf.cmdFullState(pos, zero3, zero3, 0.0, zero3)
+        th.sleep(step_dt)
+    # Last setpoint at ground — then hand off (notify must follow final stream cmd).
+    ground = np.array([hover_pos[0], hover_pos[1], 0.05])
+    cf.cmdFullState(ground, zero3, zero3, 0.0, zero3)
+    th.sleep(0.2)
+    cf.notifySetpointsStop(remainValidMillisecs=500)
+    th.sleep(0.5)
+
+
 def _apply_onboard_traj_origin(cf, th, ox: float, oy: float, height: float):
     """Set traj frame + attitude policy immediately before arming onboard eval."""
     _set_param_sync(cf, th, "traj.ox", ox)
@@ -689,22 +708,11 @@ def main():
                     cf.cmdFullState(hover_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
 
-            # Passthrough off while still streaming hover — keeps armed until HLC land().
+            # Passthrough off, brief hover at origin, then streamed descent (Rust pattern).
             _set_param_sync(cf, th, "traj.mode", 0)
-            _stream_hover_hold(cf, th, hover_pos, 0.3)
-            cf.notifySetpointsStop()
             print("[flight] Done. Landing...")
-
-            # Stream keepalive through landing ctrl_mode settle (no setpoint gap).
-            for c in allcfs.crazyflies:
-                _set_param_sync(c, th, "stabilizer.controller", _RAMP_CONTROLLER)
-                _set_param_sync(c, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
-            _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-            _stream_hover_hold(cf, th, hover_pos, _CTRL_SETTLE_S)
+            _onboard_stream_land(cf, th, hover_pos)
             _logging_active = False
-            print("[flight] Landing...")
-            allcfs.land(targetHeight=0.06, duration=2.0)
-            th.sleep(3.0)
             onboard_landed = True
 
         else:
