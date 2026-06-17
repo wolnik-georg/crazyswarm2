@@ -70,6 +70,7 @@ _latest_rpm = {}  # most recent per-motor RPM values
 _latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
 _yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw read from crazyflies.yaml at startup
+_onboard_mode = False  # True when --onboard (Mode D); written in main, read in _save_log
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -338,6 +339,7 @@ def _save_log(
         f.write(f"# meta:run_speed={speed}\n")
         f.write(f"# meta:run_reps={reps}\n")
         f.write(f"# meta:run_lap_time_s={lap_time_s:.4f}\n")
+        f.write(f"# meta:run_eval_mode={'onboard_d' if _onboard_mode else 'hlc_e'}\n")
         for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw"):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
@@ -357,11 +359,79 @@ def _save_log(
     print(f"[log] {len(_log_rows)} rows → {path}")
 
 
+# ── Onboard (Mode D) trajectory helpers ─────────────────────────────────────
+
+
+def _find_onboard_csv(trajectory: str, mode: int, kt: float, speed: float) -> Path:
+    label = _csv_label(trajectory, mode, kt, speed)
+    path = DATA_DIR / f"{label}_onboard.csv"
+    if not path.exists():
+        print(f"[error] Onboard CSV not found: {path}")
+        print(f"  Generate it with (from flying_drone_stack/):")
+        print(
+            f"    cargo run --release --bin export_poly4d -- "
+            f"--trajectory {trajectory} --mode {mode} --kt {kt} --onboard"
+        )
+        sys.exit(1)
+    return path
+
+
+def _load_onboard_csv(path: Path) -> tuple:
+    """Return (segments, total_duration). segments: list of 19-float lists [dur,cx0..cx8,cy0..cy8]."""
+    segs = []
+    total_dur = 0.0
+    with open(path) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            vals = [float(row["duration"])]
+            for i in range(9):
+                vals.append(float(row[f"cx{i}"]))
+            for i in range(9):
+                vals.append(float(row[f"cy{i}"]))
+            segs.append(vals)
+            total_dur += vals[0]
+    return segs, total_dur
+
+
+def _upload_traj_to_oot(cf, segs: list, hz: float, ox: float, oy: float):
+    """Upload trajectory segments to OOT traj params (Mode D).
+
+    Protocol: for each float, set traj.ci=index, traj.cv=value, traj.cw=1.
+    Firmware commits within 2 ms; cflib ACK round-trip adds ~5 ms between writes.
+    """
+    n_segs = len(segs)
+    n_coefs = n_segs * 19
+    print(f"[traj] Uploading {n_segs} segs ({n_coefs} coefs) to OOT params...")
+
+    cf.setParam("traj.mode", 0)   # stay in passthrough during upload
+    cf.setParam("traj.nseg", n_segs)
+    cf.setParam("traj.hz", hz)
+    cf.setParam("traj.ox", ox)
+    cf.setParam("traj.oy", oy)
+    cf.setParam("traj.dz", 0.0)
+    cf.setParam("traj.z_mode", 0)
+
+    import time as _time
+    t0 = _time.monotonic()
+    coef_idx = 0
+    for seg_i, seg in enumerate(segs):
+        for val in seg:
+            cf.setParam("traj.ci", coef_idx)
+            cf.setParam("traj.cv", float(val))
+            cf.setParam("traj.cw", 1)
+            _time.sleep(0.003)  # extra margin after commit flag (firmware clears within 2 ms)
+            coef_idx += 1
+        if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
+            print(f"[traj]   [{seg_i + 1}/{n_segs}] segs uploaded")
+
+    print(f"[traj] Upload done in {_time.monotonic() - t0:.1f}s")
+
+
 # ── Main ────────────────────────────────────────────────────────────────────
 
 
 def main():
-    global _log_t0, _logging_active
+    global _log_t0, _logging_active, _onboard_mode
 
     parser = argparse.ArgumentParser(description="Generic CS2 flight script")
     parser.add_argument(
@@ -378,14 +448,35 @@ def main():
         default=20.0,
         help="Hover duration in seconds (hover trajectory only)",
     )
+    parser.add_argument(
+        "--onboard",
+        action="store_true",
+        help="Mode D: upload to OOT traj params (500 Hz onboard eval, full jerk/snap feedforward) "
+             "instead of HLC Poly4D (Mode E). Requires {label}_onboard.csv from export_poly4d --onboard.",
+    )
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
         args.kt = 0.1 if args.trajectory == "circle" else 0.008
 
     hover_mode = args.trajectory == "hover"
+    onboard_mode = args.onboard and not hover_mode
+    _onboard_mode = onboard_mode
     traj = None
-    if not hover_mode:
+    traj_dur = 0.0
+    onboard_segs = None
+
+    if hover_mode:
+        traj_dur = args.duration
+        print(f"[flight] hover mode — {args.duration:.0f}s at {args.height:.2f}m")
+    elif onboard_mode:
+        onboard_csv_path = _find_onboard_csv(args.trajectory, args.mode, args.kt, args.speed)
+        onboard_segs, traj_dur = _load_onboard_csv(onboard_csv_path)
+        print(
+            f"[flight] onboard: {onboard_csv_path.name}  mode={args.mode} kt={args.kt} "
+            f"reps={args.reps}  ({len(onboard_segs)} segs, {traj_dur:.2f}s/rep)"
+        )
+    else:
         csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
         print(
             f"[flight] {csv_path.name}  mode={args.mode} kt={args.kt} "
@@ -393,9 +484,8 @@ def main():
         )
         traj = Trajectory()
         traj.loadcsv(csv_path)
-        print(f"[flight] Duration per rep: {traj.duration:.2f}s")
-    else:
-        print(f"[flight] hover mode — {args.duration:.0f}s at {args.height:.2f}m")
+        traj_dur = traj.duration
+        print(f"[flight] Duration per rep: {traj_dur:.2f}s")
 
     # ── Init CS2 ────────────────────────────────────────────────────────────
     # swarm.allcfs IS the ROS2 node (CrazyflieServer inherits rclpy.node.Node).
@@ -471,8 +561,45 @@ def main():
             print(f"[flight] Hovering for {args.duration:.0f}s...")
             th.sleep(args.duration)
             print("[flight] Done. Landing...")
+        elif onboard_mode:
+            # ── Mode D: OOT traj params, 500 Hz onboard eval ─────────────────
+            # Upload normalized-time degree-8 coefficients directly to firmware.
+            # The OOT controller evaluates them at 500 Hz → full jerk/snap feedforward.
+            ox = float(cf.initialPosition[0])
+            oy = float(cf.initialPosition[1])
+            _upload_traj_to_oot(cf, onboard_segs, args.height, ox, oy)
+
+            # Program HLC to hover indefinitely. During Mode D the OOT controller
+            # ignores sp.position/velocity/acceleration for the trajectory reference
+            # but still checks sp.position.z > 0.05 for arming. The HLC goTo keeps
+            # this satisfied without sending radio packets every loop iteration.
+            hover_pos = np.array(cf.initialPosition) + np.array([0, 0, args.height])
+            cf.goTo(hover_pos, 0, 999.9)
+            th.sleep(0.2)  # let goTo take effect before switching mode
+
+            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+                _apply_flight_settings(
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                )
+            else:
+                _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
+            print("[flight] Starting onboard trajectory (Mode D)...")
+
+            for rep in range(args.reps):
+                if rep > 0:
+                    th.sleep(1.0)
+                    cf.setParam("traj.mode", 0)  # reset TRAJ_T0 in firmware
+                    th.sleep(0.1)
+                _log_t0 = time.monotonic()
+                cf.setParam("traj.mode", 1)
+                cf.setParam("traj.start", 1)
+                th.sleep(traj_dur + 1.0)
+
+            cf.setParam("traj.mode", 0)  # return to passthrough before landing
+            print("[flight] Done. Landing...")
+
         else:
-            # ── Upload and fly trajectory ─────────────────────────────────────
+            # ── Mode E: HLC Poly4D upload (existing behaviour) ────────────────
             for c in allcfs.crazyflies:
                 c.uploadTrajectory(0, 0, traj)
 
@@ -490,7 +617,7 @@ def main():
                     th.sleep(1.0)
                 _log_t0 = time.monotonic()
                 allcfs.startTrajectory(0, timescale=args.speed)
-                th.sleep(traj.duration * args.speed + 1.0)
+                th.sleep(traj_dur * args.speed + 1.0)
 
             print("[flight] Done. Landing...")
 
@@ -505,8 +632,7 @@ def main():
         # ── Save log (always — even on crash/Ctrl+C) ──────────────────────────
         _logging_active = False
         if _log_rows:
-            dur = args.duration if hover_mode else traj.duration
-            _save_log(args.trajectory, args.mode, args.kt, args.speed, args.reps, dur)
+            _save_log(args.trajectory, args.mode, args.kt, args.speed, args.reps, traj_dur)
         else:
             print("[log] No rows collected — log not saved.")
 

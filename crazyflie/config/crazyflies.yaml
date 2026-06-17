@@ -153,12 +153,12 @@ all:
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
-      ctrl_mode: 3  # 0=geometric, 2=att INDI, 3=full INDI (pos+att) — no reflash needed
-      kr: 1325.0          # KR=1325 → ωn=36.4 rad/s, τ_dom=86ms (practical limit)
-      kw: 145.0           # KW=145 → ζ=2.0 (raised from 114 for more damping, less wobble)
-      kr_z: 1325.0
-      kw_z: 145.0
-      fc_bw: 25.0         # 25 Hz is sweet spot — 15 adds too much lag, higher adds too much noise
+      ctrl_mode: 2  # 0=geometric, 2=att INDI only (start here), 3=full INDI (pos+att) — no reflash needed
+      kr: 600.0           # KR=600 → ωn=24.5 rad/s, ζ=1.35 — geometric Block N equivalent (start conservative)
+      kw: 66.0            # KW=66 → ζ=1.35; prev KR=1325/KW=145 were inflated due to broken feedforward
+      kr_z: 600.0
+      kw_z: 66.0
+      fc_bw: 80.0         # 80 Hz — ~20× above ωn=24.5 rad/s; re-tune downward if noise visible
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
