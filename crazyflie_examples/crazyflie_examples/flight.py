@@ -66,6 +66,7 @@ _latest_att = {}  # most recent attitude/thrust/vbat values
 _latest_gyro = {}  # most recent gyro_acc values
 _latest_rpm = {}  # most recent per-motor RPM values
 _latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
+_latest_state = {}  # most recent EKF state (always cached — used for onboard origin)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
 _yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw read from crazyflies.yaml at startup
 _onboard_mode = False  # True when --onboard (Mode D); written in main, read in _save_log
@@ -113,13 +114,15 @@ _INDI_FILTER_VARS = [
 
 
 def _state_cb(msg: LogDataGeneric):
-    """Fires at 20 Hz. Appends one log row using latest cached attitude + gyro."""
-    if not _logging_active:
-        return
+    """Fires at state topic rate. Always caches EKF; logs rows when active."""
     if len(msg.values) != len(_STATE_VARS):
         return
 
     s = dict(zip(_STATE_VARS, msg.values))
+    _latest_state.update(s)
+    if not _logging_active:
+        return
+
     a = _latest_att
     g = _latest_gyro
 
@@ -211,7 +214,9 @@ def _indi_filter_cb(msg: LogDataGeneric):
 # ── Controller / ctrl_mode helpers ─────────────────────────────────────────
 
 _CTRL_SETTLE_S = 1.0  # wait after each controller/ctrl_mode change before proceeding
-_RAMP_CONTROLLER = 2  # mellinger — takeoff and landing (hardcoded)
+_TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start=1
+# OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
+_RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 
 
@@ -408,6 +413,7 @@ def _upload_traj_to_oot(cf, segs: list, hz: float, ox: float, oy: float):
     cf.setParam("traj.oy", oy)
     cf.setParam("traj.dz", 0.0)
     cf.setParam("traj.z_mode", 0)
+    cf.setParam("traj.att_ctrl_mode", 1)
 
     import time as _time
     t0 = _time.monotonic()
@@ -423,6 +429,40 @@ def _upload_traj_to_oot(cf, segs: list, hz: float, ox: float, oy: float):
             print(f"[traj]   [{seg_i + 1}/{n_segs}] segs uploaded")
 
     print(f"[traj] Upload done in {_time.monotonic() - t0:.1f}s")
+
+
+def _wait_for_state(th, timeout_s: float = 3.0) -> bool:
+    """Spin until at least one EKF state sample is cached."""
+    t0 = th.time()
+    while th.time() - t0 < timeout_s:
+        if _latest_state:
+            return True
+        th.sleep(0.05)
+    return bool(_latest_state)
+
+
+def _sample_origin(th, fallback_xy) -> tuple[float, float]:
+    """Sample traj origin from live EKF position (Rust sample_origin pattern)."""
+    _wait_for_state(th)
+    if _latest_state:
+        ox = float(_latest_state["stateEstimate.x"])
+        oy = float(_latest_state["stateEstimate.y"])
+        print(f"[traj] Sampled origin ox={ox:.4f} oy={oy:.4f} (EKF)")
+        return ox, oy
+    ox, oy = float(fallback_xy[0]), float(fallback_xy[1])
+    print(
+        f"[traj] WARN: no EKF state — using fallback origin ox={ox:.4f} oy={oy:.4f}"
+    )
+    return ox, oy
+
+
+def _apply_onboard_traj_origin(cf, ox: float, oy: float, height: float):
+    """Set traj frame + attitude policy immediately before arming onboard eval."""
+    cf.setParam("traj.ox", ox)
+    cf.setParam("traj.oy", oy)
+    cf.setParam("traj.hz", float(height))
+    # Hybrid: polynomial omega_d feedforward + flatness-derived attitude (Rust default).
+    cf.setParam("traj.att_ctrl_mode", 1)
 
 
 # ── Main ────────────────────────────────────────────────────────────────────
@@ -518,7 +558,7 @@ def main():
 
     # ── Controller config from crazyflies.yaml firmware_params ─────────────
     # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
-    # Takeoff/landing use hardcoded ramp settings (controller=2, ctrl_mode=0).
+    # Takeoff/landing keep OOT geometric (controller=6, ctrl_mode=0); only ctrl_mode changes.
     yaml_controller, traj_ctrl_mode, indi_gains_from_yaml = _load_firmware_controller_config()
     _yaml_indi_gains.update(indi_gains_from_yaml)
     _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
@@ -532,11 +572,10 @@ def main():
     )
 
     # ── Mode D: upload trajectory BEFORE takeoff (Rust pattern) ──────────────
-    # Must happen while OOT controller (stabilizer.controller=6) is still active
-    # from firmware_params. If we upload after _apply_flight_settings("takeoff")
-    # switches to Mellinger (controller=2), the traj.cw commit handler inside
-    # controllerOutOfTree never runs → g_traj_coefs[] stays all-zero → zero
-    # segment durations → NaN in poly_eval → immediate crash on traj.start=1.
+    # Must happen while OOT controller (stabilizer.controller=6) is active.
+    # Never switch to a non-OOT controller (e.g. mellinger=2) or traj.cw commits
+    # inside controllerOutOfTree never run → zero segment durations → NaN on start.
+    # ox/oy here are placeholders; real origin is sampled from EKF at hover (below).
     if onboard_mode:
         ox = float(cf.initialPosition[0])
         oy = float(cf.initialPosition[1])
@@ -581,8 +620,8 @@ def main():
             # This continuously refreshes sp.position.z (arming check) and avoids
             # any HLC-generated non-zero sp.velocity/sp.acceleration interfering
             # with the armed state or commander priority.
-            hover_pos = np.array(cf.initialPosition) + np.array([0, 0, args.height])
             _zero3 = np.zeros(3)
+            fallback_xy = cf.initialPosition[:2]
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
@@ -597,8 +636,13 @@ def main():
                     th.sleep(1.0)
                     cf.setParam("traj.mode", 0)  # reset TRAJ_T0 in firmware
                     th.sleep(0.1)
+                ox, oy = _sample_origin(th, fallback_xy)
+                _apply_onboard_traj_origin(cf, ox, oy, args.height)
+                hover_pos = np.array([ox, oy, args.height])
+
                 _log_t0 = time.monotonic()
                 cf.setParam("traj.mode", 1)
+                th.sleep(_TRAJ_ARM_DELAY_S)
                 cf.setParam("traj.start", 1)
                 t_end = th.time() + traj_dur + 1.0
                 while not th.isShutdown() and th.time() < t_end:
