@@ -221,6 +221,9 @@ def _indi_filter_cb(msg: LogDataGeneric):
 
 _CTRL_SETTLE_S = 1.0  # wait after each controller/ctrl_mode change before proceeding
 _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start=1
+# Firmware wraps onboard t at total_dur (periodic reps). Stop slightly early so reps=1
+# never hits the wrap — position is C0 at the seam but velocity is not, which spirals.
+_TRAJ_STOP_MARGIN_S = 0.12
 _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
 # OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
 _RAMP_CONTROLLER = 6
@@ -267,11 +270,16 @@ def _log_phase(phase: str, controller: int, ctrl_mode: int):
     )
 
 
-def _apply_flight_settings(allcfs, th, phase: str, controller: int, ctrl_mode: int):
-    """Set stabilizer.controller + indi_gains.ctrl_mode on all drones, settle, then log."""
+def _apply_flight_settings(
+    allcfs, th, phase: str, controller: int, ctrl_mode: int, indi_gains: dict | None = None
+):
+    """Set stabilizer.controller, indi_gains.* on all drones, settle, then log."""
     for c in allcfs.crazyflies:
         c.setParam("stabilizer.controller", controller)
         c.setParam("indi_gains.ctrl_mode", ctrl_mode)
+        if indi_gains:
+            for k, v in indi_gains.items():
+                c.setParam(f"indi_gains.{k}", float(v))
     th.sleep(_CTRL_SETTLE_S)
     _log_phase(phase, controller, ctrl_mode)
 
@@ -533,6 +541,28 @@ _LAND_Z_CHASE = 0.04  # command this far below measured z to pull down
 _LAND_STREAM_HZ = 20.0
 
 
+def _stop_onboard_traj_and_hold(cf, th, fallback_pos):
+    """Stop Mode D while streaming hover at measured pose (no wrap, no radio gap)."""
+    zero3 = np.zeros(3)
+    _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+    _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+    _wait_for_state(th)
+    z_meas = float(_latest_state.get("stateEstimate.z", fallback_pos[2]))
+    x_meas = float(_latest_state.get("stateEstimate.x", fallback_pos[0]))
+    y_meas = float(_latest_state.get("stateEstimate.y", fallback_pos[1]))
+    hold_pos = np.array([x_meas, y_meas, max(z_meas, _Z_CMD_MIN_AIRBORNE)])
+    t_end = th.time() + 0.30
+    cleared = False
+    while not th.isShutdown() and th.time() < t_end:
+        cf.cmdFullState(hold_pos, zero3, zero3, 0.0, zero3)
+        if not cleared:
+            _set_param_sync(cf, th, "traj.start", 0)
+            _set_param_sync(cf, th, "traj.mode", 0)
+            cleared = True
+        th.sleepForRate(_LAND_STREAM_HZ)
+    return hold_pos
+
+
 def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = _LAND_STREAM_HZ):
     """Stream cmdFullState hover keepalive — firmware armed while sp.position.z > 0.05."""
     zero3 = np.zeros(3)
@@ -557,11 +587,6 @@ def _onboard_stream_land(cf, th, hover_pos, hold_s: float = 1.0):
     """
     zero3 = np.zeros(3)
     xy = np.array(hover_pos[:2])
-
-    # Geometric ctrl_mode for landing (same as takeoff). Sync write + keep streaming.
-    _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
-    _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-    th.sleep(0.05)
 
     _wait_for_state(th)
     z_meas = float(_latest_state.get("stateEstimate.z", hover_pos[2]))
@@ -759,7 +784,7 @@ def main():
             # Restore configured ctrl_mode for the hover itself
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -778,7 +803,7 @@ def main():
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -801,18 +826,24 @@ def main():
                 _set_param_sync(cf, th, "traj.mode", 1)
                 th.sleep(_TRAJ_ARM_DELAY_S)
                 _set_param_sync(cf, th, "traj.start", 1)
-                # Exact lap duration (Rust: one continuous run for reps=1).
-                # Do NOT add +1s — firmware wraps t at total_dur and would restart the path.
-                t_end = th.time() + traj_dur
+                # Stop margin before total_dur on the last rep — firmware wraps t at lap end
+                # and restarts the path (C0 position, discontinuous velocity).
+                if rep < args.reps - 1:
+                    t_run = traj_dur
+                else:
+                    t_run = max(traj_dur - _TRAJ_STOP_MARGIN_S, traj_dur * 0.95)
+                    print(
+                        f"[flight] Onboard lap {t_run:.2f}s "
+                        f"(margin {_TRAJ_STOP_MARGIN_S:.2f}s before {traj_dur:.2f}s wrap)"
+                    )
+                t_end = th.time() + t_run
                 while not th.isShutdown() and th.time() < t_end:
                     cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
 
-            # Passthrough off, brief hover at origin, then streamed descent (Rust pattern).
-            _set_param_sync(cf, th, "traj.start", 0)
-            _set_param_sync(cf, th, "traj.mode", 0)
-            print("[flight] Done. Landing...")
-            _onboard_stream_land(cf, th, keepalive_pos)
+            print("[flight] Done. Holding and landing...")
+            hold_pos = _stop_onboard_traj_and_hold(cf, th, keepalive_pos)
+            _onboard_stream_land(cf, th, hold_pos)
             _logging_active = False
             onboard_landed = True
 
@@ -824,7 +855,7 @@ def main():
             # Switch to configured ctrl_mode for the trajectory
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode
+                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
