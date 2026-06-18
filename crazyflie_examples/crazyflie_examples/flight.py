@@ -74,7 +74,7 @@ _latest_rpm = {}  # most recent per-motor RPM values
 _latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
 _latest_state = {}  # most recent EKF state (always cached — used for onboard origin)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
-_yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw read from crazyflies.yaml at startup
+_yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw, mass, kt1..4 from crazyflies.yaml at startup
 _onboard_mode = False  # True when --onboard (Mode D); written in main, read in _save_log
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
@@ -250,7 +250,11 @@ def _load_firmware_controller_config() -> tuple[int, int, dict]:
             "[flight] ERROR: missing all.firmware_params.indi_gains.ctrl_mode in crazyflies.yaml"
         )
         sys.exit(1)
-    indi_gains = {k: indi[k] for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw") if k in indi}
+    indi_gains = {
+        k: indi[k]
+        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass", "kt1", "kt2", "kt3", "kt4")
+        if k in indi
+    }
     return int(stabilizer["controller"]), int(indi["ctrl_mode"]), indi_gains
 
 
@@ -350,7 +354,7 @@ def _save_log(
         f.write(f"# meta:run_reps={reps}\n")
         f.write(f"# meta:run_lap_time_s={lap_time_s:.4f}\n")
         f.write(f"# meta:run_eval_mode={'onboard_d' if _onboard_mode else 'hlc_e'}\n")
-        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw"):
+        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass", "kt1", "kt2", "kt3", "kt4"):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
         if "yaml" in _controller_meta:
