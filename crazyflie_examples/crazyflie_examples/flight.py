@@ -878,9 +878,20 @@ def main():
                     th.sleep(1.0)
                 _log_t0 = time.monotonic()
                 allcfs.startTrajectory(0, timescale=args.speed)
-                th.sleep(traj_dur * args.speed + 1.0)
+                th.sleep(traj_dur * args.speed)
+                print(
+                    f"[flight] HLC lap {traj_dur * args.speed:.2f}s done — overriding HLC"
+                )
 
-            print("[flight] Done. Landing...")
+            print("[flight] Done. Stopping HLC trajectory and landing...")
+            # Override HLC by streaming position setpoints, then hand back to HLC for land.
+            hlc_hold_pos = np.array([
+                float(_latest_state.get("stateEstimate.x", 0.0)),
+                float(_latest_state.get("stateEstimate.y", 0.0)),
+                float(_latest_state.get("stateEstimate.z", args.height)),
+            ])
+            _stream_hover_hold(cf, th, hlc_hold_pos, 1.0)
+            _notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
         # Switch back to geometric for landing (skip if onboard already landed above)
         if not onboard_landed:

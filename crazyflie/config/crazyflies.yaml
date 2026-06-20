@@ -158,7 +158,7 @@ all:
       kw: 87.0
       kr_z: 1050.0
       kw_z: 87.0
-      fc_bw: 90.0
+      fc_bw: 70.0
       mass: 0.0364        # AUW 36.4 g (measured 2026-06-18, CF2.1 + USD + RPM decks)
       kt1: 1.4811e-10     # per-motor KT [N/RPM²] — Lee hover 2026-06-18_20-22-55, quick mode, m=36.4g
       kt2: 1.4815e-10
