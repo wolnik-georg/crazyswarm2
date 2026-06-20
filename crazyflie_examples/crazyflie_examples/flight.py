@@ -890,7 +890,7 @@ def main():
                 float(_latest_state.get("stateEstimate.y", 0.0)),
                 float(_latest_state.get("stateEstimate.z", args.height)),
             ])
-            _stream_hover_hold(cf, th, hlc_hold_pos, 1.0)
+            _stream_hover_hold(cf, th, hlc_hold_pos, 2.5)
             _notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
         # Switch back to geometric for landing (skip if onboard already landed above)
