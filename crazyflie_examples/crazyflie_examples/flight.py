@@ -221,7 +221,7 @@ _CTRL_SETTLE_S = 1.0  # wait after each controller/ctrl_mode change before proce
 _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start=1
 # Firmware wraps onboard t at total_dur (periodic reps). Stop slightly early so reps=1
 # never hits the wrap — position is C0 at the seam but velocity is not, which spirals.
-_TRAJ_STOP_MARGIN_S = 0.12
+_TRAJ_STOP_MARGIN_S = 0.50
 _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
 # OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
 _RAMP_CONTROLLER = 6
@@ -542,21 +542,28 @@ _LAND_STREAM_HZ = 20.0
 def _stop_onboard_traj_and_hold(cf, th, fallback_pos):
     """Stop Mode D while streaming hover at measured pose (no wrap, no radio gap)."""
     zero3 = np.zeros(3)
-    _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
-    _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+    # Read measured pose first so hold_pos reflects where the drone actually is.
     _wait_for_state(th)
     z_meas = float(_latest_state.get("stateEstimate.z", fallback_pos[2]))
     x_meas = float(_latest_state.get("stateEstimate.x", fallback_pos[0]))
     y_meas = float(_latest_state.get("stateEstimate.y", fallback_pos[1]))
     hold_pos = np.array([x_meas, y_meas, max(z_meas, _Z_CMD_MIN_AIRBORNE)])
-    t_end = th.time() + 0.30
-    cleared = False
+    # Stop trajectory FIRST (prevent wrap), then switch ctrl_mode.
+    # Each _set_param_sync takes ~50-100 ms; wrong order lets the trajectory wrap before
+    # traj.mode=0 lands on the firmware, causing a discontinuous velocity reference.
+    t_end = th.time() + 0.50
+    traj_stopped = False
+    ctrl_switched = False
     while not th.isShutdown() and th.time() < t_end:
         cf.cmdFullState(hold_pos, zero3, zero3, 0.0, zero3)
-        if not cleared:
+        if not traj_stopped:
             _set_param_sync(cf, th, "traj.start", 0)
             _set_param_sync(cf, th, "traj.mode", 0)
-            cleared = True
+            traj_stopped = True
+        elif not ctrl_switched:
+            _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+            _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+            ctrl_switched = True
         th.sleepForRate(_LAND_STREAM_HZ)
     return hold_pos
 
@@ -839,11 +846,16 @@ def main():
                     cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
 
-            print("[flight] Done. Holding and landing...")
+            print("[flight] Done. Stopping trajectory and landing...")
             hold_pos = _stop_onboard_traj_and_hold(cf, th, keepalive_pos)
-            _onboard_stream_land(cf, th, hold_pos)
+            # Settle at hold_pos for 1 s, then hand back to HLC for smooth descent.
+            _stream_hover_hold(cf, th, hold_pos, 1.0)
+            _notify_setpoints_stop_sync(cf, th, remain_ms=200)
+            print("[flight] Landing...")
+            allcfs.land(targetHeight=0.06, duration=3.0)
+            th.sleep(4.0)
             _logging_active = False
-            onboard_landed = True
+            onboard_landed = True  # skip duplicate land in common block below
 
         else:
             # ── Mode E: HLC Poly4D upload (existing behaviour) ────────────────
