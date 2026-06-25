@@ -881,6 +881,11 @@ def main():
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
             print("[flight] Starting trajectory...")
+            for c in allcfs.crazyflies:
+                try:
+                    c.setParam("usd.logging", 1)
+                except Exception:
+                    pass  # uSD deck not present — skip silently
 
             for rep in range(args.reps):
                 if rep > 0:
@@ -915,6 +920,11 @@ def main():
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)
             th.sleep(3.0)
+            for c in allcfs.crazyflies:
+                try:
+                    c.setParam("usd.logging", 0)
+                except Exception:
+                    pass  # uSD deck not present — skip silently
 
     finally:
         # ── Save log + always return firmware to HLC-idle (even on Ctrl+C) ─
