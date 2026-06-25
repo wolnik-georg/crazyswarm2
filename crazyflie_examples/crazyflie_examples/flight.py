@@ -902,12 +902,18 @@ def main():
                 float(_latest_state.get("stateEstimate.z", args.height)),
             ])
             _stream_hover_hold(cf, th, hlc_hold_pos, 2.5)
+            # Switch controller while low-level setpoints still hold the drone,
+            # so there is no gap between notify_setpoints_stop and allcfs.land().
+            for c in allcfs.crazyflies:
+                c.setParam("stabilizer.controller", _RAMP_CONTROLLER)
+                c.setParam("indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+            th.sleep(0.2)
             _notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
-        # Switch back to geometric for landing (skip if onboard already landed above)
+        # Land immediately — ctrl_mode already switched above
         if not onboard_landed:
             _logging_active = False
-            _apply_flight_settings(allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+            _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)
             th.sleep(3.0)
