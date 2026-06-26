@@ -224,8 +224,8 @@ _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start
 # never hits the wrap — position is C0 at the seam but velocity is not, which spirals.
 _TRAJ_STOP_MARGIN_S = 0.50
 _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
-# OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
-_RAMP_CONTROLLER = 6
+# Lee/Mellinger (controller 2) for takeoff/landing — always available, no OOT required.
+_RAMP_CONTROLLER = 2
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 
 
@@ -571,6 +571,7 @@ def _stop_onboard_traj_and_hold(cf, th, fallback_pos):
             _set_param_sync(cf, th, "traj.mode", 0)
             traj_stopped = True
         elif not ctrl_switched:
+            cf.setParam("stabilizer.controller", _RAMP_CONTROLLER)
             _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
             _log_phase("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
             ctrl_switched = True
