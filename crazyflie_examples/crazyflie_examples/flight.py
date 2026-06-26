@@ -780,6 +780,11 @@ def main():
         _upload_traj_to_oot(cf, th, onboard_segs, args.height, ox, oy)
 
     _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+    for c in allcfs.crazyflies:
+        try:
+            c.setParam("usd.logging", 1)
+        except Exception:
+            pass  # uSD deck not present — skip silently
     print("[flight] Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
