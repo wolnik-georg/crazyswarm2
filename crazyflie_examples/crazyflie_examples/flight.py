@@ -874,6 +874,11 @@ def main():
             allcfs.land(targetHeight=0.06, duration=3.0)
             th.sleep(4.0)
             _logging_active = False
+            for c in allcfs.crazyflies:
+                try:
+                    c.setParam("usd.logging", 0)
+                except Exception:
+                    pass  # uSD deck not present — skip silently
             onboard_landed = True  # skip duplicate land in common block below
 
         else:
