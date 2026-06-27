@@ -224,8 +224,8 @@ _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start
 # never hits the wrap — position is C0 at the seam but velocity is not, which spirals.
 _TRAJ_STOP_MARGIN_S = 0.50
 _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
-# Lee/Mellinger (controller 2) for takeoff/landing — always available, no OOT required.
-_RAMP_CONTROLLER = 2
+# OOT geometric (controller 6) for takeoff/landing — state preserved on trajectory start.
+_RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 
 
