@@ -143,7 +143,7 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      controller: 6 # 1: PID, 2: mellinger, 6: geometric SE(3) (OOT — requires CONFIG_CONTROLLER_OOT=y)
+      controller: 2 # 1: PID, 2: mellinger, 6: geometric SE(3) (OOT — requires CONFIG_CONTROLLER_OOT=y)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
@@ -153,7 +153,7 @@ all:
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
     indi_gains:
-      ctrl_mode: 3        # full INDI (pos+att)
+      ctrl_mode: 0        # full INDI (pos+att)
       kr: 1050.0          # Phase 1 locked
       kw: 87.0
       kr_z: 1050.0

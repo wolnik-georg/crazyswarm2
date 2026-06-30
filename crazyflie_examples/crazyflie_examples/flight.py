@@ -59,9 +59,7 @@ from rcl_interfaces.srv import SetParameters
 
 DATA_DIR = Path(__file__).parent / "data"
 
-LOGS_DIR = (
-    Path(__file__).resolve().parents[3] / "flying_robot_course" / "Controls" / "logs"
-)
+LOGS_DIR = Path("/home/flyingrobots/georg/flying_robot_course/Controls/logs")
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
