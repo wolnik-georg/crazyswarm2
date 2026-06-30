@@ -164,11 +164,6 @@ all:
       kt2: 1.5539e-10
       kt3: 1.4552e-10
       kt4: 1.6336e-10
-    pos_gains:
-      kp_xy: 28.0
-      kp_z:  30.0
-      kv_xy: 3.0
-      kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
