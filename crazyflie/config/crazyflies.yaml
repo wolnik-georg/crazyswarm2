@@ -165,9 +165,9 @@ all:
       kt3: 1.4997e-10
       kt4: 1.4655e-10
     pos_gains:
-      kp_xy: 28.0
+      kp_xy: 40.0      # v2 baseline: KP=40, KV=3.3 (best June 20 result, 4.5cm RMSE)
       kp_z:  30.0
-      kv_xy: 3.0
+      kv_xy: 3.3
       kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
