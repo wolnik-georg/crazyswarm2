@@ -194,9 +194,9 @@ all:
       kt4: 2.1898e-10
     pos_gains:
       kp_xy: 40.0             # same as standard — adjust only after INDI stable
-      kp_z:  20.0             # 30/1.48 ≈ 20: compensates 1.48× kt in thrust path → same eff. z-BW as standard
+      kp_z:  15.0             # tuned down for 1.48× kt upgraded motors (was 30 standard, 20 first attempt)
       kv_xy: 8.0
-      kv_z:  5.0              # 7/1.48 ≈ 5: same kt compensation for z damping
+      kv_z:  4.0              # tuned down proportionally
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
