@@ -152,22 +152,50 @@ all:
     #   headlightEnable: 0
     deck:
       bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF2.1 STANDARD MOTORS — locked Jul 2 2026
+    # Final: Geom RMSE 2.0 cm (kt=0.05), speed limit kt=0.15 (5.32 s/lap).
+    # To reactivate: uncomment this block, comment out the UPGRADED block below.
+    # ════════════════════════════════════════════════════════════════════════════
+    # indi_gains:
+    #   ctrl_mode: 0
+    #   kr: 1050.0
+    #   kw: 87.0
+    #   kr_z: 1050.0
+    #   kw_z: 87.0
+    #   fc_bw: 70.0
+    #   mass: 0.0364          # AUW 36.4 g (CF2.1 + USD + RPM decks)
+    #   kt1: 1.4193e-10       # identified 2026-06-30
+    #   kt2: 1.4534e-10
+    #   kt3: 1.4997e-10
+    #   kt4: 1.4655e-10
+    # pos_gains:
+    #   kp_xy: 40.0
+    #   kp_z:  30.0
+    #   kv_xy: 8.0
+    #   kv_z:  7.0
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF2.1 UPGRADED MOTORS — tuning in progress
+    # Same starting gains as standard (same frame/inertia). Update mass + kt first.
+    # Tuning order: mass → kt bench ID → geo hover → fc_bw → KR/KW → INDI → KP/KV → speed sweep
+    # To reactivate standard: comment this block, uncomment the STANDARD block above.
+    # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 0        # full INDI (pos+att)
-      kr: 1050.0          # Phase 1 locked
+      ctrl_mode: 0            # start geometric; switch to 3 (full INDI) after kt identified
+      kr: 1050.0              # same as standard — adjust after hover confirmed
       kw: 87.0
       kr_z: 1050.0
       kw_z: 87.0
-      fc_bw: 70.0
-      mass: 0.0364        # AUW 36.4 g (measured 2026-06-18, CF2.1 + USD + RPM decks)
-      kt1: 1.4193e-10     # per-motor KT [N/RPM²] — Lee hover 2026-06-30_20-40-55, quick mode, m=36.4g
+      fc_bw: 70.0             # same filter — recheck if attitude noise changes
+      mass: 0.0364            # TODO: weigh (CF2.1 + upgrade kit + USD + RPM decks)
+      kt1: 1.4193e-10         # TODO: re-identify on thrust stand — do NOT fly INDI until updated
       kt2: 1.4534e-10
       kt3: 1.4997e-10
       kt4: 1.4655e-10
     pos_gains:
-      kp_xy: 40.0      # v2 baseline: KP=40, KV=3.3 (best June 20 result, 4.5cm RMSE)
+      kp_xy: 40.0             # same as standard — adjust only after INDI stable
       kp_z:  30.0
-      kv_xy: 3.3
+      kv_xy: 8.0
       kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
