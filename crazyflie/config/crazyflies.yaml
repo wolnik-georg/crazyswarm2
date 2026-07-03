@@ -194,9 +194,9 @@ all:
       kt4: 2.1898e-10
     pos_gains:
       kp_xy: 40.0             # same as standard — adjust only after INDI stable
-      kp_z:  30.0
+      kp_z:  20.0             # 30/1.48 ≈ 20: compensates 1.48× kt in thrust path → same eff. z-BW as standard
       kv_xy: 8.0
-      kv_z:  7.0
+      kv_z:  5.0              # 7/1.48 ≈ 5: same kt compensation for z damping
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1

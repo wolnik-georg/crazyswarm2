@@ -785,8 +785,8 @@ def main():
     _logging_active = True
     _log_t0 = time.monotonic()
 
-    allcfs.takeoff(targetHeight=args.height, duration=2.0)
-    th.sleep(2.5)
+    allcfs.takeoff(targetHeight=args.height, duration=3.0)  # 3s (was 2s) — gentler ramp for 1.48× kt upgraded motors
+    th.sleep(3.5)
 
     for c in allcfs.crazyflies:
         pos = np.array(c.initialPosition) + np.array([0, 0, args.height])
