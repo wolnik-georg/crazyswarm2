@@ -13,7 +13,7 @@ Arguments:
   --kt         : aggressiveness for modes 1/2/3 (default: 0.008 for figure8, 0.1 for circle)
   --speed      : time scale for playback — 1.0 = normal, <1 = slower (default: 1.0)
   --reps       : number of trajectory repetitions (default: 1)
-  --height     : hover height in metres (default: 1.0)
+  --height     : hover height in metres (default: 0.7)
 
 How logging works:
   CS2 server reads firmware log variables over radio and publishes two ROS2 topics:
@@ -671,7 +671,7 @@ def main():
     parser.add_argument("--kt", type=float, default=None)
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--reps", type=int, default=1)
-    parser.add_argument("--height", type=float, default=1.0)
+    parser.add_argument("--height", type=float, default=0.7)
     parser.add_argument(
         "--duration",
         type=float,
