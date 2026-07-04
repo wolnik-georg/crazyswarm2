@@ -196,10 +196,10 @@ all:
       kt3: 2.1369e-10
       kt4: 2.1898e-10
     pos_gains:
-      kp_xy: 40.0             # same as standard — adjust only after INDI stable
-      kp_z:  12.0             # tuned down for 1.48× kt upgraded motors (was 30→20→15→12)
-      kv_xy: 8.0
-      kv_z:  3.0              # tuned down proportionally
+      kp_xy: 40.0             # same as standard
+      kp_z:  30.0             # restored to standard: the over-thrust / 31 cm offset was the
+      kv_xy: 8.0              # wrong compiled thrust model, now fixed via
+      kv_z:  7.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
