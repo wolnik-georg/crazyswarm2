@@ -13,7 +13,7 @@ Arguments:
   --kt         : aggressiveness for modes 1/2/3 (default: 0.008 for figure8, 0.1 for circle)
   --speed      : time scale for playback — 1.0 = normal, <1 = slower (default: 1.0)
   --reps       : number of trajectory repetitions (default: 1)
-  --height     : hover height in metres (default: 0.7)
+  --height     : hover height in metres (default: 1.0)
 
 How logging works:
   CS2 server reads firmware log variables over radio and publishes two ROS2 topics:
@@ -72,9 +72,13 @@ _latest_rpm = {}  # most recent per-motor RPM values
 _latest_indi = {}  # most recent INDI values (from indi_state OR indi_filter_char)
 _latest_state = {}  # most recent EKF state (always cached — used for onboard origin)
 _controller_meta = {}  # phase -> (stabilizer.controller, indi_gains.ctrl_mode)
-_yaml_indi_gains = {}  # kr, kw, kr_z, kw_z, fc_bw, mass, kt1..4 from crazyflies.yaml at startup
-_yaml_pos_gains = {}   # kp_xy, kp_z, kv_xy, kv_z from crazyflies.yaml at startup
-_onboard_mode = False  # True when --onboard (Mode D); written in main, read in _save_log
+_yaml_indi_gains = (
+    {}
+)  # kr, kw, kr_z, kw_z, fc_bw, mass, kt1..4 from crazyflies.yaml at startup
+_yaml_pos_gains = {}  # kp_xy, kp_z, kv_xy, kv_z from crazyflies.yaml at startup
+_onboard_mode = (
+    False  # True when --onboard (Mode D); written in main, read in _save_log
+)
 
 # Variable order must match crazyflies.yaml custom_topics vars lists exactly.
 # Split into 3 blocks to stay within the 26-byte CRTP log packet limit (6 floats max).
@@ -254,15 +258,22 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict]:
         sys.exit(1)
     indi_gains = {
         k: indi[k]
-        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass", "kt1", "kt2", "kt3", "kt4")
+        for k in (
+            "kr",
+            "kw",
+            "kr_z",
+            "kw_z",
+            "fc_bw",
+            "mass",
+            "kt1",
+            "kt2",
+            "kt3",
+            "kt4",
+        )
         if k in indi
     }
     pos = fp.get("pos_gains", {})
-    pos_gains = {
-        k: pos[k]
-        for k in ("kp_xy", "kp_z", "kv_xy", "kv_z")
-        if k in pos
-    }
+    pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
     return int(stabilizer["controller"]), int(indi["ctrl_mode"]), indi_gains, pos_gains
 
 
@@ -276,7 +287,12 @@ def _log_phase(phase: str, controller: int, ctrl_mode: int):
 
 
 def _apply_flight_settings(
-    allcfs, th, phase: str, controller: int, ctrl_mode: int, indi_gains: dict | None = None
+    allcfs,
+    th,
+    phase: str,
+    controller: int,
+    ctrl_mode: int,
+    indi_gains: dict | None = None,
 ):
     """Set stabilizer.controller, indi_gains.* on all drones, settle, then log."""
     for c in allcfs.crazyflies:
@@ -367,7 +383,18 @@ def _save_log(
         f.write(f"# meta:run_reps={reps}\n")
         f.write(f"# meta:run_lap_time_s={lap_time_s:.4f}\n")
         f.write(f"# meta:run_eval_mode={'onboard_d' if _onboard_mode else 'hlc_e'}\n")
-        for k in ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass", "kt1", "kt2", "kt3", "kt4"):
+        for k in (
+            "kr",
+            "kw",
+            "kr_z",
+            "kw_z",
+            "fc_bw",
+            "mass",
+            "kt1",
+            "kt2",
+            "kt3",
+            "kt4",
+        ):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
         for k in ("kp_xy", "kp_z", "kv_xy", "kv_z"):
@@ -490,7 +517,7 @@ def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
     n_coefs = n_segs * 19
     print(f"[traj] Uploading {n_segs} segs ({n_coefs} coefs) to OOT params...")
 
-    _set_param_sync(cf, th, "traj.mode", 0)   # stay in passthrough during upload
+    _set_param_sync(cf, th, "traj.mode", 0)  # stay in passthrough during upload
     _set_param_sync(cf, th, "traj.nseg", n_segs)
     _set_param_sync(cf, th, "traj.hz", hz)
     _set_param_sync(cf, th, "traj.ox", ox)
@@ -533,9 +560,7 @@ def _sample_origin(th, fallback_xy) -> tuple[float, float]:
         print(f"[traj] Sampled origin ox={ox:.4f} oy={oy:.4f} (EKF)")
         return ox, oy
     ox, oy = float(fallback_xy[0]), float(fallback_xy[1])
-    print(
-        f"[traj] WARN: no EKF state — using fallback origin ox={ox:.4f} oy={oy:.4f}"
-    )
+    print(f"[traj] WARN: no EKF state — using fallback origin ox={ox:.4f} oy={oy:.4f}")
     return ox, oy
 
 
@@ -578,7 +603,9 @@ def _stop_onboard_traj_and_hold(cf, th, fallback_pos):
     return hold_pos
 
 
-def _stream_hover_hold(cf, th, hover_pos, duration_s: float, rate_hz: float = _LAND_STREAM_HZ):
+def _stream_hover_hold(
+    cf, th, hover_pos, duration_s: float, rate_hz: float = _LAND_STREAM_HZ
+):
     """Stream cmdFullState hover keepalive — firmware armed while sp.position.z > 0.05."""
     zero3 = np.zeros(3)
     t_end = th.time() + duration_s
@@ -671,7 +698,7 @@ def main():
     parser.add_argument("--kt", type=float, default=None)
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--reps", type=int, default=1)
-    parser.add_argument("--height", type=float, default=0.7)
+    parser.add_argument("--height", type=float, default=1.0)
     parser.add_argument(
         "--duration",
         type=float,
@@ -682,7 +709,7 @@ def main():
         "--onboard",
         action="store_true",
         help="Mode D: upload to OOT traj params (500 Hz onboard eval, full jerk/snap feedforward) "
-             "instead of HLC Poly4D (Mode E). Requires {label}_onboard.csv from export_poly4d --onboard.",
+        "instead of HLC Poly4D (Mode E). Requires {label}_onboard.csv from export_poly4d --onboard.",
     )
     args, _ = parser.parse_known_args()
 
@@ -700,7 +727,9 @@ def main():
         traj_dur = args.duration
         print(f"[flight] hover mode — {args.duration:.0f}s at {args.height:.2f}m")
     elif onboard_mode:
-        onboard_csv_path = _find_onboard_csv(args.trajectory, args.mode, args.kt, args.speed)
+        onboard_csv_path = _find_onboard_csv(
+            args.trajectory, args.mode, args.kt, args.speed
+        )
         onboard_segs, traj_dur = _load_onboard_csv(onboard_csv_path)
         print(
             f"[flight] onboard: {onboard_csv_path.name}  mode={args.mode} kt={args.kt} "
@@ -754,7 +783,9 @@ def main():
     # ── Controller config from crazyflies.yaml firmware_params ─────────────
     # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
     # Takeoff/landing keep OOT geometric (controller=6, ctrl_mode=0); only ctrl_mode changes.
-    yaml_controller, traj_ctrl_mode, indi_gains_from_yaml, pos_gains_from_yaml = _load_firmware_controller_config()
+    yaml_controller, traj_ctrl_mode, indi_gains_from_yaml, pos_gains_from_yaml = (
+        _load_firmware_controller_config()
+    )
     _yaml_indi_gains.update(indi_gains_from_yaml)
     _yaml_pos_gains.update(pos_gains_from_yaml)
     _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
@@ -785,7 +816,9 @@ def main():
     _logging_active = True
     _log_t0 = time.monotonic()
 
-    allcfs.takeoff(targetHeight=args.height, duration=3.0)  # 3s (was 2s) — gentler ramp for 1.48× kt upgraded motors
+    allcfs.takeoff(
+        targetHeight=args.height, duration=3.0
+    )  # 3s (was 2s) — gentler ramp for 1.48× kt upgraded motors
     th.sleep(3.5)
 
     for c in allcfs.crazyflies:
@@ -800,7 +833,12 @@ def main():
             # Restore configured ctrl_mode for the hover itself
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
+                    allcfs,
+                    th,
+                    "trajectory",
+                    yaml_controller,
+                    traj_ctrl_mode,
+                    indi_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -819,7 +857,12 @@ def main():
 
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
+                    allcfs,
+                    th,
+                    "trajectory",
+                    yaml_controller,
+                    traj_ctrl_mode,
+                    indi_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -876,7 +919,12 @@ def main():
             # Switch to configured ctrl_mode for the trajectory
             if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
                 _apply_flight_settings(
-                    allcfs, th, "trajectory", yaml_controller, traj_ctrl_mode, indi_gains_from_yaml
+                    allcfs,
+                    th,
+                    "trajectory",
+                    yaml_controller,
+                    traj_ctrl_mode,
+                    indi_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -894,18 +942,22 @@ def main():
 
             print("[flight] Done. Stopping HLC trajectory and landing...")
             # Override HLC by streaming position setpoints, then hand back to HLC for land.
-            hlc_hold_pos = np.array([
-                float(_latest_state.get("stateEstimate.x", 0.0)),
-                float(_latest_state.get("stateEstimate.y", 0.0)),
-                float(_latest_state.get("stateEstimate.z", args.height)),
-            ])
+            hlc_hold_pos = np.array(
+                [
+                    float(_latest_state.get("stateEstimate.x", 0.0)),
+                    float(_latest_state.get("stateEstimate.y", 0.0)),
+                    float(_latest_state.get("stateEstimate.z", args.height)),
+                ]
+            )
             _stream_hover_hold(cf, th, hlc_hold_pos, 2.5)
             _notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
         # Switch back to geometric for landing (skip if onboard already landed above)
         if not onboard_landed:
             _logging_active = False
-            _apply_flight_settings(allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+            _apply_flight_settings(
+                allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE
+            )
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)
             th.sleep(3.0)
@@ -919,7 +971,9 @@ def main():
         except Exception as exc:
             print(f"[flight] WARN: cleanup failed: {exc}")
         if _log_rows:
-            _save_log(args.trajectory, args.mode, args.kt, args.speed, args.reps, traj_dur)
+            _save_log(
+                args.trajectory, args.mode, args.kt, args.speed, args.reps, traj_dur
+            )
         else:
             print("[log] No rows collected — log not saved.")
 
