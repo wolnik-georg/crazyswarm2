@@ -106,9 +106,14 @@ all:
         frequency: 20 # Hz
         vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                "stabilizer.thrust", "pm.vbat"]
-      # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes)
+      # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes ≤ 26 B block limit)
+      # Bumped 20→100 Hz for INDI alpha-chain diagnosis: lets us compare a 100 Hz
+      # gyro derivative against indi.alp_raw / indi.alp to confirm the measured angular
+      # acceleration is clean (not noise INDI is chasing). Now 4 blocks at 100 Hz
+      # (state, gyro_acc, indi_state, indi_alp_raw) ≈ 440 pkt/s downlink — within limits.
+      # If CSV rows show gaps/dropouts, drop rpm+attitude to 10 Hz to free budget.
       gyro_acc:
-        frequency: 20 # Hz
+        frequency: 100 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
       # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
@@ -133,12 +138,13 @@ all:
       #   frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
       #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
       #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
-      # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
-      # Requires RPM deck fitted. Used to verify deck is reading and for
-      # post-flight KT_MOTOR validation (thrust vs RPM²).
+      # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes). Used for kt ID + INDI tau_current.
+      #   BRUSHLESS (active): from ESC bidirectional-DShot telemetry (log group "motor").
+      #   CF2.1 std/upgraded: from the optical RPM deck — swap vars to rpm.m1..rpm.m4.
       rpm:
         frequency: 20 # Hz
-        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+        vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
+        # CF2.1: vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
@@ -153,8 +159,8 @@ all:
     #   solidGreen: 0 # if set to solid color
     #   solidRed: 0 # if set to solid color
     #   headlightEnable: 0
-    deck:
-      bcRpm: 1  # RPM deck has no 1-Wire ID — must be force-enabled
+    # deck:
+    #   bcRpm: 1  # CF2.1 only (optical RPM deck). BRUSHLESS uses ESC DShot telemetry — no deck.
     # ════════════════════════════════════════════════════════════════════════════
     # CF2.1 STANDARD MOTORS — locked Jul 2 2026
     # Final: Geom RMSE 2.0 cm (kt=0.05), speed limit kt=0.15 (5.32 s/lap).
@@ -178,28 +184,49 @@ all:
     #   kv_xy: 8.0
     #   kv_z:  7.0
     # ════════════════════════════════════════════════════════════════════════════
-    # CF2.1 UPGRADED MOTORS — tuning in progress
-    # Same starting gains as standard (same frame/inertia). Update mass + kt first.
-    # Tuning order: mass → kt bench ID → geo hover → fc_bw → KR/KW → INDI → KP/KV → speed sweep
-    # To reactivate standard: comment this block, uncomment the STANDARD block above.
+    # CF2.1 UPGRADED MOTORS — thrust upgrade kit (currently INACTIVE)
+    # To reactivate: uncomment this block, comment the BRUSHLESS block below.
+    # ════════════════════════════════════════════════════════════════════════════
+    # indi_gains:
+    #   ctrl_mode: 0           # start geometric; switch to 3 (full INDI) after kt identified
+    #   kr: 600.0              # detuned from 1050 (KR_eff=0.010 = stable geometric stiffness)
+    #   kw: 66.0
+    #   kr_z: 600.0
+    #   kw_z: 66.0
+    #   fc_bw: 70.0
+    #   mass: 0.0391           # AUW 39.1 g (CF2.1 + upgrade kit + USD + RPM decks)
+    #   kt1: 2.2193e-10        # re-identified 2026-07-04, equal-thrust hover calibration
+    #   kt2: 2.6292e-10
+    #   kt3: 1.9607e-10
+    #   kt4: 2.4579e-10
+    # pos_gains:
+    #   kp_xy: 40.0
+    #   kp_z:  30.0
+    #   kv_xy: 8.0
+    #   kv_z:  7.0
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF2.1 BRUSHLESS (CF21BL) — ACTIVE. Flash brushless firmware: cd firmware_app && make cload
+    #   (make defaults to DRONE=bl). Fly with:  ros2 run crazyflie_examples flight -- --brushless
+    # PLACEHOLDER values below — MUST update after measuring: mass (weigh), kt1..kt4 (hover ID
+    # via motor.mX_rpm), then retune gains. Inertia J is a firmware constant (lib.rs, cfg drone_bl).
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 0            # start geometric; switch to 3 (full INDI) after kt identified
-      kr: 1050.0              # same as standard — adjust after hover confirmed
-      kw: 87.0
-      kr_z: 1050.0
-      kw_z: 87.0
-      fc_bw: 70.0             # same filter — recheck if attitude noise changes
-      mass: 0.0391            # AUW 39.1 g (measured 2026-07-03, CF2.1 + upgrade kit + USD + RPM decks)
-      kt1: 2.2891e-10         # identified from 3× Lee hover 2026-07-03, combined 6265 stable rows
-      kt2: 2.0197e-10
-      kt3: 2.1369e-10
-      kt4: 2.1898e-10
+      ctrl_mode: 0             # start geometric; switch to 3 (full INDI) after kt identified
+      kr: 600.0                # PLACEHOLDER — retune for brushless inertia/thrust
+      kw: 66.0                 # PLACEHOLDER
+      kr_z: 600.0              # PLACEHOLDER
+      kw_z: 66.0               # PLACEHOLDER
+      fc_bw: 70.0              # PLACEHOLDER — recheck vs brushless gyro noise
+      mass: 0.0393             # PLACEHOLDER — weigh your exact CF21BL config (guards/battery/deck)
+      kt1: 2.2000e-10          # PLACEHOLDER — identify from brushless hover (thrust vs motor.mX_rpm²)
+      kt2: 2.2000e-10          # PLACEHOLDER
+      kt3: 2.2000e-10          # PLACEHOLDER
+      kt4: 2.2000e-10          # PLACEHOLDER
     pos_gains:
-      kp_xy: 40.0             # same as standard
-      kp_z:  30.0             # restored to standard: the over-thrust / 31 cm offset was the
-      kv_xy: 8.0              # wrong compiled thrust model, now fixed via
-      kv_z:  7.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
+      kp_xy: 40.0              # PLACEHOLDER — retune for brushless
+      kp_z:  30.0              # PLACEHOLDER
+      kv_xy: 8.0               # PLACEHOLDER
+      kv_z:  7.0               # PLACEHOLDER
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1

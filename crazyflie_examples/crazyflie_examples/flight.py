@@ -711,6 +711,12 @@ def main():
         help="Mode D: upload to OOT traj params (500 Hz onboard eval, full jerk/snap feedforward) "
         "instead of HLC Poly4D (Mode E). Requires {label}_onboard.csv from export_poly4d --onboard.",
     )
+    parser.add_argument(
+        "--brushless",
+        action="store_true",
+        help="CF2.1 Brushless / Bolt only: arm the motors before takeoff (brushless firmware "
+        "requires explicit arming). No effect for standard / upgraded CF2.1 (which never arm).",
+    )
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
@@ -815,6 +821,14 @@ def main():
     # ── Takeoff and position ─────────────────────────────────────────────────
     _logging_active = True
     _log_t0 = time.monotonic()
+
+    # Brushless (CF2.1 BL / Bolt) requires explicit arming before the motors spin.
+    # No-op for standard / upgraded CF2.1 — that path is unchanged unless --brushless is passed.
+    if args.brushless:
+        print("[flight] Brushless: arming motors...")
+        for c in allcfs.crazyflies:
+            c.arm(True)
+        th.sleep(1.0)
 
     allcfs.takeoff(
         targetHeight=args.height, duration=3.0
@@ -965,6 +979,14 @@ def main():
     finally:
         # ── Save log + always return firmware to HLC-idle (even on Ctrl+C) ─
         _logging_active = False
+        # Brushless: always disarm so the motors stop spinning after landing / on abort.
+        if args.brushless:
+            try:
+                for c in allcfs.crazyflies:
+                    c.arm(False)
+                print("[flight] Brushless: motors disarmed.")
+            except Exception as exc:
+                print(f"[flight] WARN: disarm failed: {exc}")
         try:
             _firmware_idle_reset(cf, th)
             print("[flight] Cleanup done — ready for another run.")
