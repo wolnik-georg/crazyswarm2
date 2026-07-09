@@ -190,11 +190,11 @@ all:
       kr_z: 1050.0
       kw_z: 87.0
       fc_bw: 70.0             # same filter — recheck if attitude noise changes
-      mass: 0.0391            # AUW 39.1 g (measured 2026-07-03, CF2.1 + upgrade kit + USD + RPM decks)
-      kt1: 2.2891e-10         # identified from 3× Lee hover 2026-07-03, combined 6265 stable rows
-      kt2: 2.0197e-10
-      kt3: 2.1369e-10
-      kt4: 2.1898e-10
+      mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
+      kt1: 2.1918e-10         # identified 2026-07-09, 5093 stable rows (2 hover flights combined)
+      kt2: 2.3543e-10
+      kt3: 2.2362e-10
+      kt4: 2.2905e-10
     pos_gains:
       kp_xy: 40.0             # same as standard
       kp_z:  30.0             # restored to standard: the over-thrust / 31 cm offset was the
