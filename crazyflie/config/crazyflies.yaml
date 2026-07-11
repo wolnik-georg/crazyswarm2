@@ -184,7 +184,7 @@ all:
       kw: 90.0                # ζ≈1.83; kw=90 suppressed 2.1 Hz oscillation present at kw=66
       kr_z: 603.0
       kw_z: 90.0
-      fc_bw: 70.0             # same filter — recheck if attitude noise changes
+      fc_bw: 80.0             # fc_bw sweep 2026-07-11: testing 80/70/60/50 Hz
       mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
       kt1: 2.2959e-10         # identified 2026-07-09, 6269 stable rows (3 hover flights combined)
       kt2: 2.4668e-10
