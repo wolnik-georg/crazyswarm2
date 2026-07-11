@@ -184,7 +184,7 @@ all:
     # To reactivate standard: comment this block, uncomment the STANDARD block above.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 0            # start geometric; switch to 3 (full INDI) after kt identified
+      ctrl_mode: 3            # start geometric; switch to 3 (full INDI) after kt identified
       kr: 603.0               # INDI att locked 2026-07-09 — stable hover ✓; ωₙ≈24.6 rad/s
       kw: 90.0                # raised 66→90 to suppress 2.1 Hz oscillation; ζ≈1.83
       kr_z: 603.0
@@ -199,7 +199,7 @@ all:
       kp_xy: 40.0             # same as standard
       kp_z:  30.0             # restored to standard: the over-thrust / 31 cm offset was the
       kv_xy: 8.0              # wrong compiled thrust model, now fixed via
-      kv_z:  7.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
+      kv_z:  10.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
