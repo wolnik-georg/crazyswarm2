@@ -191,10 +191,10 @@ all:
       kt3: 2.0250e-10
       kt4: 2.5288e-10
     pos_gains:
-      kp_xy: 28.0             # cascade: pos ωₙ=26.9 rad/s ≈ att ωₙ=24.6 rad/s (1.1:1)
+      kp_xy: 40.0             # matched standard drone INDI: wn_pos=32.2 rad/s ≈ att wn=24.6 rad/s
       kp_z:  30.0
-      kv_xy: 6.0              # standard drone's best block (KP=28, KV=6)
-      kv_z:  10.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
+      kv_xy: 3.4              # zeta=1.37 matched to standard drone (kv=2.7*sqrt(kp*m), m=0.0386)
+      kv_z:  10.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
