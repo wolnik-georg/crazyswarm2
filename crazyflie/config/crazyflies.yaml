@@ -5,7 +5,7 @@ robots:
   cf231_active:
     enabled: true
     uri: radio://0/80/2M/E7E7E7E7E7
-    initial_position: [0.0, 0.0, 0.0]
+    initial_position: [0.3, 0.0, 0.0]
     type: cf21  # see robot_types
     # firmware_params:
     #   kalman:
@@ -180,8 +180,8 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3            # full INDI — kt1..4 identified, filter char runs passively in all modes
-      kr: 640.0               # crashed figure-8 at kw=92; trying higher kw to damp crossing-point limit cycle
-      kw: 127.0               # ζ=2.51 (kw=2*2.51*sqrt(640)); hover first
+      kr: 640.0               # kw=92 crashes f8; kw=127 overdamped (5.8-6.4cm < baseline); trying midpoint
+      kw: 110.0               # ζ=2.17 (kw=2*2.17*sqrt(640)); between crash (92) and overdamped (127)
       kr_z: 603.0
       kw_z: 90.0
       fc_bw: 70.0             # confirmed optimal 2026-07-11 sweep (80/70/60/50 Hz tested)
