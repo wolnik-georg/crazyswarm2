@@ -191,9 +191,9 @@ all:
       kt3: 2.0250e-10
       kt4: 2.5288e-10
     pos_gains:
-      kp_xy: 40.0             # same as standard
-      kp_z:  30.0             # restored to standard: the over-thrust / 31 cm offset was the
-      kv_xy: 8.0              # wrong compiled thrust model, now fixed via
+      kp_xy: 28.0             # cascade: pos ωₙ=26.9 rad/s ≈ att ωₙ=24.6 rad/s (1.1:1)
+      kp_z:  30.0
+      kv_xy: 6.0              # standard drone's best block (KP=28, KV=6)
       kv_z:  10.0              # CONFIG_CRAZYFLIE_THRUST_UPGRADE_KIT (mixer matches hardware)
     locSrv:
       extPosStdDev: 1e-3
