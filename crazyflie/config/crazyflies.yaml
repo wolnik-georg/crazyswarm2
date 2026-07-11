@@ -113,10 +113,10 @@ all:
       # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
       # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
-      indi_state:
-        frequency: 100 # Hz
-        vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
-               "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # indi_state:  # commented out during filter characterisation — re-enable after
+      #   frequency: 100 # Hz
+      #   vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
+      #          "indi.alp_x", "indi.alp_y", "indi.alp_z"]
       # /cf231/indi_alp_raw — pre-filter angular accel (3 floats = 12 bytes, separate packet)
       indi_alp_raw:
         frequency: 100 # Hz
@@ -126,13 +126,12 @@ all:
       # Logs raw alpha (pre-BW) + filtered alpha at 100 Hz for offline fc_bw sweep.
       # Works in mode=0 geometric hover — no INDI needed, filter runs passively.
       # After characterisation: re-comment this, uncomment indi_state above.
-      # fc_bw=70 Hz confirmed 2026-07-03: dominant signal at 3.7-4.2 Hz, 0 dB noise reduction
-      # in 100 Hz logs (motor noise at 350-700 Hz, above Nyquist — filter works in firmware).
-      # No change needed vs standard drone.
-      # indi_filter_char:
-      #   frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
-      #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
-      #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+      # fc_bw=70 Hz confirmed 2026-07-03 on STANDARD drone.
+      # Upgraded drone: characterise here before locking fc_bw.
+      indi_filter_char:
+        frequency: 100 # Hz  (Nyquist 50 Hz — covers fc_bw tuning range 10-80 Hz)
+        vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+               "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM from RPM deck (4 uint16 = 8 bytes)
       # Requires RPM deck fitted. Used to verify deck is reading and for
       # post-flight KT_MOTOR validation (thrust vs RPM²).
@@ -184,11 +183,11 @@ all:
     # To reactivate standard: comment this block, uncomment the STANDARD block above.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 3            # start geometric; switch to 3 (full INDI) after kt identified
-      kr: 750.0               # step up from 603; ωₙ≈27.4 rad/s
-      kw: 100.0               # kw=1.83×2×√750≈100; maintains ζ≈1.83 from previous stable point
-      kr_z: 750.0
-      kw_z: 100.0
+      ctrl_mode: 3            # full INDI — kt1..4 identified, filter char runs passively in all modes
+      kr: 603.0               # CEILING 2026-07-11 — kr=750 marginally unstable at any kw; ωₙ≈24.6 rad/s
+      kw: 90.0                # ζ≈1.83; kw=90 suppressed 2.1 Hz oscillation present at kw=66
+      kr_z: 603.0
+      kw_z: 90.0
       fc_bw: 70.0             # same filter — recheck if attitude noise changes
       mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
       kt1: 2.2959e-10         # identified 2026-07-09, 6269 stable rows (3 hover flights combined)
