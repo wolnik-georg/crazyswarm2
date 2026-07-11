@@ -185,10 +185,10 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 0            # start geometric; switch to 3 (full INDI) after kt identified
-      kr: 200.0               # INDI conservative start [1/s²]; ωₙ≈10 rad/s, ζ≈1.5 (see kw)
-      kw: 30.0                # kw/kr=0.15; Routh: kw>sqrt(4*kr*J/J)≈OK at this scale
-      kr_z: 200.0
-      kw_z: 30.0
+      kr: 603.0               # INDI att locked 2026-07-09 — stable hover ✓; ωₙ≈24.6 rad/s
+      kw: 90.0                # raised 66→90 to suppress 2.1 Hz oscillation; ζ≈1.83
+      kr_z: 603.0
+      kw_z: 90.0
       fc_bw: 70.0             # same filter — recheck if attitude noise changes
       mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
       kt1: 2.2959e-10         # identified 2026-07-09, 6269 stable rows (3 hover flights combined)
