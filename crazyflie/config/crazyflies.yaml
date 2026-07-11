@@ -180,11 +180,11 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3            # full INDI — kt1..4 identified, filter char runs passively in all modes
-      kr: 603.0               # CEILING 2026-07-11 — kr=750 marginally unstable at any kw; ωₙ≈24.6 rad/s
-      kw: 90.0                # ζ≈1.83; kw=90 suppressed 2.1 Hz oscillation present at kw=66
+      kr: 640.0               # step 1 of kr ladder 2026-07-11 — hover first before figure-8
+      kw: 92.0                # ζ=1.82 (kw=2*1.82*sqrt(640)=92); prev ceiling was kr=603/kw=90
       kr_z: 603.0
       kw_z: 90.0
-      fc_bw: 80.0             # fc_bw sweep 2026-07-11: testing 80/70/60/50 Hz
+      fc_bw: 70.0             # confirmed optimal 2026-07-11 sweep (80/70/60/50 Hz tested)
       mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
       kt1: 2.2959e-10         # identified 2026-07-09, 6269 stable rows (3 hover flights combined)
       kt2: 2.4668e-10
