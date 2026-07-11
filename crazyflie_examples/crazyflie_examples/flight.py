@@ -698,7 +698,7 @@ def main():
     parser.add_argument("--kt", type=float, default=None)
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--reps", type=int, default=1)
-    parser.add_argument("--height", type=float, default=1.0)
+    parser.add_argument("--height", type=float, default=0.7)
     parser.add_argument(
         "--duration",
         type=float,
