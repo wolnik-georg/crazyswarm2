@@ -700,6 +700,8 @@ def main():
     parser.add_argument("--speed", type=float, default=1.0)
     parser.add_argument("--reps", type=int, default=1)
     parser.add_argument("--height", type=float, default=0.7)
+    parser.add_argument("--brushless", action="store_true",
+                        help="Arm ESCs before takeoff (required for CF21BL brushless drone)")
     parser.add_argument(
         "--duration",
         type=float,
@@ -811,6 +813,10 @@ def main():
         _upload_traj_to_oot(cf, th, onboard_segs, args.height, ox, oy)
 
     _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+    if args.brushless:
+        for c in allcfs.crazyflies:
+            c.arm(True)
+        th.sleep(0.5)
     print("[flight] Taking off...")
 
     # ── Takeoff and position ─────────────────────────────────────────────────
@@ -913,6 +919,9 @@ def main():
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=3.0)
             th.sleep(4.0)
+            if args.brushless:
+                for c in allcfs.crazyflies:
+                    c.arm(False)
             _logging_active = False
             onboard_landed = True  # skip duplicate land in common block below
 
@@ -971,6 +980,9 @@ def main():
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)
             th.sleep(3.0)
+            if args.brushless:
+                for c in allcfs.crazyflies:
+                    c.arm(False)
 
     finally:
         # ── Save log + always return firmware to HLC-idle (even on Ctrl+C) ─
