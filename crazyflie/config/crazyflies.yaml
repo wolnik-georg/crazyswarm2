@@ -132,11 +132,13 @@ all:
       # CF2.1 brushed: optical RPM deck (rpm.m1..m4).
       # CF21BL brushless: DShot ESC telemetry — firmware exposes it via the same rpm group.
       # Both produce rpm_m1..rpm_m4 CSV columns. No config change needed when switching drones.
+      # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
+      # CF2.1 brushed: optical RPM deck → vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      # CF21BL brushless: DShot bidirectional telemetry → motor.m1_rpm..m4_rpm (ACTIVE)
+      # Source confirmed 2026-07-15: motor.m1_rpm is the only live source on CF21BL.
+      # rpm.m1..m4 = 0 on CF21BL (no optical deck). motor.m1_rpm = DShot eRPM, same unit
+      # as kt identification flights (cebd0f4). kt values are self-consistent with this source.
       rpm:
-        frequency: 20 # Hz
-        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
-      # DIAGNOSTIC: compare optical-deck source vs DShot-motor source — remove after source confirmed
-      motor_rpm:
         frequency: 20 # Hz
         vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
@@ -201,7 +203,7 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     # CF21BL BRUSHLESS — active, tuning in progress 2026-07-15
     # Inertia: Busetto et al. 2025 (JXX=23.951e-6, ARM_M=35.4mm, TORQUE_RATIO=0.002078)
-    # RPM: DShot telemetry (motor.m1_rpm..m4_rpm) — no RPM deck needed.
+    # RPM: DShot bidirectional telemetry → log topic "rpm" uses motor.m1_rpm..m4_rpm (NOT rpm.m1..m4).
     # Tuning order: kt ID from hover → fc_bw → KR/KW → figure-8
     # To switch back to upgraded: comment this block, uncomment UPGRADED block + deck.bcRpm above.
     # ════════════════════════════════════════════════════════════════════════════
