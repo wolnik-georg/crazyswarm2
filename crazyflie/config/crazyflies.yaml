@@ -205,14 +205,14 @@ all:
     # To switch back to upgraded: comment this block, uncomment UPGRADED block + deck.bcRpm above.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 0              # geometric to start — switch to 3 after kt identified
-      kr: 603.0                 # starting point (upgraded ceiling); brushless motors faster → ceiling likely higher
-      kw: 90.0
-      kr_z: 603.0
-      kw_z: 90.0
-      fc_bw: 70.0               # starting point — sweep after first stable INDI hover
+      ctrl_mode: 3              # full INDI — RPM confirmed live via motor.m1_rpm..m4_rpm
+      kr: 100.0                 # conservative start: ωₙ=10 rad/s (was 603)
+      kw: 30.0                  # ζ=1.5, well overdamped (was 90)
+      kr_z: 100.0
+      kw_z: 30.0
+      fc_bw: 30.0               # conservative: more noise rejection on alpha chain (was 70)
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
-      kt1: 4.2336e-10           # identified 2026-07-15, avg of 3 hover flights (15.6k RPM hover)
+      kt1: 4.2336e-10           # identified 2026-07-15, avg of 3 hover flights (15.6k eRPM hover)
       kt2: 3.9865e-10           # paper kF=3.72e-8 N/(rad/s)^2 → 4.079e-10; measured 1.2% above
       kt3: 4.0689e-10
       kt4: 4.2210e-10
