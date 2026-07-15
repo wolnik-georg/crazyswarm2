@@ -128,12 +128,13 @@ all:
       #   frequency: 100 # Hz
       #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
       #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
-      # /cf231/rpm — per-motor RPM
-      # CF2.1 brushed (RPM deck): vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
-      # CF21BL brushless (DShot telemetry — active):
+      # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
+      # CF2.1 brushed: optical RPM deck (rpm.m1..m4).
+      # CF21BL brushless: DShot ESC telemetry — firmware exposes it via the same rpm group.
+      # Both produce rpm_m1..rpm_m4 CSV columns. No config change needed when switching drones.
       rpm:
         frequency: 20 # Hz
-        vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
+        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
@@ -208,10 +209,10 @@ all:
       kw_z: 90.0
       fc_bw: 70.0               # starting point — sweep after first stable INDI hover
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
-      kt1: 3.16e-10             # PLACEHOLDER — run measure_kt.py after geometric hover log
-      kt2: 3.16e-10
-      kt3: 3.16e-10
-      kt4: 3.16e-10
+      kt1: 4.2336e-10           # identified 2026-07-15, avg of 3 hover flights (15.6k RPM hover)
+      kt2: 3.9865e-10           # paper kF=3.72e-8 N/(rad/s)^2 → 4.079e-10; measured 1.2% above
+      kt3: 4.0689e-10
+      kt4: 4.2210e-10
     pos_gains:
       kp_xy: 40.0
       kp_z:  30.0
