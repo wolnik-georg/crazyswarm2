@@ -502,6 +502,7 @@ def _firmware_idle_reset(cf, th):
     """
     _set_param_sync(cf, th, "traj.mode", 0)
     _set_param_sync(cf, th, "traj.start", 0)
+    _set_param_sync(cf, th, "traj.reps", 0)
     _set_param_sync(cf, th, "indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
     _notify_setpoints_stop_sync(cf, th)
     th.sleep(0.2)
@@ -880,22 +881,26 @@ def main():
                 z_hover = float(_latest_state.get("stateEstimate.z", args.height))
                 keepalive_pos = np.array([ox, oy, max(z_hover, _Z_CMD_MIN_AIRBORNE)])
 
+                is_last_rep = (rep == args.reps - 1)
                 _log_t0 = time.monotonic()
                 _set_param_sync(cf, th, "traj.start", 0)
+                _set_param_sync(cf, th, "traj.mode", 0)
+                # Last rep: firmware self-stops after exactly 1 lap at the rest-to-rest
+                # endpoint. Intermediate reps: reps=0 (loop forever) so manual stop
+                # in the next iteration handles the inter-rep transition cleanly.
+                _set_param_sync(cf, th, "traj.reps", 1 if is_last_rep else 0)
                 _set_param_sync(cf, th, "traj.mode", 1)
                 th.sleep(_TRAJ_ARM_DELAY_S)
                 _set_param_sync(cf, th, "traj.start", 1)
-                # Stop margin before total_dur on the last rep — firmware wraps t at lap end
-                # and restarts the path (C0 position, discontinuous velocity).
-                if rep < args.reps - 1:
-                    t_run = traj_dur
-                else:
-                    t_run = max(traj_dur - _TRAJ_STOP_MARGIN_S, traj_dur * 0.95)
-                    print(
-                        f"[flight] Onboard lap {t_run:.2f}s "
-                        f"(margin {_TRAJ_STOP_MARGIN_S:.2f}s before {traj_dur:.2f}s wrap)"
-                    )
-                t_end = th.time() + t_run
+                # Full duration for all reps. Last rep: firmware self-stops at traj_dur
+                # and we add 0.5 s so the keepalive holds position at the clean endpoint
+                # before _stop_onboard_traj_and_hold switches ctrl_mode.
+                t_settle = 0.5 if is_last_rep else 0.0
+                print(
+                    f"[flight] Onboard lap {traj_dur:.2f}s"
+                    + (f" + {t_settle:.1f}s settle (self-stop)" if is_last_rep else "")
+                )
+                t_end = th.time() + traj_dur + t_settle
                 while not th.isShutdown() and th.time() < t_end:
                     cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
                     th.sleepForRate(20)
@@ -941,6 +946,11 @@ def main():
                 )
 
             print("[flight] Done. Stopping HLC trajectory and landing...")
+            # Settle: trajectory is rest-to-rest but the drone arrives with ~5 cm position
+            # error.  Let the HLC hold at the trajectory endpoint for 0.5 s so the position
+            # controller reduces that error before we snapshot hlc_hold_pos — this makes the
+            # cmdFullState handoff much smoother and removes the end-of-lap jerk.
+            th.sleep(0.5)
             # Override HLC by streaming position setpoints, then hand back to HLC for land.
             hlc_hold_pos = np.array(
                 [
