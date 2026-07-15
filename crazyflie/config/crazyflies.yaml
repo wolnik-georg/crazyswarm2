@@ -135,6 +135,10 @@ all:
       rpm:
         frequency: 20 # Hz
         vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      # DIAGNOSTIC: compare optical-deck source vs DShot-motor source — remove after source confirmed
+      motor_rpm:
+        frequency: 20 # Hz
+        vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
