@@ -130,14 +130,15 @@ all:
       #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
       # ── SWITCH when changing drone ──────────────────────────────────────────
-      # CF21BL brushless (ACTIVE): DShot bidirectional ESC telemetry
+      # EXPERIMENT (2026-07-16): brushless reading OPTICAL RPM DECK (like brushed drones)
+      # to test DShot-telemetry-delay hypothesis. ACTIVE:
       rpm:
         frequency: 20 # Hz
-        vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
-      # CF2.1 standard / upgraded (swap in when using brushed drones):
+        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      # CF21BL brushless DShot bidirectional ESC telemetry (default — restore to switch back):
       # rpm:
       #   frequency: 20 # Hz
-      #   vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      #   vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
