@@ -208,13 +208,12 @@ all:
     # To switch back to upgraded: comment this block, uncomment UPGRADED block + deck.bcRpm above.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 3              # full INDI — RPM now from OPTICAL DECK (rpm.*), not DShot
-      # A/B vs DShot flight 17-17-33 (bounded ~7 Hz limit cycle): SAME gains, only RPM source differs.
-      kr: 5.0                   # match 17-17-33 reference
-      kw: 1.5
-      kr_z: 5.0
-      kw_z: 1.5
-      fc_bw: 30.0               # match reference; fc_bw already shown not to move the 7 Hz cycle
+      ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
+      kr: 603.0                 # stable INDI hover baseline (from upgraded drone)
+      kw: 90.0
+      kr_z: 603.0
+      kw_z: 90.0
+      fc_bw: 60.0               # 2026-07-16 hover sweep: flat optimum 50-80, cliff <40. 60 = safe optimum.
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
       # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
