@@ -209,10 +209,10 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      kr: 603.0                 # stable INDI hover baseline (from upgraded drone)
-      kw: 90.0
-      kr_z: 603.0
-      kw_z: 90.0
+      kr: 1200.0                # locked 2026-07-16: att ladder BL-att2 optimum (plateau at kr=900+)
+      kw: 97.0
+      kr_z: 1200.0
+      kw_z: 97.0
       fc_bw: 60.0               # 2026-07-16 hover sweep: flat optimum 50-80, cliff <40. 60 = safe optimum.
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
@@ -225,7 +225,7 @@ all:
     pos_gains:
       kp_xy: 40.0
       kp_z:  30.0
-      kv_xy: 8.0
+      kv_xy: 11.0               # BL-5: ζ_pos 0.63→0.87 (was 8.0); cut hover wobble + lag
       kv_z:  10.0
     locSrv:
       extPosStdDev: 1e-3
