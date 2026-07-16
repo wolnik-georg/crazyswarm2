@@ -153,8 +153,10 @@ all:
     #   solidGreen: 0 # if set to solid color
     #   solidRed: 0 # if set to solid color
     #   headlightEnable: 0
-    # deck:
-    #   bcRpm: 1  # RPM deck force-enable — CF2.1 brushed ONLY; NOT for CF21BL (DShot telemetry)
+    deck:
+      bcRpm: 1  # RPM deck force-enable. REQUIRED: driver has vid/pid=0x00 (no 1-wire id),
+                # so it never auto-detects and rpm.* stays 0 without this. Needed on the
+                # brushless too while testing the optical deck. (Comment out to return to DShot.)
     # ════════════════════════════════════════════════════════════════════════════
     # CF2.1 STANDARD MOTORS — locked Jul 2 2026
     # Final: Geom RMSE 2.0 cm (kt=0.05), speed limit kt=0.15 (5.32 s/lap).
