@@ -230,6 +230,12 @@ all:
       # (results_2026-07-15_brushless.md §4b-diagnosis-toggle), then set back to 0 — do not fly
       # the figure-8 or any real trajectory with ff_free=1.
       ff_free: 0
+      # Filter-order fix (2026-07-18, requires cload'd firmware with the filt_order toggle):
+      # 0 = legacy diff-then-filter (default, byte-identical to prior behaviour, standard/
+      # upgraded unaffected). 1 = paper order (Tal & Karaman 2021 Sec. III-D + stock
+      # crazyflie-firmware controller_indi.c): filter gyro BEFORE differentiating. Set to 1
+      # to test whether this reduces the ~5-8 Hz attitude oscillation on brushless.
+      filt_order: 0
     pos_gains:
       kp_xy: 40.0                # locked 2026-07-18: kp=50 made attitude oscillation worse, reverted to 40
       kp_z:  30.0

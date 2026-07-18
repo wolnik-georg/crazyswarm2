@@ -76,6 +76,13 @@ _yaml_indi_gains = (
     {}
 )  # kr, kw, kr_z, kw_z, fc_bw, mass, kt1..4 from crazyflies.yaml at startup
 _yaml_pos_gains = {}  # kp_xy, kp_z, kv_xy, kv_z from crazyflies.yaml at startup
+_yaml_diag_gains = (
+    {}
+)  # filt_order, ff_free: uint8 diagnostic toggles from crazyflies.yaml at startup.
+# Metadata-only (never auto-pushed via setParam like _yaml_indi_gains — these are
+# PARAM_UINT8 and the indi_gains push loop does float(v), which struct.pack would
+# reject for a uint8-typed param). Logged so post-flight analysis can tell which
+# filter chain / ff_free state produced a given CSV without relying on operator memory.
 _onboard_mode = (
     False  # True when --onboard (Mode D); written in main, read in _save_log
 )
@@ -238,7 +245,7 @@ _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 _RAMP_POS_GAINS = {"kp_xy": 40.0, "kp_z": 30.0, "kv_xy": 8.0, "kv_z": 10.0}
 
 
-def _load_firmware_controller_config() -> tuple[int, int, dict, dict]:
+def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
     """Read stabilizer.controller, indi_gains.ctrl_mode, and indi gains from crazyflies.yaml."""
     path = Path(get_package_share_directory("crazyflie")) / "config" / "crazyflies.yaml"
     try:
@@ -279,7 +286,15 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict]:
     }
     pos = fp.get("pos_gains", {})
     pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
-    return int(stabilizer["controller"]), int(indi["ctrl_mode"]), indi_gains, pos_gains
+    # Metadata-only diagnostic toggles (uint8) — never pushed via setParam, see _yaml_diag_gains.
+    diag_gains = {k: indi[k] for k in ("filt_order", "ff_free") if k in indi}
+    return (
+        int(stabilizer["controller"]),
+        int(indi["ctrl_mode"]),
+        indi_gains,
+        pos_gains,
+        diag_gains,
+    )
 
 
 def _log_phase(phase: str, controller: int, ctrl_mode: int):
@@ -406,6 +421,9 @@ def _save_log(
         ):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
+        for k in ("filt_order", "ff_free"):
+            if k in _yaml_diag_gains:
+                f.write(f"# meta:indi_{k}={_yaml_diag_gains[k]}\n")
         for k in ("kp_xy", "kp_z", "kv_xy", "kv_z"):
             if k in _yaml_pos_gains:
                 f.write(f"# meta:pos_{k}={_yaml_pos_gains[k]}\n")
@@ -795,11 +813,16 @@ def main():
     # ── Controller config from crazyflies.yaml firmware_params ─────────────
     # Trajectory uses yaml stabilizer.controller + indi_gains.ctrl_mode.
     # Takeoff/landing keep OOT geometric (controller=6, ctrl_mode=0); only ctrl_mode changes.
-    yaml_controller, traj_ctrl_mode, indi_gains_from_yaml, pos_gains_from_yaml = (
-        _load_firmware_controller_config()
-    )
+    (
+        yaml_controller,
+        traj_ctrl_mode,
+        indi_gains_from_yaml,
+        pos_gains_from_yaml,
+        diag_gains_from_yaml,
+    ) = _load_firmware_controller_config()
     _yaml_indi_gains.update(indi_gains_from_yaml)
     _yaml_pos_gains.update(pos_gains_from_yaml)
+    _yaml_diag_gains.update(diag_gains_from_yaml)
     _controller_meta["yaml"] = (yaml_controller, traj_ctrl_mode)
     print(
         f"[flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller}  "
