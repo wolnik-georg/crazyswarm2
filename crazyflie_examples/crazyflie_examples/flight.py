@@ -231,6 +231,11 @@ _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commi
 # OOT geometric (controller 6) for takeoff/landing — only ctrl_mode changes for trajectory.
 _RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
+# Position gains for ramp are pinned to this known-stable baseline, independent of whatever
+# pos_gains.kp_xy/kv_xy are being swept in crazyflies.yaml for the trajectory phase — raising
+# kv_xy/kp_xy for INDI tuning must not also destabilize the geometric takeoff/landing loop
+# (underdamped geometric hover at high kp_xy/kv_xy caused the July 1 divergence incidents).
+_RAMP_POS_GAINS = {"kp_xy": 40.0, "kp_z": 30.0, "kv_xy": 8.0, "kv_z": 10.0}
 
 
 def _load_firmware_controller_config() -> tuple[int, int, dict, dict]:
@@ -293,14 +298,18 @@ def _apply_flight_settings(
     controller: int,
     ctrl_mode: int,
     indi_gains: dict | None = None,
+    pos_gains: dict | None = None,
 ):
-    """Set stabilizer.controller, indi_gains.* on all drones, settle, then log."""
+    """Set stabilizer.controller, indi_gains.*, pos_gains.* on all drones, settle, then log."""
     for c in allcfs.crazyflies:
         c.setParam("stabilizer.controller", controller)
         c.setParam("indi_gains.ctrl_mode", ctrl_mode)
         if indi_gains:
             for k, v in indi_gains.items():
                 c.setParam(f"indi_gains.{k}", float(v))
+        if pos_gains:
+            for k, v in pos_gains.items():
+                c.setParam(f"pos_gains.{k}", float(v))
     th.sleep(_CTRL_SETTLE_S)
     _log_phase(phase, controller, ctrl_mode)
 
@@ -812,7 +821,9 @@ def main():
         print("[flight] Uploading onboard trajectory (OOT active, drone on ground)...")
         _upload_traj_to_oot(cf, th, onboard_segs, args.height, ox, oy)
 
-    _apply_flight_settings(allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+    _apply_flight_settings(
+        allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE, pos_gains=_RAMP_POS_GAINS
+    )
     if args.brushless:
         for c in allcfs.crazyflies:
             c.arm(True)
@@ -837,8 +848,12 @@ def main():
     try:
         if hover_mode:
             # ── Hover: no trajectory upload, just hold position ───────────────
-            # Restore configured ctrl_mode for the hover itself
-            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+            # Restore configured ctrl_mode + pos_gains for the hover itself
+            if (yaml_controller, traj_ctrl_mode, pos_gains_from_yaml) != (
+                _RAMP_CONTROLLER,
+                _RAMP_CTRL_MODE,
+                _RAMP_POS_GAINS,
+            ):
                 _apply_flight_settings(
                     allcfs,
                     th,
@@ -846,6 +861,7 @@ def main():
                     yaml_controller,
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
+                    pos_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -862,7 +878,11 @@ def main():
             fallback_xy = cf.initialPosition[:2]
             keepalive_pos = None
 
-            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+            if (yaml_controller, traj_ctrl_mode, pos_gains_from_yaml) != (
+                _RAMP_CONTROLLER,
+                _RAMP_CTRL_MODE,
+                _RAMP_POS_GAINS,
+            ):
                 _apply_flight_settings(
                     allcfs,
                     th,
@@ -870,6 +890,7 @@ def main():
                     yaml_controller,
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
+                    pos_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -930,8 +951,12 @@ def main():
             for c in allcfs.crazyflies:
                 c.uploadTrajectory(0, 0, traj)
 
-            # Switch to configured ctrl_mode for the trajectory
-            if (yaml_controller, traj_ctrl_mode) != (_RAMP_CONTROLLER, _RAMP_CTRL_MODE):
+            # Switch to configured ctrl_mode + pos_gains for the trajectory
+            if (yaml_controller, traj_ctrl_mode, pos_gains_from_yaml) != (
+                _RAMP_CONTROLLER,
+                _RAMP_CTRL_MODE,
+                _RAMP_POS_GAINS,
+            ):
                 _apply_flight_settings(
                     allcfs,
                     th,
@@ -939,6 +964,7 @@ def main():
                     yaml_controller,
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
+                    pos_gains_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -975,7 +1001,12 @@ def main():
         if not onboard_landed:
             _logging_active = False
             _apply_flight_settings(
-                allcfs, th, "landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE
+                allcfs,
+                th,
+                "landing",
+                _RAMP_CONTROLLER,
+                _RAMP_CTRL_MODE,
+                pos_gains=_RAMP_POS_GAINS,
             )
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)

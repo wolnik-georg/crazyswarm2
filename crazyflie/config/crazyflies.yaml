@@ -225,7 +225,7 @@ all:
     pos_gains:
       kp_xy: 40.0
       kp_z:  30.0
-      kv_xy: 11.0               # BL-5: ζ_pos 0.63→0.87 (was 8.0); cut hover wobble + lag
+      kv_xy: 8.0                # locked: KV>8 excites att INDI oscillation (tau_x 10× jump at KV=11)
       kv_z:  10.0
     locSrv:
       extPosStdDev: 1e-3
