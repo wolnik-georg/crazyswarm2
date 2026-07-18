@@ -201,18 +201,18 @@ all:
     #   kv_xy: 8.0
     #   kv_z:  10.0
     # ════════════════════════════════════════════════════════════════════════════
-    # CF21BL BRUSHLESS — active, tuning in progress 2026-07-15
+    # CF21BL BRUSHLESS — active, tuning in progress 2026-07-18
     # Inertia: Busetto et al. 2025 (JXX=23.951e-6, ARM_M=35.4mm, TORQUE_RATIO=0.002078)
     # RPM: DShot bidirectional telemetry → log topic "rpm" uses motor.m1_rpm..m4_rpm (NOT rpm.m1..m4).
-    # Tuning order: kt ID from hover → fc_bw → KR/KW → figure-8
+    # Tuning order: kt ID from hover → fc_bw → KR/KW → pos KV/KP → figure-8
     # To switch back to upgraded: comment this block, uncomment UPGRADED block + deck.bcRpm above.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      kr: 1200.0                # locked 2026-07-16: att ladder BL-att2 optimum (plateau at kr=900+)
-      kw: 97.0
-      kr_z: 1200.0
-      kw_z: 97.0
+      kr: 1300.0                # locked 2026-07-18 hover KW sweep (see results_2026-07-15_brushless.md §4b-results-KW)
+      kw: 120.0                 # best roll/pitch sigma at kr=1300 among 90..200 without excessive lag (tau_dom=83ms)
+      kr_z: 1300.0
+      kw_z: 120.0
       fc_bw: 60.0               # 2026-07-16 hover sweep: flat optimum 50-80, cliff <40. 60 = safe optimum.
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
@@ -222,10 +222,17 @@ all:
       kt2: 4.0592e-10           # was 3.9865e-10
       kt3: 4.1116e-10           # was 4.0689e-10
       kt4: 4.0631e-10           # was 4.2210e-10
+      # H1a diagnostic (2026-07-18, requires cload'd firmware with the ff_free toggle):
+      # 0 = normal RPM feedback (default). Set to 1 via cfclient ONLY for the ff_free A/B test
+      # (results_2026-07-15_brushless.md §4b-diagnosis-toggle), then set back to 0 — do not fly
+      # the figure-8 or any real trajectory with ff_free=1.
+      ff_free: 0
     pos_gains:
-      kp_xy: 40.0
+      kp_xy: 40.0                # locked 2026-07-18: kp=50 made attitude oscillation worse, reverted to 40
       kp_z:  30.0
-      kv_xy: 8.0                # locked: KV>8 excites att INDI oscillation (tau_x 10× jump at KV=11)
+      kv_xy: 8.0                 # locked 2026-07-18: KV sweep 6..13 monotonically WORSENED attitude osc
+                                  # (roll/pitch sigma 1.07/0.98 -> 3.53/6.32 deg at kv=13) — do not raise past 8
+                                  # without lowering VEL_FB_FC_HZ first, see doc §4b-results
       kv_z:  10.0
     locSrv:
       extPosStdDev: 1e-3
