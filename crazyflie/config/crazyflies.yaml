@@ -209,10 +209,13 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      kr: 1300.0                # locked 2026-07-18 hover KW sweep (see results_2026-07-15_brushless.md §4b-results-KW)
-      kw: 120.0                 # best roll/pitch sigma at kr=1300 among 90..200 without excessive lag (tau_dom=83ms)
-      kr_z: 1300.0
-      kw_z: 120.0
+      kr: 900.0                 # 2026-07-18 gain-amplification test: RMSE already plateaus at kr=900
+                                 # (BL-att1, same 3.9cm as kr=1800) — kr=1300 bought nothing on tracking
+                                 # but tripled gyro sigma vs standard drone at matched roll/pitch sigma.
+                                 # See results_2026-07-15_brushless.md §4b-h1a-retraction.
+      kw: 84.0                  # kw = 2*1.4*sqrt(900), same zeta~1.4 target as BL-att1
+      kr_z: 900.0
+      kw_z: 84.0
       fc_bw: 60.0               # 2026-07-16 hover sweep: flat optimum 50-80, cliff <40. 60 = safe optimum.
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
