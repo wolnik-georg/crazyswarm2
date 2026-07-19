@@ -209,18 +209,17 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      # 2026-07-18 LOW-BANDWIDTH REGIME (never tested before). Prior high-gain sweeps (kr 603-1800)
-      # all kept the attitude natural freq wn=sqrt(KR) at 3.9-6.7 Hz — inside the 5.8-6.9 Hz
-      # vibration band, so the loop actively chased the vibration. Stock crazyflie-firmware INDI
-      # (proven on this drone) uses KR_eq~120/KW_eq~24 → wn~1.7 Hz, well below the band. This
-      # config: KR=250 → wn=2.5 Hz (below band), KW=45 → zeta~1.4. Sweep KR 150/250/350 and
-      # fc_bw 8/12/15. See results_2026-07-15_brushless.md §4b-bandwidth.
-      kr: 250.0
-      kw: 45.0
-      kr_z: 250.0
-      kw_z: 45.0
-      fc_bw: 12.0               # heavy filter (near stock's 8 Hz); now stable because low gains give
-                                 # phase margin + filt_tau=1 phase-matches the increment base.
+      # 2026-07-19 LOW-BANDWIDTH REGIME REFUTED: kr250/kw45/fc12 flew badly (pos 16cm, roll/pitch
+      # 13/19deg, 1.2 Hz cascade wobble — attitude loop too slow to serve the kp=40 position loop).
+      # Higher kr was always better (kr250 disaster < kr603 flicker < kr1500 best). Reverted to the
+      # best-known gains kr=1500/kw=180. Next test: filt_tau=1 + sweep fc_bw DOWN (30→20→15) at
+      # THESE gains to see if the phase-matched filter attenuates the 6 Hz twitch without breaking
+      # the cascade. See results_2026-07-15_brushless.md §4b-lowbw-refuted.
+      kr: 1500.0
+      kw: 180.0
+      kr_z: 1500.0
+      kw_z: 180.0
+      fc_bw: 20.0              # moderate (was 60). Sweep 30/20/15 at kr1500/kw180 with filt_tau=1.
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
       # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
