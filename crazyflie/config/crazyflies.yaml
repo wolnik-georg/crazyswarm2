@@ -290,15 +290,16 @@ all:
       # CONFIRMED 2026-07-19: kv=7 (zeta=0.438, down from 10/zeta=0.625) gave RMSE 2.6/2.8/2.6cm —
       # BEATS kv=10's 2.8/2.9/3.0, tighter spread, geom RMSE down to 1.5-1.7cm (best of session).
       # roll err ticked up slightly (4.5-4.7 vs 4.0-4.4, within noise), pitch unchanged. Clean win,
-      # same pattern as the KR/KW decoupling. Pushing further: kv=5 (zeta=0.312, this row).
+      # CONFIRMED 2026-07-19: kv=5 (zeta=0.312) gave RMSE 2.4/2.3cm — NEW BEST, tight agreement
+      # between both flights (no kw=130-style blowup). roll err 4.9/5.4 (slight uptick), pitch
+      # 4.3/3.8 (flat). No failure signal yet. Pushing further: kv=4 (zeta=0.250, this row).
       # STOP CONDITION: watch hard for a kw=130-style SUDDEN failure (one good flight, one bad —
-      # marginal stability, not gradual noise). If seen, revert immediately to kv=7 (confirmed-good).
-      # Next if kv=5 still good: kv=4 (zeta=0.250).
+      # marginal stability, not gradual noise). If seen, revert immediately to kv=5 (confirmed-good).
       # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
       kp_xy: 64.0
       kp_z:  48.0
-      kv_xy: 5.0
-      kv_z:  7.0
+      kv_xy: 4.0
+      kv_z:  5.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
