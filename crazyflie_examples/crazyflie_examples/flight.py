@@ -281,13 +281,14 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
             "kt2",
             "kt3",
             "kt4",
+            "j_scale",
         )
         if k in indi
     }
     pos = fp.get("pos_gains", {})
     pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
     # Metadata-only diagnostic toggles (uint8) — never pushed via setParam, see _yaml_diag_gains.
-    diag_gains = {k: indi[k] for k in ("filt_order", "ff_free") if k in indi}
+    diag_gains = {k: indi[k] for k in ("filt_order", "ff_free", "filt_tau") if k in indi}
     return (
         int(stabilizer["controller"]),
         int(indi["ctrl_mode"]),
@@ -418,10 +419,11 @@ def _save_log(
             "kt2",
             "kt3",
             "kt4",
+            "j_scale",
         ):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
-        for k in ("filt_order", "ff_free"):
+        for k in ("filt_order", "ff_free", "filt_tau"):
             if k in _yaml_diag_gains:
                 f.write(f"# meta:indi_{k}={_yaml_diag_gains[k]}\n")
         for k in ("kp_xy", "kp_z", "kv_xy", "kv_z"):
