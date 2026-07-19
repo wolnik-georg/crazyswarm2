@@ -209,21 +209,21 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      # 2026-07-19 OFFICIAL-REGIME SANITY CHECK: full coherent stock crazyflie-firmware INDI gain
-      # set (both loops + filter together, keeping cascade separation), to validate whether the
-      # official low-bandwidth tuning flies clean on our brushless. Mapped to our units:
-      #   attitude: kr=120 (=REF_ERR*REF_RATE=5*24), kw=24 (=REF_RATE)  → wn=1.7 Hz
-      #   position: kp_xy=5, kv_xy=5 (=K_xi*K_dxi, K_dxi)              → wn=0.36 Hz
-      #   filter: fc_bw=8  (=STABILIZATION_INDI_FILT_CUTOFF)
-      #   cascade ratio 1.7/0.36 = 4.9x (healthy — unlike 2026-07-18's broken 2.5x).
-      # NOT replicated (architecture differs): G1 (we use measured-RPM torque via J), G2 (yaw rotor),
-      # act_dyn (motor model — we measure RPM directly). Expect CLEAN but LOOSE tracking.
-      # To restore our tuned gains: kr=1500/kw=180/fc=60, kp_xy=40/kv_xy=8.
-      kr: 120.0
-      kw: 24.0
-      kr_z: 120.0
-      kw_z: 24.0
-      fc_bw: 8.0              # official STABILIZATION_INDI_FILT_CUTOFF
+      # 2026-07-19 KNEE-LOCATION SWEEP. Measured so far (cascade held at KP=KR/30 throughout):
+      #   kr=120: pos=6.0cm  gx=9.7  (1.07x geometric's 9.1 — clean, loose)
+      #   kr=600: pos=0.93cm gx=13.0 (1.43x geo — best tested compromise so far)
+      #   kr=750..1200: pos 0.3-0.6cm, gx 14-21 (1.5-2.3x geo — flicker outpaces tracking gain)
+      # GAP 120-600 never sampled — real knee likely lives there. This point (kr=250) tests it:
+      # if gx stays near ~10-11 with pos well under 6cm, this beats kr=600 as the sweet spot; if
+      # gx already jumps toward 13-14, the knee is low and kr=600 stands. Cascade intact (KP=8,
+      # not kp=40 like the 2026-07-18 kr=250 disaster) — should NOT reproduce that cascade wobble.
+      # Next candidates if needed: kr=350 (kw56/kp12/kv6/fc11), kr=450 (kw64/kp15/kv7/fc13).
+      # To restore prior best-tested: kr=600/kw=70/kp=20/kv=7/fc=15. Official: kr120/kw24/fc8,kp5/kv5.
+      kr: 250.0
+      kw: 47.0
+      kr_z: 250.0
+      kw_z: 47.0
+      fc_bw: 10.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
       # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
@@ -263,12 +263,10 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 OFFICIAL-REGIME SANITY CHECK — stock INDI position gains (K_xi=1, K_dxi=5 →
-      # kp=5, kv=5). Paired with the low attitude gains above to keep cascade separation intact.
-      # WATCH: altitude hold may be soft at kp_z=5; abort if it sinks/climbs. To restore our tuned
-      # values: kp_xy=40, kp_z=30, kv_xy=8, kv_z=10.
-      kp_xy: 5.0
-      kp_z:  5.0
+      # 2026-07-19 KNEE-LOCATION SWEEP — position gains paired with kr250/kw47 (cascade KP=KR/30).
+      # Restore prior best-tested (kr600): kp_xy=20/kv_xy=7/kp_z=20/kv_z=7. Tuned: kp40/kv8/kp_z30/kv_z10.
+      kp_xy: 8.0
+      kp_z:  8.0
       kv_xy: 5.0
       kv_z:  5.0
     locSrv:
