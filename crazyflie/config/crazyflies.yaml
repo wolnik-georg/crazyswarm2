@@ -210,20 +210,19 @@ all:
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
       # 2026-07-19 KNEE-LOCATION SWEEP. Measured (cascade held at KP=KR/30 throughout):
-      #   kr=120: hover pos=6.0cm  gx=9.7  (clean, loose)
-      #   kr=250: hover pos=1.97cm gx=7.6 (BELOW geometric's 9.1!) — BEST hover so far.
-      #           BUT figure-8 RMSE=14.5cm, roll/pitch flatness err 6.6/3.8deg — attitude too slow
-      #           to track the trajectory (tau~300ms+), even though hover is clean+tight.
-      #   kr=600: hover pos=0.93cm gx=13.0 (flicker returns)
-      #   kr=750..1200: pos 0.3-0.6cm, gx 14-21 (flicker outpaces tracking gain)
-      # Knee is between 250-600. This point (kr=400) bisects it — watch BOTH hover gx AND fig-8
-      # RMSE/flatness err (hover-only misses the tracking-speed problem kr=250 has).
-      # To restore best hover point: kr=250/kw=47/kp=8/kv=5/fc=10. Official: kr120/kw24/fc8,kp5/kv5.
-      kr: 400.0
-      kw: 60.0
-      kr_z: 400.0
-      kw_z: 60.0
-      fc_bw: 12.0
+      #   kr=120: hover pos=6.0cm  gx=9.7   fig8: RMSE 22.7-33.5cm (clean, loose)
+      #   kr=250: hover pos=1.97cm gx=7.6   fig8: RMSE 14.5cm, roll/pitch err 6.6/3.8deg
+      #   kr=400: hover pos=0.93cm gx=10.4/10.6 (~15% above geo)  fig8: RMSE 9.7cm, roll err 5.2deg
+      #           — BEST SO FAR on both axes, dominates kr=250 (better hover AND better tracking).
+      #   kr=600: hover pos=0.93cm gx=13.0/13.6 (flicker returns) — fig8 not yet flown at this point.
+      # kr=400 vs kr=600 undecided: same hover pos, 400 is cleaner, but 600's fig-8 RMSE unknown.
+      # This point (kr=500) bisects to settle it. Fly BOTH hover and figure-8.
+      # To restore best-so-far: kr=400/kw=60/kp=13/kv=6/fc=12. Official: kr120/kw24/fc8,kp5/kv5.
+      kr: 500.0
+      kw: 67.0
+      kr_z: 500.0
+      kw_z: 67.0
+      fc_bw: 14.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
       # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
@@ -263,12 +262,12 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 KNEE-LOCATION SWEEP — position gains paired with kr400/kw60 (cascade KP=KR/30).
-      # kr=250 point used kp_xy=8/kv_xy=5 (best hover, but loose fig-8). Tuned: kp40/kv8/kp_z30/kv_z10.
-      kp_xy: 13.0
-      kp_z:  13.0
-      kv_xy: 6.0
-      kv_z:  6.0
+      # 2026-07-19 KNEE-LOCATION SWEEP — position gains paired with kr500/kw67 (cascade KP=KR/30).
+      # kr=400 point (best so far) used kp_xy=13/kv_xy=6. Tuned: kp40/kv8/kp_z30/kv_z10.
+      kp_xy: 17.0
+      kp_z:  17.0
+      kv_xy: 7.0
+      kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
