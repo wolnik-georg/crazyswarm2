@@ -225,15 +225,18 @@ all:
       # is scaled by fixed J (gain-invariant — explains why attitude err never improved with KR).
       # alpha_ref = alpha_des - KR*eR - KW*e_omega: KW directly, linearly injects raw gyro noise
       # here — this path DOES scale with KW specifically, independent of KR's bandwidth benefit.
-      # DECOUPLING TEST: freeze KR=2400 (best tracking, hover still only "rough" not unsafe), pull
-      # KW back down from the ratio-prescribed 228 to isolate KW's effect on attitude flatness err
-      # without losing KR's position-RMSE gain. This row: kw=170 (zeta=1.74, was 2.33).
-      # Ladder if needed: kw=170 -> 130 (zeta=1.33) -> 100 (zeta=1.02).
-      # Watch: does roll/pitch flatness err drop while RMSE stays near 2.9-3.1cm?
+      # DECOUPLING TEST CONFIRMED 2026-07-19: kr=2400/kw=170 (zeta=1.74, down from 228/zeta=2.33)
+      # gave RMSE 2.8/2.9/3.0cm (matches or BEATS kw=228's 2.9/3.1) AND roll/pitch flatness err
+      # dropped to a tight, consistent 4.0/4.0/4.1deg roll, 3.3/4.5/3.7deg pitch (was noisy 4-7deg
+      # band the whole ladder). Clean win on BOTH metrics — confirms KW (not KR) was driving
+      # attitude noise via KW*e_omega, independent of KR's position-RMSE bandwidth benefit.
+      # Pushing KW lower to find its floor (too little damping = different failure mode = overshoot/
+      # oscillation, not noise). This row: kw=130 (zeta=1.33). Next if needed: kw=100 (zeta=1.02).
+      # STOP CONDITION: RMSE or flatness err worse than kw=170's result -> revert to kw=170 (best so far).
       kr: 2400.0
-      kw: 170.0
+      kw: 130.0
       kr_z: 2400.0
-      kw_z: 170.0
+      kw_z: 130.0
       fc_bw: 60.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
