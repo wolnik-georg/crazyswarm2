@@ -230,13 +230,17 @@ all:
       # dropped to a tight, consistent 4.0/4.0/4.1deg roll, 3.3/4.5/3.7deg pitch (was noisy 4-7deg
       # band the whole ladder). Clean win on BOTH metrics — confirms KW (not KR) was driving
       # attitude noise via KW*e_omega, independent of KR's position-RMSE bandwidth benefit.
-      # Pushing KW lower to find its floor (too little damping = different failure mode = overshoot/
-      # oscillation, not noise). This row: kw=130 (zeta=1.33). Next if needed: kw=100 (zeta=1.02).
-      # STOP CONDITION: RMSE or flatness err worse than kw=170's result -> revert to kw=170 (best so far).
+      # KW FLOOR FOUND 2026-07-19: kw=130 (zeta=1.33) FAILED — flight 1 fine (RMSE 2.8, roll 4.4,
+      # pitch 3.4) but flight 2 blew up (RMSE 6.1, roll 21.6deg, pitch 13.8deg — an order of
+      # magnitude worse than anything else this session). Inconsistent pass/fail = marginal
+      # stability, not smooth degradation — a real floor, not noise-band scatter. REVERTED to
+      # kw=170 (zeta=1.74), the confirmed best point on both RMSE and attitude flatness err
+      # (2.8-3.0cm, ~4.0deg roll, ~3.8deg pitch, consistent across 3 flights). THIS IS THE LOCKED
+      # CONFIG — do not go below kw=170 at kr=2400 (marginal/unsafe below this point).
       kr: 2400.0
-      kw: 130.0
+      kw: 170.0
       kr_z: 2400.0
-      kw_z: 130.0
+      kw_z: 170.0
       fc_bw: 60.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
@@ -277,13 +281,21 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 DECOUPLING TEST — position gains FROZEN at kr=2400's proven point (KR/KP cascade
-      # unchanged; only KW is being pulled independently). To revert to original tuned config:
-      # kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
+      # 2026-07-19 KV DECOUPLING TEST — analogous to the KR/KW decoupling that just improved
+      # attitude tracking (KW*e_omega directly injects raw gyro noise into torque, independent of
+      # KR's bandwidth benefit). Position loop has the same structure: KP sets bandwidth, KV
+      # multiplies velocity error into the accel demand — never tested independently, always
+      # scaled with KP at a fixed ratio (zeta_pos=0.625-0.632) the whole session.
+      # FROZEN: kp_xy=64 (proven bandwidth, matches locked kr=2400/kw=170 point).
+      # PULLED DOWN: kv_xy=10 (zeta=0.625) -> 7 (zeta=0.438, this row).
+      # Watch: does figure-8 RMSE stay near 2.8-3.0cm while position tracking noise/consistency
+      # improves? If yes, continue to kv=5 (zeta=0.312). If RMSE or consistency gets WORSE
+      # (like kw=130's failure), revert to kv=10 — that was already the confirmed-good point.
+      # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
       kp_xy: 64.0
       kp_z:  48.0
-      kv_xy: 10.0
-      kv_z:  13.0
+      kv_xy: 7.0
+      kv_z:  9.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
