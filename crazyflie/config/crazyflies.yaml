@@ -209,20 +209,21 @@ all:
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
       ctrl_mode: 3              # full INDI — RPM from OPTICAL DECK (rpm.*), not DShot (fixes 7 Hz cycle)
-      # 2026-07-19 KNEE-LOCATION SWEEP. Measured (cascade held at KP=KR/30 throughout):
-      #   kr=120: hover pos=6.0cm  gx=9.7   fig8: RMSE 22.7-33.5cm (clean, loose)
-      #   kr=250: hover pos=1.97cm gx=7.6   fig8: RMSE 14.5cm, roll/pitch err 6.6/3.8deg
-      #   kr=400: hover pos=0.93cm gx=10.4/10.6 (~15% above geo)  fig8: RMSE 9.7cm, roll err 5.2deg
-      #           — BEST SO FAR on both axes, dominates kr=250 (better hover AND better tracking).
-      #   kr=600: hover pos=0.93cm gx=13.0/13.6 (flicker returns) — fig8 not yet flown at this point.
-      # kr=400 vs kr=600 undecided: same hover pos, 400 is cleaner, but 600's fig-8 RMSE unknown.
-      # This point (kr=500) bisects to settle it. Fly BOTH hover and figure-8.
-      # To restore best-so-far: kr=400/kw=60/kp=13/kv=6/fc=12. Official: kr120/kw24/fc8,kp5/kv5.
-      kr: 500.0
-      kw: 67.0
-      kr_z: 500.0
-      kw_z: 67.0
-      fc_bw: 14.0
+      # 2026-07-19 PRIORITY SWITCH: RMSE target ~4cm, flicker accepted as cost (operator decision).
+      # Knee sweep (kr120→600, cascade held) showed monotonic tradeoff: fig8 RMSE 22.7→14.5→9.7→
+      # 7.9cm as kr climbed 120→250→400→500, at the cost of hover gx 9.7→7.6→10.4→13.6-14.7.
+      # Rather than continue extrapolating, REVERTED to the config already proven at target:
+      # kr=1500/kw=180 (zeta=2.32, note: higher damping than this ladder's zeta=1.5 formula would
+      # give at kr=1500 i.e. kw=116 — the empirically-validated kw=180 is used, not the formula)
+      # measured 4.2cm figure-8 RMSE repeatably on 2026-07-18 (BL-locked config). Now combined with
+      # filt_tau=1/filt_order=1/fixed torque_ratio (all correct-regardless improvements added since).
+      # Expect hover gx back near ~18 (flicker), fig8 RMSE ~4cm (target). Knee-sweep points remain
+      # available if flicker needs revisiting: kr=400 (gx~10.4, fig8 9.7cm) is the clean compromise.
+      kr: 1500.0
+      kw: 180.0
+      kr_z: 1500.0
+      kw_z: 180.0
+      fc_bw: 60.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
       # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
@@ -262,12 +263,13 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 KNEE-LOCATION SWEEP — position gains paired with kr500/kw67 (cascade KP=KR/30).
-      # kr=400 point (best so far) used kp_xy=13/kv_xy=6. Tuned: kp40/kv8/kp_z30/kv_z10.
-      kp_xy: 17.0
-      kp_z:  17.0
-      kv_xy: 7.0
-      kv_z:  7.0
+      # 2026-07-19 PRIORITY SWITCH: reverted to proven RMSE-target config (paired with kr1500/kw180
+      # above). Measured 4.2cm figure-8 RMSE on 2026-07-18. Knee-sweep kp_xy=13/kv_xy=6 (kr=400,
+      # clean compromise) remains available if flicker needs revisiting.
+      kp_xy: 40.0
+      kp_z:  30.0
+      kv_xy: 8.0
+      kv_z:  10.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
