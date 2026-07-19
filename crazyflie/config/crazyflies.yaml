@@ -212,14 +212,18 @@ all:
       # 2026-07-19 PUSHING FOR CEILING (ratios: zeta_att=2.324, kp_ratio=0.0267/cascade=6.12x,
       # zeta_pos=0.632). Ladder progress:
       #   kr=1500: 4.2/4.2/4.4cm, hover gx=17.1/15.3
-      #   kr=1650: 4.0/4.2cm (small edge, within noise), hover gx=18.1/17.1 (unchanged)
-      # Continuing to kr=1800 (this row). If RMSE keeps improving/holding, go to 2000, 2200.
-      # If RMSE gets WORSE than the previous step, STOP — revert to the step before it (ceiling found).
+      #   kr=1650: 4.0/4.2cm, hover gx=18.1/17.1
+      #   kr=1800: 3.8/3.9cm (BEST — hits target), hover gx=20.7/20.2, hover pos=0.30cm (best too)
+      #            — matches historical BL-att4 attitude-ladder plateau point (2026-07-16)
+      # RMSE gains shrinking (0.2cm/step) while flicker climbs steadily — diminishing-returns
+      # signature, but not yet a confirmed reversal. Continuing to kr=2000 (this row) to find the
+      # actual ceiling (first step where RMSE gets WORSE than the previous step).
+      # STOP CONDITION: RMSE worse than kr=1800's 3.8/3.9cm -> revert to kr=1800 (the ceiling).
       # To revert to confirmed-good: kr=1500/kw=180/kp=40/kv=8/fc=60.
-      kr: 1800.0
-      kw: 197.0
-      kr_z: 1800.0
-      kw_z: 197.0
+      kr: 2000.0
+      kw: 208.0
+      kr_z: 2000.0
+      kw_z: 208.0
       fc_bw: 60.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
@@ -260,10 +264,11 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 PUSHING FOR CEILING — paired with kr1800/kw197 above, same ratios as the
-      # validated kr1500/kp40/kv8 point. To revert to confirmed-good: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
-      kp_xy: 48.0
-      kp_z:  36.0
+      # 2026-07-19 PUSHING FOR CEILING — paired with kr2000/kw208 above, same ratios as the
+      # validated kr1500/kp40/kv8 point. kr=1800 point (best-so-far, 3.8/3.9cm) used kp_xy=48/kv_xy=9.
+      # To revert to confirmed-good: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
+      kp_xy: 53.0
+      kp_z:  40.0
       kv_xy: 9.0
       kv_z:  11.0
     locSrv:
