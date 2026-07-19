@@ -287,15 +287,18 @@ all:
       # multiplies velocity error into the accel demand — never tested independently, always
       # scaled with KP at a fixed ratio (zeta_pos=0.625-0.632) the whole session.
       # FROZEN: kp_xy=64 (proven bandwidth, matches locked kr=2400/kw=170 point).
-      # PULLED DOWN: kv_xy=10 (zeta=0.625) -> 7 (zeta=0.438, this row).
-      # Watch: does figure-8 RMSE stay near 2.8-3.0cm while position tracking noise/consistency
-      # improves? If yes, continue to kv=5 (zeta=0.312). If RMSE or consistency gets WORSE
-      # (like kw=130's failure), revert to kv=10 — that was already the confirmed-good point.
+      # CONFIRMED 2026-07-19: kv=7 (zeta=0.438, down from 10/zeta=0.625) gave RMSE 2.6/2.8/2.6cm —
+      # BEATS kv=10's 2.8/2.9/3.0, tighter spread, geom RMSE down to 1.5-1.7cm (best of session).
+      # roll err ticked up slightly (4.5-4.7 vs 4.0-4.4, within noise), pitch unchanged. Clean win,
+      # same pattern as the KR/KW decoupling. Pushing further: kv=5 (zeta=0.312, this row).
+      # STOP CONDITION: watch hard for a kw=130-style SUDDEN failure (one good flight, one bad —
+      # marginal stability, not gradual noise). If seen, revert immediately to kv=7 (confirmed-good).
+      # Next if kv=5 still good: kv=4 (zeta=0.250).
       # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
       kp_xy: 64.0
       kp_z:  48.0
-      kv_xy: 7.0
-      kv_z:  9.0
+      kv_xy: 5.0
+      kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
