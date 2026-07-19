@@ -216,16 +216,24 @@ all:
       #   kr=1650: RMSE 4.0/4.2cm
       #   kr=1800: RMSE 3.8/3.9cm, roll/pitch err 5.8/4.1, 4.3/5.2 deg
       #   kr=2000: RMSE 3.3/3.9cm, roll/pitch err 5.4/5.9, 6.5/7.0 deg
-      #   kr=2200: RMSE 3.1/3.1/3.2cm (BEST), roll/pitch err 7.0/5.2, 5.2/3.7, 6.1/5.0 deg — still
-      #            best-or-tied RMSE, attitude flatness err noisy but NOT clearly worse (4-7deg
-      #            band throughout). Hover-only got noticeably noisier at 2200 but that's not the
-      #            stop condition here. Continuing to kr=2400 (this row).
-      # STOP CONDITION (revised): figure-8 RMSE OR roll/pitch flatness err clearly worse than the
-      # previous step -> revert to the step before it.
+      #   kr=2200: RMSE 3.1/3.1/3.2cm, roll/pitch err 7.0/5.2, 5.2/3.7, 6.1/5.0 deg
+      #   kr=2400: RMSE 2.9/3.1cm (BEST tracking), roll/pitch err 4.9/5.7, 5.7/4.1 deg
+      #   kr=2600: hover confirmed worse. kr=2800 identified as the hover ceiling — climb halted.
+      # ANALYSIS: pos RMSE improved monotonically the whole ladder (bandwidth/lag effect from KR),
+      # but roll/pitch flatness err stayed flat/noisy 3.9-6.5deg the whole time — did NOT track KR.
+      # Mechanism (verified in code): delta_tau = J*(alpha_ref_filt - alpha_meas); alpha_meas noise
+      # is scaled by fixed J (gain-invariant — explains why attitude err never improved with KR).
+      # alpha_ref = alpha_des - KR*eR - KW*e_omega: KW directly, linearly injects raw gyro noise
+      # here — this path DOES scale with KW specifically, independent of KR's bandwidth benefit.
+      # DECOUPLING TEST: freeze KR=2400 (best tracking, hover still only "rough" not unsafe), pull
+      # KW back down from the ratio-prescribed 228 to isolate KW's effect on attitude flatness err
+      # without losing KR's position-RMSE gain. This row: kw=170 (zeta=1.74, was 2.33).
+      # Ladder if needed: kw=170 -> 130 (zeta=1.33) -> 100 (zeta=1.02).
+      # Watch: does roll/pitch flatness err drop while RMSE stays near 2.9-3.1cm?
       kr: 2400.0
-      kw: 228.0
+      kw: 170.0
       kr_z: 2400.0
-      kw_z: 228.0
+      kw_z: 170.0
       fc_bw: 60.0
       mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
       # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
@@ -266,9 +274,9 @@ all:
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
     pos_gains:
-      # 2026-07-19 PUSHING FURTHER (figure-8 tracking priority) — paired with kr2400/kw228 above.
-      # kr=2200 (best fig-8 so far, 3.1cm) used kp_xy=59/kv_xy=10. To revert to original tuned
-      # config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
+      # 2026-07-19 DECOUPLING TEST — position gains FROZEN at kr=2400's proven point (KR/KP cascade
+      # unchanged; only KW is being pulled independently). To revert to original tuned config:
+      # kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
       kp_xy: 64.0
       kp_z:  48.0
       kv_xy: 10.0
