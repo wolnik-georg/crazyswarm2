@@ -1,0 +1,70 @@
+=== Mon Jul 20 07:45:03 PM CEST 2026 ===
+=== Step 1: clean stale build/install artifacts ===
+cleaned.
+
+=== Step 2: colcon build (verbose, unbuffered) ===
+Starting >>> crazyflie_interfaces
+-- The C compiler identification is GNU 13.3.0
+-- The CXX compiler identification is GNU 13.3.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /usr/bin/cc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /usr/bin/c++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+CMake Error at CMakeLists.txt:13 (find_package):
+  By not providing "Findament_cmake.cmake" in CMAKE_MODULE_PATH this project
+  has asked CMake to find a package configuration file provided by
+  "ament_cmake", but CMake did not find one.
+
+  Could not find a package configuration file provided by "ament_cmake" with
+  any of the following names:
+
+    ament_cmakeConfig.cmake
+    ament_cmake-config.cmake
+
+  Add the installation prefix of "ament_cmake" to CMAKE_PREFIX_PATH or set
+  "ament_cmake_DIR" to a directory containing one of the above files.  If
+  "ament_cmake" provides a separate development package or SDK, be sure it
+  has been installed.
+
+
+-- Configuring incomplete, errors occurred!
+--- stderr: crazyflie_interfaces
+CMake Error at CMakeLists.txt:13 (find_package):
+  By not providing "Findament_cmake.cmake" in CMAKE_MODULE_PATH this project
+  has asked CMake to find a package configuration file provided by
+  "ament_cmake", but CMake did not find one.
+
+  Could not find a package configuration file provided by "ament_cmake" with
+  any of the following names:
+
+    ament_cmakeConfig.cmake
+    ament_cmake-config.cmake
+
+  Add the installation prefix of "ament_cmake" to CMAKE_PREFIX_PATH or set
+  "ament_cmake_DIR" to a directory containing one of the above files.  If
+  "ament_cmake" provides a separate development package or SDK, be sure it
+  has been installed.
+
+
+---
+Failed   <<< crazyflie_interfaces [0.41s, exited with code 1]
+
+Summary: 0 packages finished [0.50s]
+  1 package failed: crazyflie_interfaces
+  1 package had stderr output: crazyflie_interfaces
+  2 packages not processed
+
+=== Step 3: build status ===
+BUILD FAILED (exit 1)
+
+=== Step 4: verify installed flight.py is a symlink ===
+No installed flight.py found — build did not produce it.
+
+=== Step 5: source workspace ===
+install/setup.bash: line 11: COLCON_TRACE: unbound variable

@@ -1,0 +1,32 @@
+[0.004s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/crazyflie_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces
+[0.063s] -- The C compiler identification is GNU 13.3.0
+[0.112s] -- The CXX compiler identification is GNU 13.3.0
+[0.132s] -- Detecting C compiler ABI info
+[0.236s] -- Detecting C compiler ABI info - done
+[0.247s] -- Check for working C compiler: /usr/bin/cc - skipped
+[0.247s] -- Detecting C compile features
+[0.248s] -- Detecting C compile features - done
+[0.267s] -- Detecting CXX compiler ABI info
+[0.357s] -- Detecting CXX compiler ABI info - done
+[0.366s] -- Check for working CXX compiler: /usr/bin/c++ - skipped
+[0.366s] -- Detecting CXX compile features
+[0.366s] -- Detecting CXX compile features - done
+[0.385s] CMake Error at CMakeLists.txt:13 (find_package):
+[0.385s]   By not providing "Findament_cmake.cmake" in CMAKE_MODULE_PATH this project
+[0.385s]   has asked CMake to find a package configuration file provided by
+[0.385s]   "ament_cmake", but CMake did not find one.
+[0.385s] 
+[0.385s]   Could not find a package configuration file provided by "ament_cmake" with
+[0.385s]   any of the following names:
+[0.385s] 
+[0.385s]     ament_cmakeConfig.cmake
+[0.385s]     ament_cmake-config.cmake
+[0.386s] 
+[0.386s]   Add the installation prefix of "ament_cmake" to CMAKE_PREFIX_PATH or set
+[0.386s]   "ament_cmake_DIR" to a directory containing one of the above files.  If
+[0.386s]   "ament_cmake" provides a separate development package or SDK, be sure it
+[0.386s]   has been installed.
+[0.386s] 
+[0.386s] 
+[0.386s] -- Configuring incomplete, errors occurred!
+[0.388s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces' returned '1': DEBUGINFOD_URLS=https://debuginfod.ubuntu.com /usr/bin/cmake /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/crazyflie_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces
