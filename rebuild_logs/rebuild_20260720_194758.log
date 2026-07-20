@@ -1,0 +1,4 @@
+=== Mon Jul 20 07:47:58 PM CEST 2026 ===
+=== Step 0: ensure ROS2 environment is sourced ===
+ROS_DISTRO not set — sourcing /opt/ros/jazzy/setup.bash
+/opt/ros/jazzy/setup.bash: line 8: AMENT_TRACE_SETUP_FILES: unbound variable

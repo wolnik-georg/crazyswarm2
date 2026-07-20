@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 """
+
+colcon build --symlink-install --packages-select crazyflie_examples
+. install/local_setup.bash
+source  /opt/ros/jazzy/setup.bash
+source /home/flyingrobots/venv/bin/activate
+colcon build --symlink-install --packages-select crazyflie_examples
+. install/local_setup.bash
+source  /opt/ros/jazzy/setup.bash
+source /home/flyingrobots/venv/bin/activate
+
+
 Generic CS2 flight script — runs any Rust-exported Poly4D trajectory.
 
 Usage:
@@ -1088,8 +1099,8 @@ def main():
             # cmdFullState handoff much smoother and removes the end-of-lap jerk.
             th.sleep(0.5)
             # Override HLC by streaming position setpoints, then hand back to HLC for land.
-            hlc_hold_pos = np.array(
                 [
+            hlc_hold_pos = np.array(
                     float(_latest_state.get("stateEstimate.x", 0.0)),
                     float(_latest_state.get("stateEstimate.y", 0.0)),
                     float(_latest_state.get("stateEstimate.z", args.height)),
