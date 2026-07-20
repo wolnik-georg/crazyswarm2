@@ -22,6 +22,29 @@ LOG_FILE="$LOG_DIR/rebuild_$(date +%Y%m%d_%H%M%S).log"
 
 {
   echo "=== $(date) ==="
+  echo "=== Step 0: ensure ROS2 environment is sourced ==="
+  # Required because this script runs via `bash script.sh`, which many .bashrc
+  # setups skip ROS sourcing for (common guard: `[ -z "$PS1" ] && return`
+  # short-circuits before the ROS source line in non-interactive shells).
+  # Without this, CMake can't find ament_cmake and every package fails to
+  # configure (confirmed root cause of the crazyflie_interfaces build failure).
+  if [ -z "${ROS_DISTRO:-}" ]; then
+    ROS_SETUP=$(ls /opt/ros/*/setup.bash 2>/dev/null | head -1)
+    if [ -n "$ROS_SETUP" ]; then
+      echo "ROS_DISTRO not set — sourcing $ROS_SETUP"
+      # shellcheck disable=SC1090
+      source "$ROS_SETUP"
+    else
+      echo "ERROR: ROS_DISTRO not set and no /opt/ros/*/setup.bash found."
+      echo "Source your ROS2 environment manually first, e.g.:"
+      echo "  source /opt/ros/humble/setup.bash"
+      exit 1
+    fi
+  else
+    echo "ROS_DISTRO=$ROS_DISTRO already set."
+  fi
+
+  echo
   echo "=== Step 1: clean stale build/install artifacts ==="
   rm -rf build/crazyflie_examples install/crazyflie_examples log/latest_build
   echo "cleaned."
