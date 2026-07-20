@@ -573,13 +573,19 @@ def _upload_traj_to_oot(cf, th, segs: list, z_segs: list, hz: float, ox: float, 
     (traj.zci/zcv/zcw for the Z-axis buffer). Each triplet is written
     synchronously with 8 ms spacing (Rust upload_coef).
 
-    traj.z_mode is always set to 1 (polynomial). z_segs is all-zero for flat
-    trajectories, which is equivalent to the old z_mode=0 constant-height behaviour.
+    traj.z_mode is only switched to 1 (polynomial) and the Z buffer uploaded
+    when z_segs actually has nonzero content — flat trajectories (all-zero Z)
+    keep the old z_mode=0 constant-height path untouched, byte-for-byte
+    identical to pre-2026-07-20 behaviour. Avoids exercising the new Z-upload
+    firmware path at all for trajectories that never needed it.
     """
     n_segs = len(segs)
     n_coefs = n_segs * 19
-    n_z_coefs = n_segs * 9
-    print(f"[traj] Uploading {n_segs} segs ({n_coefs} pos coefs + {n_z_coefs} z coefs) to OOT params...")
+    needs_z = any(abs(v) > 1e-9 for z_seg in z_segs for v in z_seg)
+
+    print(f"[traj] Uploading {n_segs} segs ({n_coefs} pos coefs"
+          + (f" + {n_segs * 9} z coefs" if needs_z else ", flat — z_mode=0")
+          + ") to OOT params...")
 
     _set_param_sync(cf, th, "traj.mode", 0)  # stay in passthrough during upload
     _set_param_sync(cf, th, "traj.nseg", n_segs)
@@ -587,7 +593,7 @@ def _upload_traj_to_oot(cf, th, segs: list, z_segs: list, hz: float, ox: float, 
     _set_param_sync(cf, th, "traj.ox", ox)
     _set_param_sync(cf, th, "traj.oy", oy)
     _set_param_sync(cf, th, "traj.dz", 0.0)
-    _set_param_sync(cf, th, "traj.z_mode", 1)
+    _set_param_sync(cf, th, "traj.z_mode", 1 if needs_z else 0)
     _set_param_sync(cf, th, "traj.att_ctrl_mode", 1)
 
     t0 = time.monotonic()
@@ -602,16 +608,17 @@ def _upload_traj_to_oot(cf, th, segs: list, z_segs: list, hz: float, ox: float, 
         if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
             print(f"[traj]   [{seg_i + 1}/{n_segs}] pos segs uploaded")
 
-    z_idx = 0
-    for seg_i, z_seg in enumerate(z_segs):
-        for val in z_seg:
-            _set_param_sync(cf, th, "traj.zci", z_idx)
-            _set_param_sync(cf, th, "traj.zcv", float(val))
-            _set_param_sync(cf, th, "traj.zcw", 1)
-            th.sleep(_COEF_UPLOAD_DELAY_S)
-            z_idx += 1
-        if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
-            print(f"[traj]   [{seg_i + 1}/{n_segs}] z segs uploaded")
+    if needs_z:
+        z_idx = 0
+        for seg_i, z_seg in enumerate(z_segs):
+            for val in z_seg:
+                _set_param_sync(cf, th, "traj.zci", z_idx)
+                _set_param_sync(cf, th, "traj.zcv", float(val))
+                _set_param_sync(cf, th, "traj.zcw", 1)
+                th.sleep(_COEF_UPLOAD_DELAY_S)
+                z_idx += 1
+            if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
+                print(f"[traj]   [{seg_i + 1}/{n_segs}] z segs uploaded")
 
     print(f"[traj] Upload done in {time.monotonic() - t0:.1f}s")
 
