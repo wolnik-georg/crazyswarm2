@@ -1,0 +1,25 @@
+=== Mon Jul 20 07:41:03 PM CEST 2026 ===
+=== Step 1: clean stale build/install artifacts ===
+cleaned.
+
+=== Step 2: colcon build (verbose, unbuffered) ===
+Starting >>> crazyflie_examples
+[0.131s] ERROR:colcon.colcon_cmake.task.cmake.build:Failed to find the following files:
+- /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/package.sh
+- /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_py/share/crazyflie_py/package.sh
+Check that the following packages have been built:
+- crazyflie_interfaces
+- crazyflie_py
+Failed   <<< crazyflie_examples [0.01s, exited with code 1]
+
+Summary: 0 packages finished [0.10s]
+  1 package failed: crazyflie_examples
+
+=== Step 3: build status ===
+BUILD FAILED (exit 1)
+
+=== Step 4: verify installed flight.py is a symlink ===
+No installed flight.py found — build did not produce it.
+
+=== Step 5: source workspace ===
+install/setup.bash: line 11: COLCON_TRACE: unbound variable
