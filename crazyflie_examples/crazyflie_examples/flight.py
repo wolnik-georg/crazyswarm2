@@ -39,6 +39,7 @@ The YAML vars list is defined by us, so the mapping below is authoritative.
 
 import argparse
 import csv
+import json
 import sys
 import time
 from datetime import datetime
@@ -462,12 +463,36 @@ def _find_onboard_csv(trajectory: str, mode: int, kt: float, speed: float) -> Pa
     return path
 
 
+def _is_periodic(csv_path: Path) -> bool:
+    """Read the {label}_onboard.meta.json sidecar written by export_poly4d --onboard.
+
+    Returns False (safe default) if the sidecar is missing or unreadable — e.g. for
+    onboard CSVs generated before this metadata existed. --reps > 1 is only allowed
+    when this returns True (see the check at the onboard_mode call site).
+    """
+    meta_path = csv_path.with_suffix("").with_suffix(".meta.json")
+    if not meta_path.exists():
+        return False
+    try:
+        with open(meta_path) as f:
+            return bool(json.load(f).get("periodic", False))
+    except (json.JSONDecodeError, OSError):
+        return False
+
+
 def _load_onboard_csv(path: Path) -> tuple:
-    """Return (segments, total_duration). segments: list of 19-float lists [dur,cx0..cx8,cy0..cy8]."""
+    """Return (segs, z_segs, total_duration).
+
+    segs: list of 19-float lists [dur,cx0..cx8,cy0..cy8] (position, traj.ci/cv/cw).
+    z_segs: list of 9-float lists [cz0..cz8] (Z axis, traj.zci/zcv/zcw). All-zero for
+    flat trajectories (older exports without cz columns fall back to all-zero here).
+    """
     segs = []
+    z_segs = []
     total_dur = 0.0
     with open(path) as f:
         reader = csv.DictReader(f)
+        has_z = reader.fieldnames is not None and "cz0" in reader.fieldnames
         for row in reader:
             vals = [float(row["duration"])]
             for i in range(9):
@@ -476,7 +501,11 @@ def _load_onboard_csv(path: Path) -> tuple:
                 vals.append(float(row[f"cy{i}"]))
             segs.append(vals)
             total_dur += vals[0]
-    return segs, total_dur
+            if has_z:
+                z_segs.append([float(row[f"cz{i}"]) for i in range(9)])
+            else:
+                z_segs.append([0.0] * 9)
+    return segs, z_segs, total_dur
 
 
 def _set_param_sync(cf, th, name: str, value):
@@ -537,15 +566,20 @@ def _firmware_idle_reset(cf, th):
     th.sleep(0.2)
 
 
-def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
+def _upload_traj_to_oot(cf, th, segs: list, z_segs: list, hz: float, ox: float, oy: float):
     """Upload trajectory segments to OOT traj params (Mode D).
 
-    Protocol: for each float, set traj.ci=index, traj.cv=value, traj.cw=1.
-    Each triplet is written synchronously with 8 ms spacing (Rust upload_coef).
+    Protocol: for each float, set traj.ci=index, traj.cv=value, traj.cw=1
+    (traj.zci/zcv/zcw for the Z-axis buffer). Each triplet is written
+    synchronously with 8 ms spacing (Rust upload_coef).
+
+    traj.z_mode is always set to 1 (polynomial). z_segs is all-zero for flat
+    trajectories, which is equivalent to the old z_mode=0 constant-height behaviour.
     """
     n_segs = len(segs)
     n_coefs = n_segs * 19
-    print(f"[traj] Uploading {n_segs} segs ({n_coefs} coefs) to OOT params...")
+    n_z_coefs = n_segs * 9
+    print(f"[traj] Uploading {n_segs} segs ({n_coefs} pos coefs + {n_z_coefs} z coefs) to OOT params...")
 
     _set_param_sync(cf, th, "traj.mode", 0)  # stay in passthrough during upload
     _set_param_sync(cf, th, "traj.nseg", n_segs)
@@ -553,7 +587,7 @@ def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
     _set_param_sync(cf, th, "traj.ox", ox)
     _set_param_sync(cf, th, "traj.oy", oy)
     _set_param_sync(cf, th, "traj.dz", 0.0)
-    _set_param_sync(cf, th, "traj.z_mode", 0)
+    _set_param_sync(cf, th, "traj.z_mode", 1)
     _set_param_sync(cf, th, "traj.att_ctrl_mode", 1)
 
     t0 = time.monotonic()
@@ -566,7 +600,18 @@ def _upload_traj_to_oot(cf, th, segs: list, hz: float, ox: float, oy: float):
             th.sleep(_COEF_UPLOAD_DELAY_S)
             coef_idx += 1
         if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
-            print(f"[traj]   [{seg_i + 1}/{n_segs}] segs uploaded")
+            print(f"[traj]   [{seg_i + 1}/{n_segs}] pos segs uploaded")
+
+    z_idx = 0
+    for seg_i, z_seg in enumerate(z_segs):
+        for val in z_seg:
+            _set_param_sync(cf, th, "traj.zci", z_idx)
+            _set_param_sync(cf, th, "traj.zcv", float(val))
+            _set_param_sync(cf, th, "traj.zcw", 1)
+            th.sleep(_COEF_UPLOAD_DELAY_S)
+            z_idx += 1
+        if (seg_i + 1) % 3 == 0 or seg_i == n_segs - 1:
+            print(f"[traj]   [{seg_i + 1}/{n_segs}] z segs uploaded")
 
     print(f"[traj] Upload done in {time.monotonic() - t0:.1f}s")
 
@@ -722,7 +767,13 @@ def main():
 
     parser = argparse.ArgumentParser(description="Generic CS2 flight script")
     parser.add_argument(
-        "--trajectory", default="figure8", choices=["figure8", "circle", "hover"]
+        "--trajectory", default="figure8", choices=[
+            "figure8", "circle", "hover",
+            "helix", "loop", "corkscrew", "corner",
+            "teardrop", "teardrop_wide", "loop_train", "roller_coaster",
+            "oval", "slalom", "tilted_oval",
+            "corner_loop", "slalom_loop", "loop_train_loop", "roller_coaster_loop",
+        ]
     )
     parser.add_argument("--mode", type=int, default=0, choices=[0, 1, 2, 3])
     parser.add_argument("--kt", type=float, default=None)
@@ -754,6 +805,7 @@ def main():
     traj = None
     traj_dur = 0.0
     onboard_segs = None
+    onboard_z_segs = None
 
     if hover_mode:
         traj_dur = args.duration
@@ -762,10 +814,21 @@ def main():
         onboard_csv_path = _find_onboard_csv(
             args.trajectory, args.mode, args.kt, args.speed
         )
-        onboard_segs, traj_dur = _load_onboard_csv(onboard_csv_path)
+        onboard_periodic = _is_periodic(onboard_csv_path)
+        if args.reps > 1 and not onboard_periodic:
+            print(
+                f"[error] --reps {args.reps} requested for '{args.trajectory}' mode={args.mode}, "
+                f"but this trajectory/mode is not marked periodic-safe for looping "
+                f"(missing or periodic=false in {onboard_csv_path.with_suffix('').with_suffix('.meta.json').name}). "
+                f"Multi-rep would jump/teleport at the lap boundary. Use --reps 1, or pick a "
+                f"periodic trajectory (circle, loop, teardrop, teardrop_wide, oval, tilted_oval, "
+                f"corner_loop, slalom_loop, loop_train_loop, roller_coaster_loop)."
+            )
+            sys.exit(1)
+        onboard_segs, onboard_z_segs, traj_dur = _load_onboard_csv(onboard_csv_path)
         print(
             f"[flight] onboard: {onboard_csv_path.name}  mode={args.mode} kt={args.kt} "
-            f"reps={args.reps}  ({len(onboard_segs)} segs, {traj_dur:.2f}s/rep)"
+            f"reps={args.reps} periodic={onboard_periodic}  ({len(onboard_segs)} segs, {traj_dur:.2f}s/rep)"
         )
     else:
         csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
@@ -844,7 +907,7 @@ def main():
         ox = float(cf.initialPosition[0])
         oy = float(cf.initialPosition[1])
         print("[flight] Uploading onboard trajectory (OOT active, drone on ground)...")
-        _upload_traj_to_oot(cf, th, onboard_segs, args.height, ox, oy)
+        _upload_traj_to_oot(cf, th, onboard_segs, onboard_z_segs, args.height, ox, oy)
 
     _apply_flight_settings(
         allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE, pos_gains=_RAMP_POS_GAINS
@@ -921,41 +984,36 @@ def main():
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
             print("[flight] Starting onboard trajectory (Mode D)...")
 
-            for rep in range(args.reps):
-                if rep > 0:
-                    _stream_hover_hold(cf, th, keepalive_pos, 1.0)
-                    _set_param_sync(cf, th, "traj.start", 0)
-                    _set_param_sync(cf, th, "traj.mode", 0)
-                    th.sleep(0.1)
-                ox, oy = _sample_origin(th, fallback_xy)
-                _apply_onboard_traj_origin(cf, th, ox, oy, args.height)
-                _wait_for_state(th)
-                z_hover = float(_latest_state.get("stateEstimate.z", args.height))
-                keepalive_pos = np.array([ox, oy, max(z_hover, _Z_CMD_MIN_AIRBORNE)])
+            # Single continuous arm cycle: the firmware self-stops after exactly
+            # traj.reps laps from one TRAJ_T0 latch (t_elapsed >= total_dur * reps,
+            # see controllerOutOfTree in lib.rs) — no per-rep stop/restart needed.
+            # For reps>1 this requires a periodic trajectory (position AND
+            # velocity/accel/jerk continuity at the wrap seam); enforced above via
+            # onboard_periodic before takeoff, so it's guaranteed true here.
+            ox, oy = _sample_origin(th, fallback_xy)
+            _apply_onboard_traj_origin(cf, th, ox, oy, args.height)
+            _wait_for_state(th)
+            z_hover = float(_latest_state.get("stateEstimate.z", args.height))
+            keepalive_pos = np.array([ox, oy, max(z_hover, _Z_CMD_MIN_AIRBORNE)])
 
-                is_last_rep = (rep == args.reps - 1)
-                _log_t0 = time.monotonic()
-                _set_param_sync(cf, th, "traj.start", 0)
-                _set_param_sync(cf, th, "traj.mode", 0)
-                # Last rep: firmware self-stops after exactly 1 lap at the rest-to-rest
-                # endpoint. Intermediate reps: reps=0 (loop forever) so manual stop
-                # in the next iteration handles the inter-rep transition cleanly.
-                _set_param_sync(cf, th, "traj.reps", 1 if is_last_rep else 0)
-                _set_param_sync(cf, th, "traj.mode", 1)
-                th.sleep(_TRAJ_ARM_DELAY_S)
-                _set_param_sync(cf, th, "traj.start", 1)
-                # Full duration for all reps. Last rep: firmware self-stops at traj_dur
-                # and we add 0.5 s so the keepalive holds position at the clean endpoint
-                # before _stop_onboard_traj_and_hold switches ctrl_mode.
-                t_settle = 0.5 if is_last_rep else 0.0
-                print(
-                    f"[flight] Onboard lap {traj_dur:.2f}s"
-                    + (f" + {t_settle:.1f}s settle (self-stop)" if is_last_rep else "")
-                )
-                t_end = th.time() + traj_dur + t_settle
-                while not th.isShutdown() and th.time() < t_end:
-                    cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
-                    th.sleepForRate(20)
+            _log_t0 = time.monotonic()
+            _set_param_sync(cf, th, "traj.start", 0)
+            _set_param_sync(cf, th, "traj.mode", 0)
+            _set_param_sync(cf, th, "traj.reps", args.reps)
+            _set_param_sync(cf, th, "traj.mode", 1)
+            th.sleep(_TRAJ_ARM_DELAY_S)
+            _set_param_sync(cf, th, "traj.start", 1)
+            # Firmware self-stops at reps*traj_dur; add 0.5s so the keepalive holds
+            # position at the clean endpoint before _stop_onboard_traj_and_hold.
+            t_settle = 0.5
+            print(
+                f"[flight] Onboard {args.reps} rep(s) x {traj_dur:.2f}s "
+                f"= {args.reps * traj_dur:.2f}s + {t_settle:.1f}s settle (self-stop)"
+            )
+            t_end = th.time() + args.reps * traj_dur + t_settle
+            while not th.isShutdown() and th.time() < t_end:
+                cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
+                th.sleepForRate(20)
 
             print("[flight] Done. Stopping trajectory and landing...")
             hold_pos = _stop_onboard_traj_and_hold(cf, th, keepalive_pos)
