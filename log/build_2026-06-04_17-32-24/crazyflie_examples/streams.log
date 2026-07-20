@@ -1,0 +1,153 @@
+[0.008s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples -- -j24 -l24
+[0.058s] Built target ament_cmake_python_copy_crazyflie_examples_setup
+[0.059s] Built target ament_cmake_python_copy_crazyflie_examples
+[0.195s] running install_scripts
+[0.195s] running egg_info
+[0.196s] writing crazyflie_examples.egg-info/PKG-INFO
+[0.196s] writing dependency_links to crazyflie_examples.egg-info/dependency_links.txt
+[0.197s] writing entry points to crazyflie_examples.egg-info/entry_points.txt
+[0.197s] writing top-level names to crazyflie_examples.egg-info/top_level.txt
+[0.203s] /home/flyingrobots/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+[0.203s] !!
+[0.203s] 
+[0.203s]         ********************************************************************************
+[0.203s]         Please avoid running ``setup.py`` directly.
+[0.203s]         Instead, use pypa/build, pypa/installer or other
+[0.203s]         standards-based tools.
+[0.204s] 
+[0.204s]         See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+[0.204s]         ********************************************************************************
+[0.204s] 
+[0.204s] !!
+[0.204s]   self.initialize_options()
+[0.206s] running egg_info
+[0.221s] reading manifest file 'crazyflie_examples.egg-info/SOURCES.txt'
+[0.222s] writing manifest file 'crazyflie_examples.egg-info/SOURCES.txt'
+[0.223s] writing crazyflie_examples.egg-info/PKG-INFO
+[0.223s] writing dependency_links to crazyflie_examples.egg-info/dependency_links.txt
+[0.223s] writing entry points to crazyflie_examples.egg-info/entry_points.txt
+[0.224s] writing top-level names to crazyflie_examples.egg-info/top_level.txt
+[0.240s] reading manifest file 'crazyflie_examples.egg-info/SOURCES.txt'
+[0.240s] writing manifest file 'crazyflie_examples.egg-info/SOURCES.txt'
+[0.242s] Built target ament_cmake_python_build_crazyflie_examples_egg
+[0.278s] Installing arming script to scripts
+[0.278s] Installing cmd_full_state script to scripts
+[0.278s] Installing figure8 script to scripts
+[0.278s] Installing flight script to scripts
+[0.278s] Installing goto_unicast script to scripts
+[0.278s] Installing group_mask script to scripts
+[0.278s] Installing hello_world script to scripts
+[0.279s] Installing infinite_flight script to scripts
+[0.279s] Installing multi_trajectory script to scripts
+[0.279s] Installing nice_hover script to scripts
+[0.279s] Installing set_param script to scripts
+[0.279s] Installing swap script to scripts
+[0.300s] Built target ament_cmake_python_build_crazyflie_examples_scripts
+[0.307s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples -- -j24 -l24
+[0.314s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --install /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples
+[0.319s] -- Install configuration: ""
+[0.319s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/pythonpath.sh
+[0.320s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/pythonpath.dsv
+[0.320s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info/dependency_links.txt
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info/PKG-INFO
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info/entry_points.txt
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info/top_level.txt
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples-1.0.3-py3.12.egg-info/SOURCES.txt
+[0.320s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples/
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//set_param
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//flight
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//group_mask
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//infinite_flight
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//cmd_full_state
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//nice_hover
+[0.320s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//goto_unicast
+[0.321s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//hello_world
+[0.321s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//swap
+[0.321s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//arming
+[0.321s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//figure8
+[0.321s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//multi_trajectory
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/goto_unicast.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/figure8.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/arming.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/group_mask.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/cmd_full_state.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/swap.py
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.008.csv
+[0.321s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode0_speed0.50.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode1_kt0.008.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.05.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode2_kt0.02.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode0_speed0.75.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode0_speed2.00.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode0_speed1.50.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode0.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode2_kt0.1.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode2_kt0.01.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode1_kt0.01.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode1_kt0.05.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode2_kt0.05.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode1_kt0.1.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode0_speed2.00.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode0_speed0.50.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.1.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode1_kt0.05.csv
+[0.322s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode3_kt0.01.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode1_kt0.2.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode2_kt0.008.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode0.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode1_kt0.03.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode3_kt0.02.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode0_speed0.75.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode1_kt0.04.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode0_speed1.50.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/circle_mode1_kt0.02.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode2_kt0.05.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/multi_trajectory
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/multi_trajectory/traj1.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/multi_trajectory/traj0.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode1_kt0.02.csv
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/infinite_flight.py
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/hello_world.py
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/set_param.py
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/__init__.py
+[0.323s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/flight.py
+[0.324s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/multi_trajectory.py
+[0.324s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/nice_hover.py
+[0.353s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples'...
+[0.353s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data'...
+[0.353s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/multi_trajectory'...
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//config
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//config/slam_params.yaml
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//config/nav2_params.yaml
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//config/nav2_view.rviz
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//data
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//data/map.pgm
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//data/map.data
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//data/map.yaml
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//data/map.posegraph
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch/launch.py
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch/keyboard_velmux_launch.py
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch/multiranger_nav2_launch.py
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch/multiranger_simple_mapper_launch.py
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//launch/multiranger_mapping_launch.py
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/ament_index/resource_index/package_run_dependencies/crazyflie_examples
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/ament_index/resource_index/parent_prefix_path/crazyflie_examples
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/ament_prefix_path.sh
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/ament_prefix_path.dsv
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/path.sh
+[0.357s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/environment/path.dsv
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/local_setup.bash
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/local_setup.sh
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/local_setup.zsh
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/local_setup.dsv
+[0.358s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/package.dsv
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/ament_index/resource_index/packages/crazyflie_examples
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/cmake/crazyflie_examplesConfig.cmake
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/cmake/crazyflie_examplesConfig-version.cmake
+[0.358s] -- Up-to-date: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples/package.xml
+[0.359s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --install /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples

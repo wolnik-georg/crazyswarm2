@@ -1,0 +1,28 @@
+-- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found ament_cmake_pytest: 2.5.4 (/opt/ros/jazzy/share/ament_cmake_pytest/cmake)
+[33mCMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+  The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+  install the 'python3-pytest' package.  On other platforms, install 'pytest'
+  using pip.
+Call Stack (most recent call first):
+  CMakeLists.txt:27 (ament_add_pytest_test)
+
+[0m
+[33mCMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+  The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+  install the 'python3-pytest' package.  On other platforms, install 'pytest'
+  using pip.
+Call Stack (most recent call first):
+  CMakeLists.txt:27 (ament_add_pytest_test)
+
+[0m
+-- Configuring done (0.3s)
+-- Generating done (0.0s)
+-- Build files have been written to: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples
+failed to create symbolic link '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples/ament_cmake_python/crazyflie_examples/crazyflie_examples' because existing path cannot be removed: Is a directory
+gmake[2]: *** [CMakeFiles/ament_cmake_python_symlink_crazyflie_examples.dir/build.make:70: CMakeFiles/ament_cmake_python_symlink_crazyflie_examples] Error 1
+gmake[1]: *** [CMakeFiles/Makefile2:141: CMakeFiles/ament_cmake_python_symlink_crazyflie_examples.dir/all] Error 2
+gmake[1]: *** Waiting for unfinished jobs....
+Built target ament_cmake_python_symlink_crazyflie_examples_setup
+gmake: *** [Makefile:146: all] Error 2

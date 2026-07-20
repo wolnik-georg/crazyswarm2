@@ -1,0 +1,30 @@
+[0.007s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples -- -j24 -l24
+[0.034s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.209s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.280s] -- Found ament_cmake_pytest: 2.5.4 (/opt/ros/jazzy/share/ament_cmake_pytest/cmake)
+[0.294s] [33mCMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+[0.294s]   The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+[0.294s]   install the 'python3-pytest' package.  On other platforms, install 'pytest'
+[0.294s]   using pip.
+[0.294s] Call Stack (most recent call first):
+[0.294s]   CMakeLists.txt:27 (ament_add_pytest_test)
+[0.294s] 
+[0.294s] [0m
+[0.312s] [33mCMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+[0.312s]   The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+[0.312s]   install the 'python3-pytest' package.  On other platforms, install 'pytest'
+[0.312s]   using pip.
+[0.312s] Call Stack (most recent call first):
+[0.312s]   CMakeLists.txt:27 (ament_add_pytest_test)
+[0.312s] 
+[0.312s] [0m
+[0.383s] -- Configuring done (0.4s)
+[0.385s] -- Generating done (0.0s)
+[0.387s] -- Build files have been written to: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples
+[0.412s] failed to create symbolic link '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples/ament_cmake_python/crazyflie_examples/crazyflie_examples' because existing path cannot be removed: Is a directory
+[0.413s] gmake[2]: *** [CMakeFiles/ament_cmake_python_symlink_crazyflie_examples.dir/build.make:70: CMakeFiles/ament_cmake_python_symlink_crazyflie_examples] Error 1
+[0.413s] gmake[1]: *** [CMakeFiles/Makefile2:141: CMakeFiles/ament_cmake_python_symlink_crazyflie_examples.dir/all] Error 2
+[0.413s] gmake[1]: *** Waiting for unfinished jobs....
+[0.419s] Built target ament_cmake_python_symlink_crazyflie_examples_setup
+[0.420s] gmake: *** [Makefile:146: all] Error 2
+[0.423s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy:/home/flyingrobots/georg/ros2_ws/install/crazyflie_py DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) \[\e]0;\u@\h: \w\a\]${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_examples -- -j24 -l24
