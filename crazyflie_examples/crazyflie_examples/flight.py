@@ -1099,8 +1099,8 @@ def main():
             # cmdFullState handoff much smoother and removes the end-of-lap jerk.
             th.sleep(0.5)
             # Override HLC by streaming position setpoints, then hand back to HLC for land.
-                [
             hlc_hold_pos = np.array(
+                [
                     float(_latest_state.get("stateEstimate.x", 0.0)),
                     float(_latest_state.get("stateEstimate.y", 0.0)),
                     float(_latest_state.get("stateEstimate.z", args.height)),
