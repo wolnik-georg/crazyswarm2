@@ -28,7 +28,12 @@ LOG_FILE="$LOG_DIR/rebuild_$(date +%Y%m%d_%H%M%S).log"
 
   echo
   echo "=== Step 2: colcon build (verbose, unbuffered) ==="
-  colcon build --symlink-install --packages-select crazyflie_examples \
+  # --packages-up-to (not --packages-select): also builds crazyflie_interfaces /
+  # crazyflie_py if they aren't already present in this workspace's install/ —
+  # --packages-select assumes dependencies already exist and fails outright if
+  # colcon can't discover them (confirmed root cause of the "1 package failed"
+  # error: crazyflie_interfaces/crazyflie_py package.sh files were missing).
+  colcon build --symlink-install --packages-up-to crazyflie_examples \
     --event-handlers console_direct+
   BUILD_STATUS=$?
 
