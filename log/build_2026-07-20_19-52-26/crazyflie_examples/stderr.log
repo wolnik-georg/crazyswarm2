@@ -1,0 +1,29 @@
+CMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+  The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+  install the 'python3-pytest' package.  On other platforms, install 'pytest'
+  using pip.
+Call Stack (most recent call first):
+  CMakeLists.txt:27 (ament_add_pytest_test)
+
+
+CMake Warning at /opt/ros/jazzy/share/ament_cmake_pytest/cmake/ament_add_pytest_test.cmake:82 (message):
+  The Python module 'pytest' was not found, pytests cannot be run.  On Linux,
+  install the 'python3-pytest' package.  On other platforms, install 'pytest'
+  using pip.
+Call Stack (most recent call first):
+  CMakeLists.txt:27 (ament_add_pytest_test)
+
+
+/home/flyingrobots/venv/lib/python3.12/site-packages/setuptools/_distutils/cmd.py:66: SetuptoolsDeprecationWarning: setup.py install is deprecated.
+!!
+
+        ********************************************************************************
+        Please avoid running ``setup.py`` directly.
+        Instead, use pypa/build, pypa/installer or other
+        standards-based tools.
+
+        See https://blog.ganssle.io/articles/2021/10/setup-py-deprecated.html for details.
+        ********************************************************************************
+
+!!
+  self.initialize_options()

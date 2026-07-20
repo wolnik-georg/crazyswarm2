@@ -1,0 +1,807 @@
+[0.005s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/crazyflie_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces
+[0.025s] -- Found ament_cmake: 2.5.4 (/opt/ros/jazzy/share/ament_cmake/cmake)
+[0.132s] -- Found Python3: /home/flyingrobots/venv/bin/python3 (found version "3.12.3") found components: Interpreter 
+[0.197s] -- Override CMake install command with custom implementation using symlinks instead of copying resources
+[0.226s] -- Found builtin_interfaces: 2.0.3 (/opt/ros/jazzy/share/builtin_interfaces/cmake)
+[0.262s] -- Found rosidl_generator_c: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_c/cmake)
+[0.286s] -- Found rosidl_generator_cpp: 4.6.6 (/opt/ros/jazzy/share/rosidl_generator_cpp/cmake)
+[0.301s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[0.323s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[0.336s] -- Found geometry_msgs: 5.3.6 (/opt/ros/jazzy/share/geometry_msgs/cmake)
+[0.368s] -- Found rosidl_default_generators: 1.6.0 (/opt/ros/jazzy/share/rosidl_default_generators/cmake)
+[0.380s] -- Found rosidl_adapter: 4.6.6 (/opt/ros/jazzy/share/rosidl_adapter/cmake)
+[0.952s] -- Found ament_cmake_cppcheck: 0.17.3 (/opt/ros/jazzy/share/ament_cmake_cppcheck/cmake)
+[0.956s] -- Found ament_cmake_cpplint: 0.17.3 (/opt/ros/jazzy/share/ament_cmake_cpplint/cmake)
+[0.959s] -- Found ament_cmake_uncrustify: 0.17.3 (/opt/ros/jazzy/share/ament_cmake_uncrustify/cmake)
+[0.964s] -- Found ament_cmake_ros: 0.12.0 (/opt/ros/jazzy/share/ament_cmake_ros/cmake)
+[1.629s] -- Using all available rosidl_typesupport_c: rosidl_typesupport_fastrtps_c;rosidl_typesupport_introspection_c
+[1.895s] -- Using all available rosidl_typesupport_cpp: rosidl_typesupport_fastrtps_cpp;rosidl_typesupport_introspection_cpp
+[1.900s] -- Found python_cmake_module: 0.11.1 (/opt/ros/jazzy/share/python_cmake_module/cmake)
+[1.989s] -- Found PythonExtra: /home/flyingrobots/venv/bin/python3  
+[2.337s] -- Found Python3: /home/flyingrobots/venv/bin/python3 (found version "3.12.3") found components: Interpreter Development NumPy Development.Module Development.Embed 
+[2.390s] -- Found ament_cmake_flake8: 0.17.3 (/opt/ros/jazzy/share/ament_cmake_flake8/cmake)
+[2.391s] -- Found ament_cmake_pep257: 0.17.3 (/opt/ros/jazzy/share/ament_cmake_pep257/cmake)
+[2.411s] -- Configuring done (2.4s)
+[2.483s] -- Generating done (0.0s)
+[2.492s] -- Build files have been written to: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces
+[2.499s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/crazyflie_interfaces -DAMENT_CMAKE_SYMLINK_INSTALL=1 -DCMAKE_INSTALL_PREFIX=/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces
+[2.500s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces -- -j24 -l24
+[2.555s] [  0%] Generating type hashes for ROS interfaces
+[2.562s] [  0%] Built target ament_cmake_python_symlink_crazyflie_interfaces
+[2.690s] running egg_info
+[2.698s] creating crazyflie_interfaces.egg-info
+[2.698s] writing crazyflie_interfaces.egg-info/PKG-INFO
+[2.698s] writing dependency_links to crazyflie_interfaces.egg-info/dependency_links.txt
+[2.698s] writing top-level names to crazyflie_interfaces.egg-info/top_level.txt
+[2.699s] writing manifest file 'crazyflie_interfaces.egg-info/SOURCES.txt'
+[2.734s] reading manifest file 'crazyflie_interfaces.egg-info/SOURCES.txt'
+[2.734s] writing manifest file 'crazyflie_interfaces.egg-info/SOURCES.txt'
+[2.757s] [  0%] Built target ament_cmake_python_build_crazyflie_interfaces_egg
+[3.025s] [  0%] Built target crazyflie_interfaces__rosidl_generator_type_description
+[3.035s] [  1%] Generating C code for ROS interfaces
+[3.045s] [  1%] Generating C++ code for ROS interfaces
+[4.373s] [  1%] Built target crazyflie_interfaces__cpp
+[4.727s] [  2%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics__functions.c.o
+[4.727s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics_array__functions.c.o
+[4.727s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support.c.o
+[4.727s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics__description.c.o
+[4.728s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics__type_support.c.o
+[4.728s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/full_state__functions.c.o
+[4.728s] [  4%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_data_generic__description.c.o
+[4.729s] [  4%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_data_generic__functions.c.o
+[4.729s] [  3%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/full_state__type_support.c.o
+[4.729s] [  5%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_data_generic__type_support.c.o
+[4.730s] [  6%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/hover__functions.c.o
+[4.730s] [  6%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/full_state__description.c.o
+[4.730s] [  7%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/hover__type_support.c.o
+[4.730s] [  7%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_block__description.c.o
+[4.730s] [  8%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_block__functions.c.o
+[4.731s] [  8%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/log_block__type_support.c.o
+[4.731s] [  9%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/position__description.c.o
+[4.731s] [ 10%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/status__description.c.o
+[4.731s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/status__type_support.c.o
+[4.731s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/hover__description.c.o
+[4.732s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/status__functions.c.o
+[4.732s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/position__functions.c.o
+[4.732s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/connection_statistics_array__description.c.o
+[4.736s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/position__type_support.c.o
+[4.763s] [ 11%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__description.c.o
+[4.766s] [ 13%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support.c.o
+[4.766s] [ 13%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/velocity_world__functions.c.o
+[4.767s] [ 13%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/velocity_world__type_support.c.o
+[4.767s] [ 13%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/velocity_world__description.c.o
+[4.768s] [ 14%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/go_to__functions.c.o
+[4.769s] [ 14%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__functions.c.o
+[4.770s] [ 14%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/go_to__type_support.c.o
+[4.770s] [ 14%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/go_to__description.c.o
+[4.773s] [ 15%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/notify_setpoints_stop__description.c.o
+[4.776s] [ 16%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/land__description.c.o
+[4.777s] [ 16%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/notify_setpoints_stop__functions.c.o
+[4.779s] [ 16%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/land__functions.c.o
+[4.779s] [ 17%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support.c.o
+[4.779s] [ 18%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/set_group_mask__functions.c.o
+[4.784s] [ 18%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/set_group_mask__type_support.c.o
+[4.784s] [ 18%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/land__type_support.c.o
+[4.784s] [ 19%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/start_trajectory__type_support.c.o
+[4.784s] [ 19%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/start_trajectory__functions.c.o
+[4.785s] [ 20%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/stop__description.c.o
+[4.789s] [ 20%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/set_group_mask__description.c.o
+[4.789s] [ 20%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/start_trajectory__description.c.o
+[4.791s] [ 20%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/stop__functions.c.o
+[4.795s] [ 21%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/takeoff__description.c.o
+[4.795s] [ 21%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/stop__type_support.c.o
+[4.799s] [ 21%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/takeoff__functions.c.o
+[4.804s] [ 22%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/takeoff__type_support.c.o
+[4.811s] [ 22%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/update_params__description.c.o
+[4.816s] [ 22%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/update_params__functions.c.o
+[4.816s] [ 22%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/upload_trajectory__description.c.o
+[4.817s] [ 23%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/upload_trajectory__functions.c.o
+[4.818s] [ 24%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/update_params__type_support.c.o
+[4.820s] [ 24%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/upload_trajectory__type_support.c.o
+[4.828s] [ 25%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/remove_logging__description.c.o
+[4.830s] [ 25%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/remove_logging__type_support.c.o
+[4.830s] [ 26%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/add_logging__description.c.o
+[4.834s] [ 26%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/remove_logging__functions.c.o
+[4.835s] [ 27%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/add_logging__type_support.c.o
+[4.837s] [ 27%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/add_logging__functions.c.o
+[4.843s] [ 27%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/arm__functions.c.o
+[4.849s] [ 27%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/arm__description.c.o
+[4.851s] [ 28%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_c.dir/rosidl_generator_c/crazyflie_interfaces/srv/detail/arm__type_support.c.o
+[4.900s] [ 28%] Linking C shared library libcrazyflie_interfaces__rosidl_generator_c.so
+[4.928s] [ 28%] Built target crazyflie_interfaces__rosidl_generator_c
+[4.936s] [ 28%] Generating C type support for eProsima Fast-RTPS
+[4.936s] [ 29%] Generating C++ introspection for ROS interfaces
+[4.937s] [ 29%] Generating C type support dispatch for ROS interfaces
+[4.937s] [ 29%] Generating C++ type support for eProsima Fast-RTPS
+[4.937s] [ 30%] Generating C introspection for ROS interfaces
+[4.937s] [ 30%] Generating C++ type support dispatch for ROS interfaces
+[5.663s] [ 31%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/connection_statistics__type_support.cpp.o
+[5.665s] [ 31%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/connection_statistics_array__type_support.cpp.o
+[5.665s] [ 32%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/log_data_generic__type_support.cpp.o
+[5.666s] [ 32%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/full_state__type_support.cpp.o
+[5.666s] [ 32%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/hover__type_support.cpp.o
+[5.667s] [ 32%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/position__type_support.cpp.o
+[5.667s] [ 33%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/log_block__type_support.cpp.o
+[5.667s] [ 34%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/status__type_support.cpp.o
+[5.667s] [ 34%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/trajectory_polynomial_piece__type_support.cpp.o
+[5.667s] [ 34%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/land__type_support.cpp.o
+[5.667s] [ 34%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/go_to__type_support.cpp.o
+[5.667s] [ 35%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/msg/velocity_world__type_support.cpp.o
+[5.668s] [ 35%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/set_group_mask__type_support.cpp.o
+[5.668s] [ 37%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/notify_setpoints_stop__type_support.cpp.o
+[5.668s] [ 37%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/start_trajectory__type_support.cpp.o
+[5.669s] [ 37%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/takeoff__type_support.cpp.o
+[5.669s] [ 38%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/update_params__type_support.cpp.o
+[5.671s] [ 38%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/upload_trajectory__type_support.cpp.o
+[5.673s] [ 38%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/stop__type_support.cpp.o
+[5.681s] [ 39%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/connection_statistics__type_support.cpp.o
+[5.714s] [ 39%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/connection_statistics_array__type_support.cpp.o
+[5.721s] [ 40%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/log_data_generic__type_support.cpp.o
+[5.721s] [ 40%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/full_state__type_support.cpp.o
+[5.723s] [ 40%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/add_logging__type_support.cpp.o
+[5.724s] [ 40%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/arm__type_support.cpp.o
+[5.728s] [ 41%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_c.dir/rosidl_typesupport_c/crazyflie_interfaces/srv/remove_logging__type_support.cpp.o
+[5.729s] [ 41%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/hover__type_support.cpp.o
+[5.729s] [ 42%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/log_block__type_support.cpp.o
+[5.730s] [ 42%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/position__type_support.cpp.o
+[5.731s] [ 43%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/status__type_support.cpp.o
+[5.732s] [ 43%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/land__type_support.cpp.o
+[5.733s] [ 44%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/notify_setpoints_stop__type_support.cpp.o
+[5.733s] [ 44%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/velocity_world__type_support.cpp.o
+[5.733s] [ 45%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/go_to__type_support.cpp.o
+[5.733s] [ 45%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/msg/trajectory_polynomial_piece__type_support.cpp.o
+[5.743s] [ 45%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/set_group_mask__type_support.cpp.o
+[5.744s] [ 46%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/stop__type_support.cpp.o
+[5.750s] [ 46%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/start_trajectory__type_support.cpp.o
+[5.758s] [ 46%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/takeoff__type_support.cpp.o
+[5.767s] [ 47%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/update_params__type_support.cpp.o
+[5.774s] [ 47%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/upload_trajectory__type_support.cpp.o
+[5.782s] [ 48%] Linking CXX shared library libcrazyflie_interfaces__rosidl_typesupport_c.so
+[5.870s] [ 48%] Built target crazyflie_interfaces__rosidl_typesupport_c
+[5.893s] [ 48%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/remove_logging__type_support.cpp.o
+[5.999s] [ 49%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/add_logging__type_support.cpp.o
+[6.000s] [ 49%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_cpp.dir/rosidl_typesupport_cpp/crazyflie_interfaces/srv/arm__type_support.cpp.o
+[6.161s] [ 49%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/log_data_generic__type_support.cpp.o
+[6.161s] [ 50%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/full_state__type_support.cpp.o
+[6.163s] [ 50%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/position__type_support.cpp.o
+[6.163s] [ 50%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support.cpp.o
+[6.163s] [ 50%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/connection_statistics__type_support.cpp.o
+[6.166s] [ 51%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/hover__type_support.cpp.o
+[6.166s] [ 50%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support.cpp.o
+[6.166s] [ 51%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support.cpp.o
+[6.166s] [ 53%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/land__type_support.cpp.o
+[6.166s] [ 53%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/status__type_support.cpp.o
+[6.167s] [ 53%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/go_to__type_support.cpp.o
+[6.168s] [ 53%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/log_block__type_support.cpp.o
+[6.168s] [ 53%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/set_group_mask__type_support.cpp.o
+[6.169s] [ 54%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/msg/detail/velocity_world__type_support.cpp.o
+[6.190s] [ 55%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/start_trajectory__type_support.cpp.o
+[6.193s] [ 55%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/stop__type_support.cpp.o
+[6.194s] [ 56%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/takeoff__type_support.cpp.o
+[6.269s] [ 56%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/update_params__type_support.cpp.o
+[6.365s] [ 56%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/upload_trajectory__type_support.cpp.o
+[6.413s] [ 57%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/remove_logging__type_support.cpp.o
+[6.460s] [ 57%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/add_logging__type_support.cpp.o
+[6.477s] [ 58%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_cpp.dir/rosidl_typesupport_introspection_cpp/crazyflie_interfaces/srv/detail/arm__type_support.cpp.o
+[6.495s] [ 59%] Linking CXX shared library libcrazyflie_interfaces__rosidl_typesupport_cpp.so
+[6.538s] [ 59%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/connection_statistics__type_support.c.o
+[6.538s] [ 60%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/log_data_generic__type_support.c.o
+[6.538s] [ 60%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support.c.o
+[6.538s] [ 60%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/full_state__type_support.c.o
+[6.539s] [ 61%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/hover__type_support.c.o
+[6.539s] [ 61%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support.c.o
+[6.540s] [ 59%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/log_block__type_support.c.o
+[6.542s] [ 62%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/position__type_support.c.o
+[6.549s] [ 62%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/status__type_support.c.o
+[6.553s] [ 63%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/msg/detail/velocity_world__type_support.c.o
+[6.558s] [ 63%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/go_to__type_support.c.o
+[6.572s] [ 64%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/land__type_support.c.o
+[6.574s] [ 64%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support.c.o
+[6.576s] [ 65%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/set_group_mask__type_support.c.o
+[6.578s] [ 65%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/start_trajectory__type_support.c.o
+[6.578s] [ 65%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/update_params__type_support.c.o
+[6.578s] [ 66%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/takeoff__type_support.c.o
+[6.579s] [ 66%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/stop__type_support.c.o
+[6.581s] [ 67%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/upload_trajectory__type_support.c.o
+[6.586s] [ 67%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/remove_logging__type_support.c.o
+[6.594s] [ 67%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/add_logging__type_support.c.o
+[6.598s] [ 67%] Built target crazyflie_interfaces__rosidl_typesupport_cpp
+[6.600s] [ 68%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_introspection_c.dir/rosidl_typesupport_introspection_c/crazyflie_interfaces/srv/detail/arm__type_support.c.o
+[6.644s] [ 68%] Linking C shared library libcrazyflie_interfaces__rosidl_typesupport_introspection_c.so
+[6.678s] [ 68%] Built target crazyflie_interfaces__rosidl_typesupport_introspection_c
+[6.871s] [ 68%] Linking CXX shared library libcrazyflie_interfaces__rosidl_typesupport_introspection_cpp.so
+[6.946s] [ 68%] Built target crazyflie_interfaces__rosidl_typesupport_introspection_cpp
+[7.040s] [ 69%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/connection_statistics_array__type_support.cpp.o
+[7.040s] [ 69%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/hover__type_support.cpp.o
+[7.040s] [ 69%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/full_state__type_support.cpp.o
+[7.041s] [ 70%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/log_data_generic__type_support.cpp.o
+[7.042s] [ 70%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/log_block__type_support.cpp.o
+[7.042s] [ 70%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/connection_statistics__type_support.cpp.o
+[7.044s] [ 71%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/velocity_world__type_support.cpp.o
+[7.044s] [ 71%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/trajectory_polynomial_piece__type_support.cpp.o
+[7.045s] [ 71%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/notify_setpoints_stop__type_support.cpp.o
+[7.047s] [ 72%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/set_group_mask__type_support.cpp.o
+[7.048s] [ 72%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/start_trajectory__type_support.cpp.o
+[7.048s] [ 72%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/go_to__type_support.cpp.o
+[7.048s] [ 73%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/stop__type_support.cpp.o
+[7.048s] [ 73%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/takeoff__type_support.cpp.o
+[7.048s] [ 73%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/status__type_support.cpp.o
+[7.048s] [ 73%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/update_params__type_support.cpp.o
+[7.048s] [ 74%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/land__type_support.cpp.o
+[7.052s] [ 74%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/remove_logging__type_support.cpp.o
+[7.052s] [ 74%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/arm__type_support.cpp.o
+[7.053s] [ 75%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/msg/detail/dds_fastrtps/position__type_support.cpp.o
+[7.054s] [ 76%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/add_logging__type_support.cpp.o
+[7.065s] [ 77%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.dir/rosidl_typesupport_fastrtps_cpp/crazyflie_interfaces/srv/detail/dds_fastrtps/upload_trajectory__type_support.cpp.o
+[7.440s] [ 78%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/connection_statistics__type_support_c.cpp.o
+[7.448s] [ 78%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support_c.cpp.o
+[7.467s] [ 78%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/full_state__type_support_c.cpp.o
+[7.493s] [ 79%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/log_data_generic__type_support_c.cpp.o
+[7.497s] [ 79%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/hover__type_support_c.cpp.o
+[7.519s] [ 80%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/log_block__type_support_c.cpp.o
+[7.538s] [ 80%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/position__type_support_c.cpp.o
+[7.542s] [ 81%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support_c.cpp.o
+[7.543s] [ 81%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/status__type_support_c.cpp.o
+[7.565s] [ 81%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/msg/detail/velocity_world__type_support_c.cpp.o
+[7.602s] [ 81%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/land__type_support_c.cpp.o
+[7.603s] [ 82%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/go_to__type_support_c.cpp.o
+[7.621s] [ 82%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/start_trajectory__type_support_c.cpp.o
+[7.627s] [ 82%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support_c.cpp.o
+[7.627s] [ 83%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/set_group_mask__type_support_c.cpp.o
+[7.636s] [ 84%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/stop__type_support_c.cpp.o
+[7.653s] [ 84%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/takeoff__type_support_c.cpp.o
+[7.658s] [ 84%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/update_params__type_support_c.cpp.o
+[7.674s] [ 85%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/upload_trajectory__type_support_c.cpp.o
+[7.699s] [ 85%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/remove_logging__type_support_c.cpp.o
+[7.728s] [ 86%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/add_logging__type_support_c.cpp.o
+[7.750s] [ 86%] Building CXX object CMakeFiles/crazyflie_interfaces__rosidl_typesupport_fastrtps_c.dir/rosidl_typesupport_fastrtps_c/crazyflie_interfaces/srv/detail/arm__type_support_c.cpp.o
+[7.776s] [ 86%] Linking CXX shared library libcrazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[7.895s] [ 86%] Built target crazyflie_interfaces__rosidl_typesupport_fastrtps_cpp
+[8.191s] [ 87%] Linking CXX shared library libcrazyflie_interfaces__rosidl_typesupport_fastrtps_c.so
+[8.254s] [ 87%] Built target crazyflie_interfaces__rosidl_typesupport_fastrtps_c
+[8.268s] [ 87%] Built target crazyflie_interfaces
+[8.284s] [ 87%] Generating Python code for ROS interfaces
+[10.897s] [ 87%] Built target crazyflie_interfaces__py
+[10.918s] [ 87%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_hover_s.c.o
+[10.919s] [ 87%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_connection_statistics_array_s.c.o
+[10.919s] [ 87%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_status_s.c.o
+[10.920s] [ 88%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_position_s.c.o
+[10.921s] [ 88%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_connection_statistics_s.c.o
+[10.921s] [ 89%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_trajectory_polynomial_piece_s.c.o
+[10.922s] [ 90%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_log_block_s.c.o
+[10.922s] [ 91%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_go_to_s.c.o
+[10.923s] [ 91%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_velocity_world_s.c.o
+[10.923s] [ 91%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_land_s.c.o
+[10.924s] [ 91%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_full_state_s.c.o
+[10.925s] [ 92%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/msg/_log_data_generic_s.c.o
+[10.926s] [ 93%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_notify_setpoints_stop_s.c.o
+[10.930s] [ 93%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_set_group_mask_s.c.o
+[10.931s] [ 94%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_stop_s.c.o
+[10.931s] [ 94%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_takeoff_s.c.o
+[10.933s] [ 93%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_start_trajectory_s.c.o
+[10.933s] [ 95%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_update_params_s.c.o
+[10.934s] [ 96%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_add_logging_s.c.o
+[10.937s] [ 96%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_arm_s.c.o
+[10.938s] [ 96%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_upload_trajectory_s.c.o
+[10.947s] [ 96%] Building C object CMakeFiles/crazyflie_interfaces__rosidl_generator_py.dir/rosidl_generator_py/crazyflie_interfaces/srv/_remove_logging_s.c.o
+[11.130s] [ 97%] Linking C shared library libcrazyflie_interfaces__rosidl_generator_py.so
+[11.166s] [ 97%] Built target crazyflie_interfaces__rosidl_generator_py
+[11.178s] [ 97%] Building C object CMakeFiles/crazyflie_interfaces_s__rosidl_typesupport_c.dir/rosidl_generator_py/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_c.c.o
+[11.179s] [ 97%] Building C object CMakeFiles/crazyflie_interfaces_s__rosidl_typesupport_introspection_c.dir/rosidl_generator_py/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_introspection_c.c.o
+[11.179s] [ 97%] Building C object CMakeFiles/crazyflie_interfaces_s__rosidl_typesupport_fastrtps_c.dir/rosidl_generator_py/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c.o
+[11.330s] [ 98%] Linking C shared module rosidl_generator_py/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_introspection_c.so
+[11.333s] [ 99%] Linking C shared module rosidl_generator_py/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_c.so
+[11.352s] [ 99%] Built target crazyflie_interfaces_s__rosidl_typesupport_introspection_c
+[11.358s] [ 99%] Built target crazyflie_interfaces_s__rosidl_typesupport_c
+[11.365s] [100%] Linking C shared module rosidl_generator_py/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[11.391s] [100%] Built target crazyflie_interfaces_s__rosidl_typesupport_fastrtps_c
+[11.400s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --build /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces -- -j24 -l24
+[11.406s] Invoking command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --install /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces
+[11.411s] -- Install configuration: ""
+[11.412s] -- Execute custom install script
+[11.412s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/ament_index/resource_index/rosidl_interfaces/crazyflie_interfaces
+[11.418s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatistics.json
+[11.423s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatisticsArray.json
+[11.430s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/FullState.json
+[11.437s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogDataGeneric.json
+[11.444s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Hover.json
+[11.451s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogBlock.json
+[11.459s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Position.json
+[11.466s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Status.json
+[11.472s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/TrajectoryPolynomialPiece.json
+[11.477s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/VelocityWorld.json
+[11.483s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/GoTo.json
+[11.488s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Land.json
+[11.494s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/NotifySetpointsStop.json
+[11.499s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/SetGroupMask.json
+[11.505s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/StartTrajectory.json
+[11.510s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Stop.json
+[11.516s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Takeoff.json
+[11.521s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UpdateParams.json
+[11.527s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UploadTrajectory.json
+[11.532s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/RemoveLogging.json
+[11.538s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/AddLogging.json
+[11.544s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Arm.json
+[11.553s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/connection_statistics.h
+[11.558s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/connection_statistics_array.h
+[11.562s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__functions.h
+[11.567s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__struct.h
+[11.571s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__type_support.h
+[11.575s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__functions.h
+[11.580s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__struct.h
+[11.585s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support.h
+[11.589s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__functions.h
+[11.593s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__struct.h
+[11.597s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__type_support.h
+[11.601s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__functions.h
+[11.605s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__struct.h
+[11.610s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__type_support.h
+[11.614s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__functions.h
+[11.618s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__struct.h
+[11.622s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__type_support.h
+[11.626s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__functions.h
+[11.630s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__struct.h
+[11.635s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__type_support.h
+[11.641s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__functions.h
+[11.648s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__struct.h
+[11.655s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__type_support.h
+[11.661s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__functions.h
+[11.667s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__struct.h
+[11.672s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__type_support.h
+[11.678s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__functions.h
+[11.684s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__struct.h
+[11.689s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support.h
+[11.694s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__functions.h
+[11.699s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__struct.h
+[11.703s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__type_support.h
+[11.707s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/full_state.h
+[11.712s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/hover.h
+[11.716s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/log_block.h
+[11.720s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/log_data_generic.h
+[11.724s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/position.h
+[11.728s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/rosidl_generator_c__visibility_control.h
+[11.732s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/status.h
+[11.736s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/trajectory_polynomial_piece.h
+[11.740s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/velocity_world.h
+[11.744s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/add_logging.h
+[11.750s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/arm.h
+[11.758s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__functions.h
+[11.764s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__struct.h
+[11.770s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__type_support.h
+[11.777s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__functions.h
+[11.783s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__struct.h
+[11.788s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__type_support.h
+[11.794s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__functions.h
+[11.800s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__struct.h
+[11.805s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__type_support.h
+[11.811s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__functions.h
+[11.816s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__struct.h
+[11.821s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__type_support.h
+[11.827s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__functions.h
+[11.832s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__struct.h
+[11.837s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support.h
+[11.843s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__functions.h
+[11.848s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__struct.h
+[11.854s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__type_support.h
+[11.859s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__functions.h
+[11.865s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__struct.h
+[11.870s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__type_support.h
+[11.877s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__functions.h
+[11.883s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__struct.h
+[11.889s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__type_support.h
+[11.894s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__functions.h
+[11.899s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__struct.h
+[11.903s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__type_support.h
+[11.908s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__functions.h
+[11.912s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__struct.h
+[11.917s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__type_support.h
+[11.922s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__functions.h
+[11.927s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__struct.h
+[11.933s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__type_support.h
+[11.938s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__functions.h
+[11.943s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__struct.h
+[11.949s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__type_support.h
+[11.954s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/go_to.h
+[11.959s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/land.h
+[11.965s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/notify_setpoints_stop.h
+[11.969s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/remove_logging.h
+[11.973s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/set_group_mask.h
+[11.977s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/start_trajectory.h
+[11.981s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/stop.h
+[11.986s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/takeoff.h
+[11.990s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/update_params.h
+[11.995s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/upload_trajectory.h
+[12.002s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/library_path.sh
+[12.007s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/library_path.dsv
+[12.015s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__rosidl_typesupport_fastrtps_c.h
+[12.023s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__rosidl_typesupport_fastrtps_c.h
+[12.032s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__rosidl_typesupport_fastrtps_c.h
+[12.037s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__rosidl_typesupport_fastrtps_c.h
+[12.042s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__rosidl_typesupport_fastrtps_c.h
+[12.046s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__rosidl_typesupport_fastrtps_c.h
+[12.050s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__rosidl_typesupport_fastrtps_c.h
+[12.054s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__rosidl_typesupport_fastrtps_c.h
+[12.059s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__rosidl_typesupport_fastrtps_c.h
+[12.063s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__rosidl_typesupport_fastrtps_c.h
+[12.067s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/rosidl_typesupport_fastrtps_c__visibility_control.h
+[12.071s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__rosidl_typesupport_fastrtps_c.h
+[12.075s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__rosidl_typesupport_fastrtps_c.h
+[12.079s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__rosidl_typesupport_fastrtps_c.h
+[12.083s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__rosidl_typesupport_fastrtps_c.h
+[12.087s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__rosidl_typesupport_fastrtps_c.h
+[12.091s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__rosidl_typesupport_fastrtps_c.h
+[12.095s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__rosidl_typesupport_fastrtps_c.h
+[12.099s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__rosidl_typesupport_fastrtps_c.h
+[12.103s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__rosidl_typesupport_fastrtps_c.h
+[12.108s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__rosidl_typesupport_fastrtps_c.h
+[12.112s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__rosidl_typesupport_fastrtps_c.h
+[12.116s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__rosidl_typesupport_fastrtps_c.h
+[12.121s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/connection_statistics.hpp
+[12.126s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/connection_statistics_array.hpp
+[12.132s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__builder.hpp
+[12.138s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__struct.hpp
+[12.145s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__traits.hpp
+[12.151s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__type_support.hpp
+[12.157s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__builder.hpp
+[12.163s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__struct.hpp
+[12.168s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__traits.hpp
+[12.173s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__type_support.hpp
+[12.179s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__builder.hpp
+[12.184s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__struct.hpp
+[12.190s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__traits.hpp
+[12.195s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__type_support.hpp
+[12.200s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__builder.hpp
+[12.206s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__struct.hpp
+[12.211s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__traits.hpp
+[12.217s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__type_support.hpp
+[12.222s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__builder.hpp
+[12.228s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__struct.hpp
+[12.233s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__traits.hpp
+[12.238s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__type_support.hpp
+[12.244s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__builder.hpp
+[12.250s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__struct.hpp
+[12.258s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__traits.hpp
+[12.265s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__type_support.hpp
+[12.271s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__builder.hpp
+[12.277s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__struct.hpp
+[12.287s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__traits.hpp
+[12.295s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__type_support.hpp
+[12.300s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__builder.hpp
+[12.306s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__struct.hpp
+[12.311s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__traits.hpp
+[12.316s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__type_support.hpp
+[12.322s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__builder.hpp
+[12.327s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__struct.hpp
+[12.333s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__traits.hpp
+[12.338s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__type_support.hpp
+[12.343s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__builder.hpp
+[12.349s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__struct.hpp
+[12.354s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__traits.hpp
+[12.360s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__type_support.hpp
+[12.365s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/full_state.hpp
+[12.370s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/hover.hpp
+[12.377s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/log_block.hpp
+[12.383s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/log_data_generic.hpp
+[12.389s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/position.hpp
+[12.395s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/rosidl_generator_cpp__visibility_control.hpp
+[12.402s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/status.hpp
+[12.406s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/trajectory_polynomial_piece.hpp
+[12.412s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/velocity_world.hpp
+[12.417s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/add_logging.hpp
+[12.421s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/arm.hpp
+[12.425s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__builder.hpp
+[12.430s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__struct.hpp
+[12.435s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__traits.hpp
+[12.439s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__type_support.hpp
+[12.445s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__builder.hpp
+[12.449s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__struct.hpp
+[12.453s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__traits.hpp
+[12.458s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__type_support.hpp
+[12.462s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__builder.hpp
+[12.466s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__struct.hpp
+[12.470s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__traits.hpp
+[12.474s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__type_support.hpp
+[12.479s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__builder.hpp
+[12.484s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__struct.hpp
+[12.488s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__traits.hpp
+[12.493s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__type_support.hpp
+[12.497s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__builder.hpp
+[12.501s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__struct.hpp
+[12.506s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__traits.hpp
+[12.513s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__type_support.hpp
+[12.519s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__builder.hpp
+[12.526s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__struct.hpp
+[12.532s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__traits.hpp
+[12.537s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__type_support.hpp
+[12.543s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__builder.hpp
+[12.548s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__struct.hpp
+[12.554s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__traits.hpp
+[12.559s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__type_support.hpp
+[12.564s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__builder.hpp
+[12.570s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__struct.hpp
+[12.575s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__traits.hpp
+[12.580s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__type_support.hpp
+[12.586s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__builder.hpp
+[12.591s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__struct.hpp
+[12.596s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__traits.hpp
+[12.602s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__type_support.hpp
+[12.607s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__builder.hpp
+[12.612s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__struct.hpp
+[12.618s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__traits.hpp
+[12.625s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__type_support.hpp
+[12.631s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__builder.hpp
+[12.638s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__struct.hpp
+[12.645s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__traits.hpp
+[12.650s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__type_support.hpp
+[12.656s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__builder.hpp
+[12.661s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__struct.hpp
+[12.666s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__traits.hpp
+[12.672s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__type_support.hpp
+[12.677s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/go_to.hpp
+[12.682s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/land.hpp
+[12.688s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/notify_setpoints_stop.hpp
+[12.693s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/remove_logging.hpp
+[12.698s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/set_group_mask.hpp
+[12.704s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/start_trajectory.hpp
+[12.709s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/stop.hpp
+[12.715s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/takeoff.hpp
+[12.720s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/update_params.hpp
+[12.725s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/upload_trajectory.hpp
+[12.732s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__rosidl_typesupport_fastrtps_cpp.hpp
+[12.737s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__rosidl_typesupport_fastrtps_cpp.hpp
+[12.743s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__rosidl_typesupport_fastrtps_cpp.hpp
+[12.750s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__rosidl_typesupport_fastrtps_cpp.hpp
+[12.757s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__rosidl_typesupport_fastrtps_cpp.hpp
+[12.763s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__rosidl_typesupport_fastrtps_cpp.hpp
+[12.768s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__rosidl_typesupport_fastrtps_cpp.hpp
+[12.774s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__rosidl_typesupport_fastrtps_cpp.hpp
+[12.779s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__rosidl_typesupport_fastrtps_cpp.hpp
+[12.785s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__rosidl_typesupport_fastrtps_cpp.hpp
+[12.790s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/rosidl_typesupport_fastrtps_cpp__visibility_control.h
+[12.796s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__rosidl_typesupport_fastrtps_cpp.hpp
+[12.801s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__rosidl_typesupport_fastrtps_cpp.hpp
+[12.807s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__rosidl_typesupport_fastrtps_cpp.hpp
+[12.812s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__rosidl_typesupport_fastrtps_cpp.hpp
+[12.817s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__rosidl_typesupport_fastrtps_cpp.hpp
+[12.823s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__rosidl_typesupport_fastrtps_cpp.hpp
+[12.828s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__rosidl_typesupport_fastrtps_cpp.hpp
+[12.834s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__rosidl_typesupport_fastrtps_cpp.hpp
+[12.839s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__rosidl_typesupport_fastrtps_cpp.hpp
+[12.845s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__rosidl_typesupport_fastrtps_cpp.hpp
+[12.850s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__rosidl_typesupport_fastrtps_cpp.hpp
+[12.856s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__rosidl_typesupport_fastrtps_cpp.hpp
+[12.862s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__rosidl_typesupport_introspection_c.h
+[12.868s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__rosidl_typesupport_introspection_c.h
+[12.874s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__rosidl_typesupport_introspection_c.h
+[12.879s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__rosidl_typesupport_introspection_c.h
+[12.883s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__rosidl_typesupport_introspection_c.h
+[12.888s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__rosidl_typesupport_introspection_c.h
+[12.892s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__rosidl_typesupport_introspection_c.h
+[12.896s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__rosidl_typesupport_introspection_c.h
+[12.900s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__rosidl_typesupport_introspection_c.h
+[12.904s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__rosidl_typesupport_introspection_c.h
+[12.908s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/rosidl_typesupport_introspection_c__visibility_control.h
+[12.912s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__rosidl_typesupport_introspection_c.h
+[12.916s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__rosidl_typesupport_introspection_c.h
+[12.921s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__rosidl_typesupport_introspection_c.h
+[12.925s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__rosidl_typesupport_introspection_c.h
+[12.929s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__rosidl_typesupport_introspection_c.h
+[12.933s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__rosidl_typesupport_introspection_c.h
+[12.937s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__rosidl_typesupport_introspection_c.h
+[12.941s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__rosidl_typesupport_introspection_c.h
+[12.945s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__rosidl_typesupport_introspection_c.h
+[12.949s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__rosidl_typesupport_introspection_c.h
+[12.953s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__rosidl_typesupport_introspection_c.h
+[12.957s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__rosidl_typesupport_introspection_c.h
+[12.962s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics__rosidl_typesupport_introspection_cpp.hpp
+[12.966s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/connection_statistics_array__rosidl_typesupport_introspection_cpp.hpp
+[12.970s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/full_state__rosidl_typesupport_introspection_cpp.hpp
+[12.974s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/hover__rosidl_typesupport_introspection_cpp.hpp
+[12.979s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_block__rosidl_typesupport_introspection_cpp.hpp
+[12.985s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/log_data_generic__rosidl_typesupport_introspection_cpp.hpp
+[12.991s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/position__rosidl_typesupport_introspection_cpp.hpp
+[12.998s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/status__rosidl_typesupport_introspection_cpp.hpp
+[13.005s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/trajectory_polynomial_piece__rosidl_typesupport_introspection_cpp.hpp
+[13.011s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/msg/detail/velocity_world__rosidl_typesupport_introspection_cpp.hpp
+[13.017s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/add_logging__rosidl_typesupport_introspection_cpp.hpp
+[13.022s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/arm__rosidl_typesupport_introspection_cpp.hpp
+[13.028s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/go_to__rosidl_typesupport_introspection_cpp.hpp
+[13.033s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/land__rosidl_typesupport_introspection_cpp.hpp
+[13.038s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/notify_setpoints_stop__rosidl_typesupport_introspection_cpp.hpp
+[13.044s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/remove_logging__rosidl_typesupport_introspection_cpp.hpp
+[13.049s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/set_group_mask__rosidl_typesupport_introspection_cpp.hpp
+[13.055s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/start_trajectory__rosidl_typesupport_introspection_cpp.hpp
+[13.060s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/stop__rosidl_typesupport_introspection_cpp.hpp
+[13.065s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/takeoff__rosidl_typesupport_introspection_cpp.hpp
+[13.071s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/update_params__rosidl_typesupport_introspection_cpp.hpp
+[13.076s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/include/crazyflie_interfaces/crazyflie_interfaces/srv/detail/upload_trajectory__rosidl_typesupport_introspection_cpp.hpp
+[13.081s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/pythonpath.sh
+[13.088s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/pythonpath.dsv
+[13.093s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces-1.0.3-py3.12.egg-info/PKG-INFO
+[13.098s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces-1.0.3-py3.12.egg-info/SOURCES.txt
+[13.104s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces-1.0.3-py3.12.egg-info/dependency_links.txt
+[13.109s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces-1.0.3-py3.12.egg-info/top_level.txt
+[13.116s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/__init__.py
+[13.121s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_c.c
+[13.127s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_fastrtps_c.c
+[13.132s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/_crazyflie_interfaces_s.ep.rosidl_typesupport_introspection_c.c
+[13.138s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_c.so
+[13.143s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[13.148s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_introspection_c.so
+[13.154s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/__init__.py
+[13.159s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics.py
+[13.166s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics_array.py
+[13.173s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics_array_s.c
+[13.179s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics_s.c
+[13.185s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_full_state.py
+[13.191s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_full_state_s.c
+[13.198s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_hover.py
+[13.204s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_hover_s.c
+[13.210s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_block.py
+[13.215s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_block_s.c
+[13.221s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_data_generic.py
+[13.226s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_data_generic_s.c
+[13.232s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_position.py
+[13.237s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_position_s.c
+[13.243s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_status.py
+[13.248s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_status_s.c
+[13.254s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_trajectory_polynomial_piece.py
+[13.259s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_trajectory_polynomial_piece_s.c
+[13.265s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_velocity_world.py
+[13.270s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_velocity_world_s.c
+[13.277s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/__init__.py
+[13.285s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_add_logging.py
+[13.292s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_add_logging_s.c
+[13.299s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_arm.py
+[13.304s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_arm_s.c
+[13.310s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_go_to.py
+[13.316s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_go_to_s.c
+[13.321s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_land.py
+[13.327s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_land_s.c
+[13.332s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_notify_setpoints_stop.py
+[13.337s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_notify_setpoints_stop_s.c
+[13.343s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_remove_logging.py
+[13.348s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_remove_logging_s.c
+[13.353s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_set_group_mask.py
+[13.358s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_set_group_mask_s.c
+[13.364s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_start_trajectory.py
+[13.369s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_start_trajectory_s.c
+[13.374s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_stop.py
+[13.380s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_stop_s.c
+[13.385s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_takeoff.py
+[13.391s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_takeoff_s.c
+[13.397s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_update_params.py
+[13.404s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_update_params_s.c
+[13.408s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_upload_trajectory.py
+[13.413s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_upload_trajectory_s.c
+[13.417s] -- Up-to-date symlink: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_fastrtps_c.so
+[13.417s] -- Up-to-date symlink: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_introspection_c.so
+[13.417s] -- Up-to-date symlink: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/crazyflie_interfaces_s__rosidl_typesupport_c.so
+[13.418s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatistics.idl
+[13.422s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatisticsArray.idl
+[13.426s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/FullState.idl
+[13.430s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogDataGeneric.idl
+[13.435s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Hover.idl
+[13.439s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogBlock.idl
+[13.443s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Position.idl
+[13.447s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Status.idl
+[13.451s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/TrajectoryPolynomialPiece.idl
+[13.455s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/VelocityWorld.idl
+[13.460s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/GoTo.idl
+[13.464s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Land.idl
+[13.468s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/NotifySetpointsStop.idl
+[13.472s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/SetGroupMask.idl
+[13.476s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/StartTrajectory.idl
+[13.480s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Stop.idl
+[13.485s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Takeoff.idl
+[13.489s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UpdateParams.idl
+[13.493s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UploadTrajectory.idl
+[13.500s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/RemoveLogging.idl
+[13.507s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/AddLogging.idl
+[13.513s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Arm.idl
+[13.525s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatistics.msg
+[13.535s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/ConnectionStatisticsArray.msg
+[13.542s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/FullState.msg
+[13.549s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogDataGeneric.msg
+[13.554s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Hover.msg
+[13.560s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/LogBlock.msg
+[13.565s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Position.msg
+[13.570s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/Status.msg
+[13.576s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/TrajectoryPolynomialPiece.msg
+[13.582s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/msg/VelocityWorld.msg
+[13.587s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/GoTo.srv
+[13.593s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Land.srv
+[13.598s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/NotifySetpointsStop.srv
+[13.604s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/SetGroupMask.srv
+[13.609s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/StartTrajectory.srv
+[13.614s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Stop.srv
+[13.621s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Takeoff.srv
+[13.628s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UpdateParams.srv
+[13.636s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/UploadTrajectory.srv
+[13.642s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/RemoveLogging.srv
+[13.648s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/AddLogging.srv
+[13.654s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/srv/Arm.srv
+[13.660s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/ament_index/resource_index/package_run_dependencies/crazyflie_interfaces
+[13.665s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/ament_index/resource_index/parent_prefix_path/crazyflie_interfaces
+[13.670s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/ament_prefix_path.sh
+[13.674s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/ament_prefix_path.dsv
+[13.678s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/path.sh
+[13.682s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/environment/path.dsv
+[13.686s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/local_setup.bash
+[13.691s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/local_setup.sh
+[13.695s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/local_setup.zsh
+[13.699s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/local_setup.dsv
+[13.703s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/package.dsv
+[13.708s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/ament_index/resource_index/packages/crazyflie_interfaces
+[13.712s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/rosidl_cmake-extras.cmake
+[13.716s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/ament_cmake_export_dependencies-extras.cmake
+[13.720s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/ament_cmake_export_include_directories-extras.cmake
+[13.724s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/ament_cmake_export_libraries-extras.cmake
+[13.730s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/ament_cmake_export_targets-extras.cmake
+[13.737s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/rosidl_cmake_export_typesupport_targets-extras.cmake
+[13.744s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/rosidl_cmake_export_typesupport_libraries-extras.cmake
+[13.749s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfacesConfig.cmake
+[13.753s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfacesConfig-version.cmake
+[13.758s] -- Symlinking: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/package.xml
+[13.762s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_generator_c.so
+[13.762s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_generator_c.so" to ""
+[13.763s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_fastrtps_c.so
+[13.763s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_fastrtps_c.so" to ""
+[13.763s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.so
+[13.764s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_fastrtps_cpp.so" to ""
+[13.764s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_introspection_c.so
+[13.764s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_introspection_c.so" to ""
+[13.764s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_c.so
+[13.764s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_c.so" to ""
+[13.765s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_introspection_cpp.so
+[13.765s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_introspection_cpp.so" to ""
+[13.765s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_cpp.so
+[13.766s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_typesupport_cpp.so" to ""
+[13.827s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/__init__.py'...
+[13.827s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/__init__.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_connection_statistics_array.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_full_state.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_hover.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_block.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_log_data_generic.py'...
+[13.827s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_position.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_status.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_trajectory_polynomial_piece.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/msg/_velocity_world.py'...
+[13.828s] Listing '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/__init__.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_add_logging.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_arm.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_go_to.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_land.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_notify_setpoints_stop.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_remove_logging.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_set_group_mask.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_start_trajectory.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_stop.py'...
+[13.828s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_takeoff.py'...
+[13.829s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_update_params.py'...
+[13.829s] Compiling '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/python3.12/site-packages/crazyflie_interfaces/srv/_upload_trajectory.py'...
+[13.830s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_generator_py.so
+[13.831s] -- Set non-toolchain portion of runtime path of "/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/lib/libcrazyflie_interfaces__rosidl_generator_py.so" to ""
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_generator_cExport.cmake
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_generator_cExport-noconfig.cmake
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_typesupport_fastrtps_cExport.cmake
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_typesupport_fastrtps_cExport-noconfig.cmake
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_generator_cppExport.cmake
+[13.831s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_typesupport_fastrtps_cppExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_typesupport_fastrtps_cppExport-noconfig.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_introspection_cExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_introspection_cExport-noconfig.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_cExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_cExport-noconfig.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_introspection_cppExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_introspection_cppExport-noconfig.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_cppExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/crazyflie_interfaces__rosidl_typesupport_cppExport-noconfig.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_generator_pyExport.cmake
+[13.832s] -- Installing: /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_interfaces/share/crazyflie_interfaces/cmake/export_crazyflie_interfaces__rosidl_generator_pyExport-noconfig.cmake
+[13.834s] Invoked command in '/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/jazzy DEBUGINFOD_URLS=https://debuginfod.ubuntu.com PS1=(venv) VIRTUAL_ENV_PROMPT=(venv) /usr/bin/cmake --install /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/build/crazyflie_interfaces
