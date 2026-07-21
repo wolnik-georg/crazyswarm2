@@ -1015,6 +1015,32 @@ def main():
             z_hover = float(_latest_state.get("stateEstimate.z", args.height))
             keepalive_pos = np.array([ox, oy, max(z_hover, _Z_CMD_MIN_AIRBORNE)])
 
+            # Pre-position to the trajectory's actual first point before arming.
+            # traj.ox/oy is the coordinate-frame origin, NOT necessarily where the
+            # path starts — segment 0's cx0/cy0 (a degree-8 poly's value at tau=0
+            # is just its constant term) give the true local start offset. Many
+            # trajectories don't start at local (0,0) (e.g. circle's first point
+            # is (radius, 0)); arming traj.start=1 without first flying here would
+            # command an instant multi-metre jump from the hover point, which the
+            # controller can't track cleanly (confirmed root cause of circle/oval
+            # crashing immediately on trajectory start). This does NOT change the
+            # trajectory's absolute room-frame position/footprint at all — traj.ox/oy
+            # is unchanged, so the flight-space validation in docs/flight_space.md
+            # still holds exactly. It only adds a smooth, ordinary goTo (geometric
+            # controller, well-tested) to close the gap before Mode D takes over.
+            start_dx = float(onboard_segs[0][1])   # cx0
+            start_dy = float(onboard_segs[0][10])  # cy0
+            if abs(start_dx) > 1e-6 or abs(start_dy) > 1e-6:
+                start_pos = np.array([ox + start_dx, oy + start_dy, args.height])
+                print(
+                    f"[flight] Pre-positioning to trajectory start "
+                    f"(offset {start_dx:+.3f}, {start_dy:+.3f} from hover)..."
+                )
+                for c in allcfs.crazyflies:
+                    c.goTo(start_pos, 0, 2.0)
+                th.sleep(2.5)
+                keepalive_pos = start_pos.copy()
+
             _log_t0 = time.monotonic()
             _set_param_sync(cf, th, "traj.start", 0)
             _set_param_sync(cf, th, "traj.mode", 0)
