@@ -474,21 +474,28 @@ def _find_onboard_csv(trajectory: str, mode: int, kt: float, speed: float) -> Pa
     return path
 
 
-def _is_periodic(csv_path: Path) -> bool:
+def _load_onboard_meta(csv_path: Path) -> dict:
     """Read the {label}_onboard.meta.json sidecar written by export_poly4d --onboard.
 
-    Returns False (safe default) if the sidecar is missing or unreadable — e.g. for
-    onboard CSVs generated before this metadata existed. --reps > 1 is only allowed
-    when this returns True (see the check at the onboard_mode call site).
+    Returns {"periodic": bool, "n_entry": int, "n_exit": int}. Safe defaults
+    (False/0/0) if the sidecar is missing or unreadable — e.g. for onboard CSVs
+    generated before this metadata existed. n_entry/n_exit are the rest-to-rest
+    lead-in/lead-out segment counts (Issue B fix): those segments play once at the
+    start/end while traj.reps counts only the core laps in between.
     """
     meta_path = csv_path.with_suffix("").with_suffix(".meta.json")
+    out = {"periodic": False, "n_entry": 0, "n_exit": 0}
     if not meta_path.exists():
-        return False
+        return out
     try:
         with open(meta_path) as f:
-            return bool(json.load(f).get("periodic", False))
-    except (json.JSONDecodeError, OSError):
-        return False
+            m = json.load(f)
+        out["periodic"] = bool(m.get("periodic", False))
+        out["n_entry"] = int(m.get("n_entry", 0))
+        out["n_exit"] = int(m.get("n_exit", 0))
+    except (json.JSONDecodeError, OSError, ValueError):
+        pass
+    return out
 
 
 def _load_onboard_csv(path: Path) -> tuple:
@@ -642,6 +649,22 @@ def _wait_for_state(th, timeout_s: float = 3.0) -> bool:
             return True
         th.sleep(0.05)
     return bool(_latest_state)
+
+
+def _wait_until_at(th, target_xy, tol_m: float = 0.06, timeout_s: float = 3.0) -> bool:
+    """Poll EKF position until within tol of target XY (Issue B fix: settle on
+    measured error before arming the trajectory, not on a fixed sleep)."""
+    t0 = th.time()
+    while not th.isShutdown() and th.time() - t0 < timeout_s:
+        if _latest_state:
+            ex = float(_latest_state["stateEstimate.x"]) - float(target_xy[0])
+            ey = float(_latest_state["stateEstimate.y"]) - float(target_xy[1])
+            if (ex * ex + ey * ey) ** 0.5 < tol_m:
+                return True
+        th.sleep(0.05)
+    print(f"[flight] WARN: not within {tol_m*100:.0f}cm of trajectory start after "
+          f"{timeout_s:.1f}s — arming anyway")
+    return False
 
 
 def _sample_origin(th, fallback_xy) -> tuple[float, float]:
@@ -833,7 +856,8 @@ def main():
         onboard_csv_path = _find_onboard_csv(
             args.trajectory, args.mode, args.kt, args.speed
         )
-        onboard_periodic = _is_periodic(onboard_csv_path)
+        onboard_meta = _load_onboard_meta(onboard_csv_path)
+        onboard_periodic = onboard_meta["periodic"]
         if args.reps > 1 and not onboard_periodic:
             print(
                 f"[error] --reps {args.reps} requested for '{args.trajectory}' mode={args.mode}, "
@@ -845,9 +869,19 @@ def main():
             )
             sys.exit(1)
         onboard_segs, onboard_z_segs, traj_dur = _load_onboard_csv(onboard_csv_path)
+        # Entry/core/exit split (Issue B): entry/exit play once, reps count core laps.
+        onb_n_entry = min(onboard_meta["n_entry"], len(onboard_segs))
+        onb_n_exit = min(onboard_meta["n_exit"], len(onboard_segs) - onb_n_entry)
+        onb_t_entry = sum(s[0] for s in onboard_segs[:onb_n_entry])
+        onb_t_exit = (
+            sum(s[0] for s in onboard_segs[len(onboard_segs) - onb_n_exit:])
+            if onb_n_exit else 0.0
+        )
+        onb_t_core = traj_dur - onb_t_entry - onb_t_exit
         print(
             f"[flight] onboard: {onboard_csv_path.name}  mode={args.mode} kt={args.kt} "
-            f"reps={args.reps} periodic={onboard_periodic}  ({len(onboard_segs)} segs, {traj_dur:.2f}s/rep)"
+            f"reps={args.reps} periodic={onboard_periodic}  ({len(onboard_segs)} segs: "
+            f"{onb_n_entry} entry + core {onb_t_core:.2f}s/rep + {onb_n_exit} exit)"
         )
     else:
         csv_path = _find_csv(args.trajectory, args.mode, args.kt, args.speed)
@@ -1039,23 +1073,43 @@ def main():
                 for c in allcfs.crazyflies:
                     c.goTo(start_pos, 0, 2.0)
                 th.sleep(2.5)
+                _wait_until_at(th, start_pos[:2])
                 keepalive_pos = start_pos.copy()
 
             _log_t0 = time.monotonic()
             _set_param_sync(cf, th, "traj.start", 0)
             _set_param_sync(cf, th, "traj.mode", 0)
             _set_param_sync(cf, th, "traj.reps", args.reps)
+            # Rest-to-rest entry/exit split (Issue B fix). Always written (not only
+            # when >0) so a stale value from a previous run can never leak into this
+            # flight. Old firmware without the params: only acceptable for old
+            # exports (n_entry=0); a wrapped export MUST NOT fly with firmware that
+            # would loop its entry/exit segments as part of the lap.
+            try:
+                _set_param_sync(cf, th, "traj.n_entry", onb_n_entry)
+                _set_param_sync(cf, th, "traj.n_exit", onb_n_exit)
+            except Exception:
+                if onb_n_entry or onb_n_exit:
+                    print(
+                        "[error] firmware lacks traj.n_entry/n_exit but this export "
+                        "has rest-to-rest entry/exit segments — reflash firmware "
+                        "(cd firmware_app && make cload) or re-export without wrap."
+                    )
+                    raise
             _set_param_sync(cf, th, "traj.mode", 1)
             th.sleep(_TRAJ_ARM_DELAY_S)
             _set_param_sync(cf, th, "traj.start", 1)
-            # Firmware self-stops at reps*traj_dur; add 0.5s so the keepalive holds
-            # position at the clean endpoint before _stop_onboard_traj_and_hold.
+            # Firmware self-stops at t_entry + reps*t_core + t_exit; add 0.5s so the
+            # keepalive holds position at the clean endpoint before
+            # _stop_onboard_traj_and_hold. (Old exports: t_entry=t_exit=0.)
             t_settle = 0.5
+            t_flight = onb_t_entry + args.reps * onb_t_core + onb_t_exit
             print(
-                f"[flight] Onboard {args.reps} rep(s) x {traj_dur:.2f}s "
-                f"= {args.reps * traj_dur:.2f}s + {t_settle:.1f}s settle (self-stop)"
+                f"[flight] Onboard {onb_t_entry:.2f}s entry + {args.reps} rep(s) x "
+                f"{onb_t_core:.2f}s + {onb_t_exit:.2f}s exit = {t_flight:.2f}s "
+                f"+ {t_settle:.1f}s settle (self-stop)"
             )
-            t_end = th.time() + args.reps * traj_dur + t_settle
+            t_end = th.time() + t_flight + t_settle
             while not th.isShutdown() and th.time() < t_end:
                 cf.cmdFullState(keepalive_pos, _zero3, _zero3, 0.0, _zero3)
                 th.sleepForRate(20)

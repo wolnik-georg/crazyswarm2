@@ -280,6 +280,17 @@ all:
       # inertia is NOT the problem — kept at 1.0. Still a runtime knob for a quick sanity sweep
       # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
       j_scale: 1.0
+      # Output clamps (2026-07-22, NEW — requires cload'd firmware with clamp_en; mirrors stock C
+      # INDI bounds, see flying_drone_stack/docs/investigation §15.10). Blow-up containment,
+      # NOT the 6.3 Hz fix. Bitmask: bit0=tau_xy, bit1=tau_z, bit2=tilt, bit3=thrust → 15 = all.
+      # For Phase-4 inverted/loop flight set clamp_en: 11 (tilt clamp off, tau clamps stay on).
+      # Values = physical headroom at hover: tau_xy = ARM*4*0.1N, tau_z = TORQUE_RATIO*4*0.1N.
+      # (Upgraded block would use ~0.010/0.0017; standard ~0.007/0.0012 by the same formula.)
+      clamp_en: 15
+      tau_xy_max: 0.014
+      tau_z_max: 0.0025
+      tilt_max_deg: 30.0
+      thrust_max: 0.8
     pos_gains:
       # 2026-07-19 KV DECOUPLING TEST — analogous to the KR/KW decoupling that just improved
       # attitude tracking (KW*e_omega directly injects raw gyro noise into torque, independent of
