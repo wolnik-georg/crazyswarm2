@@ -242,14 +242,21 @@ all:
       kr_z: 2400.0
       kw_z: 170.0
       fc_bw: 60.0
-      mass: 0.041               # AUW 41.0 g (measured 2026-07-15)
-      # kt re-identified 2026-07-16 from OPTICAL DECK geometric hover (18-09-05): RPM balanced
-      # to 1.3% (m1-4 ≈ 15.5-15.7k), 0 invalid. Deck & DShot mechanical RPM match to 1.00 →
-      # kt unchanged in scale (mean 4.10e-10). Previous DShot-derived kt commented at line end.
-      kt1: 4.1623e-10           # was 4.2336e-10 (DShot)
-      kt2: 4.0592e-10           # was 3.9865e-10
-      kt3: 4.1116e-10           # was 4.0689e-10
-      kt4: 4.0631e-10           # was 4.2210e-10
+      mass: 0.0367               # AUW 36.7 g (measured 2026-07-25, prop guards removed)
+      # mass: 0.041               # was 41.0 g (measured 2026-07-15, WITH prop guards)
+      # kt re-identified 2026-07-25 from stable hover (single clean flight,
+      # hover_mode0_2026-07-25_15-09-16.csv, stock/"lee" controller, firmware_controller=2),
+      # no guards, mass=36.7g. Earlier two hovers this session had rpm_m4 reading flat 0
+      # (broken/disconnected RPM channel that flight, not a computation issue) — this flight's
+      # rpm_m4 was valid throughout (2700/2700 nonzero samples), so all 4 motors re-derived
+      # together from the same flight (not mixed with the earlier two). kt is a motor/prop
+      # coefficient (thrust=kt*rpm^2), not mass-dependent in theory — new values (3.97-4.22e-10)
+      # land in the same range as the prior guards-on values (4.06-4.16e-10), consistent with
+      # unchanged motors/props, good sanity check.
+      kt1: 4.0568e-10           # was 4.1623e-10 (2026-07-15, with guards, mass=41g)
+      kt2: 4.0758e-10           # was 4.0592e-10
+      kt3: 3.9739e-10           # was 4.1116e-10
+      kt4: 4.2230e-10           # was 4.0631e-10
       # H1a diagnostic (2026-07-18, requires cload'd firmware with the ff_free toggle):
       # 0 = normal RPM feedback (default). Set to 1 via cfclient ONLY for the ff_free A/B test
       # (results_2026-07-15_brushless.md §4b-diagnosis-toggle), then set back to 0 — do not fly
