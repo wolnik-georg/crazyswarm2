@@ -180,7 +180,7 @@ all:
     #   kv_xy: 8.0
     #   kv_z:  7.0
     # ════════════════════════════════════════════════════════════════════════════
-    # CF2.1 UPGRADED MOTORS — PARKED 2026-07-25 (footage session paused, see FINALIZE_PROJECT.md)
+    # CF2.1 UPGRADED MOTORS — PARKED 2026-07-25 (brushless re-tested, see FINALIZE_PROJECT.md)
     # To reactivate: uncomment this block and deck.bcRpm above, comment out active block below.
     # ════════════════════════════════════════════════════════════════════════════
     # indi_gains:
@@ -201,7 +201,7 @@ all:
     #   kv_xy: 8.0
     #   kv_z:  10.0
     # ════════════════════════════════════════════════════════════════════════════
-    # CF21BL BRUSHLESS — active 2026-07-25 (footage capture + circle sweep, Task 3, then re-park)
+    # CF21BL BRUSHLESS — active 2026-07-25 (additional hover test, then re-park)
     # Inertia: Busetto et al. 2025 (JXX=23.951e-6, ARM_M=35.4mm, TORQUE_RATIO=0.002078)
     # RPM: DShot bidirectional telemetry → log topic "rpm" uses motor.m1_rpm..m4_rpm (NOT rpm.m1..m4).
     # Tuning order: kt ID from hover → fc_bw → KR/KW → pos KV/KP → figure-8
