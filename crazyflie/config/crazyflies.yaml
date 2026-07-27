@@ -291,8 +291,21 @@ all:
       # For Phase-4 inverted/loop flight set clamp_en: 11 (tilt clamp off, tau clamps stay on).
       # Values = physical headroom at hover: tau_xy = ARM*4*0.1N, tau_z = TORQUE_RATIO*4*0.1N.
       # (Upgraded block would use ~0.010/0.0017; standard ~0.007/0.0012 by the same formula.)
-      clamp_en: 15
-      tau_xy_max: 0.014
+      # 2026-07-27: switched to clamp_en=11 (tilt clamp OFF, tau/thrust clamps stay on)
+      # for the inverted-loop attempt, per this block's own anticipated fix above ("For
+      # Phase-4 inverted/loop flight set clamp_en: 11"). The tilt clamp lives in the
+      # POSITION loop and caps the desired-thrust-vector angle at tilt_max_deg=30 deg
+      # before it ever reaches the attitude controller -- it's only skipped when an
+      # explicit attitude override (rd_override) is active, which our Mode 1/flatness
+      # loop trajectory does NOT use. Near the apex (needs ~180 deg tilt), this clamp
+      # was very likely handing the attitude controller a corrupted ~30 deg target to
+      # chase instead of the true inverted one -- a much more direct explanation for
+      # the sustained tau_xy clamp saturation seen in both 2026-07-27 crash logs than
+      # actuator lag alone. Also loosened tau_xy_max (0.014 -> 0.030) as a secondary
+      # margin since we're now in genuinely new territory this clamp was never tuned
+      # for; tau_z_max/thrust_max left as-is (no evidence they were binding).
+      clamp_en: 11
+      tau_xy_max: 0.030
       tau_z_max: 0.0025
       tilt_max_deg: 30.0
       thrust_max: 0.8
