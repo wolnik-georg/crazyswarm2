@@ -102,13 +102,20 @@ all:
         vars: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
                "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
       # /cf231/attitude — attitude + thrust + battery (5 floats = 20 bytes)
+      # Bumped 20 -> 100 Hz (2026-07-27, no SD/USD logging available on this drone --
+      # this is the best resolution radio logging can give). Needed to resolve the
+      # post-loop-flip recovery window (~0.3-0.5s, gyro rates 500-1000+ deg/s): at
+      # 20Hz that event only had 6-10 samples. Matches state/indi_state, which already
+      # run at 100Hz without issue, so bandwidth headroom exists. Revert to 20 if this
+      # causes radio packet loss/log gaps.
       attitude:
-        frequency: 20 # Hz
+        frequency: 100 # Hz
         vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                "stabilizer.thrust", "pm.vbat"]
       # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes)
+      # Bumped 20 -> 100 Hz alongside attitude above, same reason.
       gyro_acc:
-        frequency: 20 # Hz
+        frequency: 100 # Hz
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
       # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
@@ -299,15 +306,18 @@ all:
       # is active, which flatness-derived loop/teardrop trajectories do NOT use. Any
       # genuine inversion (needs ~180 deg tilt at the apex) requires this clamp OFF,
       # regardless of how the trajectory itself is generated (pinned or natural).
-      # tau_xy_max kept LOOSENED at 0.030 (was 0.014) per explicit operator decision
-      # 2026-07-27, even though the redesigned natural (unpinned) `loop` power-loop
-      # only needs 16% of the original 0.014Nm ceiling (see export_poly4d.rs
-      # build_loop()) -- extra headroom kept as margin for anything unexpected on
-      # future flights. Note this does trade away some of the blow-up containment
-      # this clamp was originally added for (was raised from a real incident that
-      # reached 52mNm unclamped) -- not free, but the operator's call to make.
+      # tau_xy_max LOOSENED further 0.030 -> 0.045 (2026-07-27 evening): post-flip
+      # recovery telemetry from the working entry=exit=0.33s/pin=0.16s loop config
+      # showed tau_x/tau_y saturating at the 0.030 clamp AND chattering (rapid sign
+      # flips) rather than converging -- gyro rates to 500-1000+ deg/s, z fell from
+      # apex to floor in ~1s (near-freefall). 0.045 is still well under the 0.052Nm
+      # blow-up incident that originally motivated this clamp, so containment is not
+      # fully given up, just widened. If the chatter persists at 0.045 unchanged, that
+      # points away from pure saturation and toward an EKF-attitude-estimate-lag
+      # explanation instead (open question, see project memory) -- raising this
+      # further would not help in that case.
       clamp_en: 11
-      tau_xy_max: 0.030
+      tau_xy_max: 0.045
       tau_z_max: 0.0025
       tilt_max_deg: 30.0
       thrust_max: 0.8
