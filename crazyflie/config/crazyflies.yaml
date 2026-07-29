@@ -128,6 +128,13 @@ all:
       indi_alp_raw:
         frequency: 100 # Hz
         vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
+      # /cf231/indi_alp_notch — stage-2 notch-filtered angular accel (3 floats = 12 bytes,
+      # separate packet, same 6-float/packet limit as indi_alp_raw above). Added 2026-07-28
+      # (shake investigation): always computed/logged regardless of indi_gains.notch_en so
+      # alp_raw / alp (stage-1 BW) / alp_notch (stage-2 notch) can be compared from one flight.
+      indi_alp_notch:
+        frequency: 100 # Hz
+        vars: ["indi.alp_notch_x", "indi.alp_notch_y", "indi.alp_notch_z"]
       # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
       # fc_bw=70 Hz confirmed 2026-07-11 on UPGRADED drone (same result as standard 2026-07-03).
       # Motor noise at 350-700 Hz, above 50 Hz Nyquist of 100 Hz log — filter works in firmware.
@@ -321,6 +328,19 @@ all:
       tau_z_max: 0.0025
       tilt_max_deg: 30.0
       thrust_max: 0.8
+      # Optional stage-2 notch (band-reject) filter (2026-07-28, requires cload'd firmware with
+      # the notch_en/notch_f0/notch_bw toggle). The stage-1 Butterworth above (fc_bw=60) sits well
+      # above the 5-10 Hz shake band and measurably does NOT touch it (|alpha_filtered/alpha_raw|
+      # =1.000 at 7.22 Hz, 500 Hz SD-log analysis, docs/results_2026-07-15_brushless.md §16.6) --
+      # and lowering fc_bw down into that band was already tried and made things 3-4x worse. This
+      # targets ONLY the diagnosed narrow band (genuine spectral peak at 7.22 Hz, not broadband),
+      # applied identically to alpha_meas and alpha_ref so the two chains stay phase-matched.
+      # Default OFF = byte-identical to prior behaviour. f0/bw runtime-tunable (no reflash needed
+      # to retune) in case the shake frequency drifts session-to-session (6.3-7.9 Hz measured
+      # across sessions in the prior investigation).
+      notch_en: 0
+      notch_f0: 7.2
+      notch_bw: 5.0
     pos_gains:
       # 2026-07-19 KV DECOUPLING TEST — analogous to the KR/KW decoupling that just improved
       # attitude tracking (KW*e_omega directly injects raw gyro noise into torque, independent of

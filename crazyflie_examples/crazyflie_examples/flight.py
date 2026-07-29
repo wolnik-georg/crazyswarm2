@@ -139,6 +139,11 @@ _INDI_FILTER_VARS = [
     "indi.alp_y",
     "indi.alp_z",
 ]
+_INDI_ALPNOTCH_VARS = [
+    "indi.alp_notch_x",
+    "indi.alp_notch_y",
+    "indi.alp_notch_z",
+]
 
 
 def _state_cb(msg: LogDataGeneric):
@@ -187,6 +192,9 @@ def _state_cb(msg: LogDataGeneric):
             "alp_raw_x": _latest_indi.get("indi.alp_raw_x", float("nan")),
             "alp_raw_y": _latest_indi.get("indi.alp_raw_y", float("nan")),
             "alp_raw_z": _latest_indi.get("indi.alp_raw_z", float("nan")),
+            "alp_notch_x": _latest_indi.get("indi.alp_notch_x", float("nan")),
+            "alp_notch_y": _latest_indi.get("indi.alp_notch_y", float("nan")),
+            "alp_notch_z": _latest_indi.get("indi.alp_notch_z", float("nan")),
         }
     )
 
@@ -236,6 +244,14 @@ def _indi_filter_cb(msg: LogDataGeneric):
     if len(msg.values) != len(_INDI_FILTER_VARS):
         return
     for name, val in zip(_INDI_FILTER_VARS, msg.values):
+        _latest_indi[name] = val
+
+
+def _indi_alp_notch_cb(msg: LogDataGeneric):
+    """Caches alp_notch_x/y/z from indi_alp_notch topic (100 Hz, stage-2 notch filter output)."""
+    if len(msg.values) != len(_INDI_ALPNOTCH_VARS):
+        return
+    for name, val in zip(_INDI_ALPNOTCH_VARS, msg.values):
         _latest_indi[name] = val
 
 
@@ -294,13 +310,17 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
             "kt3",
             "kt4",
             "j_scale",
+            "notch_f0",
+            "notch_bw",
         )
         if k in indi
     }
     pos = fp.get("pos_gains", {})
     pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
     # Metadata-only diagnostic toggles (uint8) — never pushed via setParam, see _yaml_diag_gains.
-    diag_gains = {k: indi[k] for k in ("filt_order", "ff_free", "filt_tau") if k in indi}
+    diag_gains = {
+        k: indi[k] for k in ("filt_order", "ff_free", "filt_tau", "notch_en") if k in indi
+    }
     return (
         int(stabilizer["controller"]),
         int(indi["ctrl_mode"]),
@@ -409,6 +429,9 @@ def _save_log(
         "alp_raw_x",
         "alp_raw_y",
         "alp_raw_z",
+        "alp_notch_x",
+        "alp_notch_y",
+        "alp_notch_z",
     ]
     kt_str = f"{kt:.6f}".rstrip("0").rstrip(".")
     with open(path, "w", newline="") as f:
@@ -432,10 +455,12 @@ def _save_log(
             "kt3",
             "kt4",
             "j_scale",
+            "notch_f0",
+            "notch_bw",
         ):
             if k in _yaml_indi_gains:
                 f.write(f"# meta:indi_{k}={_yaml_indi_gains[k]}\n")
-        for k in ("filt_order", "ff_free", "filt_tau"):
+        for k in ("filt_order", "ff_free", "filt_tau", "notch_en"):
             if k in _yaml_diag_gains:
                 f.write(f"# meta:indi_{k}={_yaml_diag_gains[k]}\n")
         for k in ("kp_xy", "kp_z", "kv_xy", "kv_z"):
@@ -917,8 +942,12 @@ def main():
     allcfs.create_subscription(
         LogDataGeneric, f"{cf_name}/indi_filter_char", _indi_filter_cb, 10
     )
+    allcfs.create_subscription(
+        LogDataGeneric, f"{cf_name}/indi_alp_notch", _indi_alp_notch_cb, 10
+    )
     print(
-        f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, indi_alp_raw, indi_filter_char"
+        f"[log] Subscribed to {cf_name}/state, attitude, gyro_acc, rpm, indi_state, "
+        f"indi_alp_raw, indi_filter_char, indi_alp_notch"
     )
 
     # ── Wait for EKF + clear stale state from any previous run ───────────────
