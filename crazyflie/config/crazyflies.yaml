@@ -338,9 +338,21 @@ all:
       # Default OFF = byte-identical to prior behaviour. f0/bw runtime-tunable (no reflash needed
       # to retune) in case the shake frequency drifts session-to-session (6.3-7.9 Hz measured
       # across sessions in the prior investigation).
+      # 2026-07-29 lab session: measured resonance sits at 6.9 Hz (not 7.2) across
+      # every flight this session -- recentered f0 and narrowed bw to minimize the
+      # low-frequency phase penalty (wider bw was shown to push phase lag down into
+      # the control-critical <5 Hz range, which is what caused the bw=10/20 crashes
+      # at kr=2400, not a filter-design bug -- see notch_bode_response.png). Also
+      # fixed same day: alpha_ref/tau_current notch+BW filters were gated behind
+      # `mode & 2` in firmware_app/src/lib.rs and never ran during the geometric
+      # ramp phase, causing a cold-start transient at the INDI handover that was
+      # the real cause of every notch_en=1 crash regardless of bw -- see lib.rs
+      # controller_step comments. notch_en=0 here first to sanity-check the
+      # reflashed firmware (with that fix) reproduces normal INDI hover before
+      # re-enabling the notch.
       notch_en: 0
-      notch_f0: 7.2
-      notch_bw: 5.0
+      notch_f0: 6.9
+      notch_bw: 3.0
     pos_gains:
       # 2026-07-19 KV DECOUPLING TEST — analogous to the KR/KW decoupling that just improved
       # attitude tracking (KW*e_omega directly injects raw gyro noise into torque, independent of
