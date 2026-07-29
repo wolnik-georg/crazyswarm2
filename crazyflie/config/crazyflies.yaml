@@ -197,15 +197,16 @@ all:
     # CF2.1 UPGRADED MOTORS — locked Jul 15 2026, 3.7 cm mean RMSE (n=11)
     # REACTIVATED 2026-07-29 to test the inverted-loop maneuver (unchanged, no new tuning)
     # on this platform for comparison against the brushless recovery result. Core gains
-    # unchanged from the Jul 15 lock; clamp_en/tau_xy_max/tau_z_max/tilt_max_deg/thrust_max
-    # added below (didn't exist when this block was last active) using the same
-    # physical-headroom formula as brushless's clamp block: tau_xy = ARM*4*0.1N,
-    # tau_z = TORQUE_RATIO*4*0.1N -- values from that block's own comment ("Upgraded block
-    # would use ~0.010/0.0017"). clamp_en=11 (tilt clamp off, tau/thrust clamps on) per the
-    # same "Phase-4 inverted/loop flight" rule used for brushless -- the inversion needs the
-    # tilt clamp off regardless of platform. filt_order/filt_tau/notch_en intentionally
-    # omitted (upgraded was never part of that investigation; firmware defaults are 0/0/0,
-    # i.e. legacy behaviour, matching this platform's original validated config exactly).
+    # unchanged from the Jul 15 lock. clamp_en REVERTED to 0 (no clamps) 2026-07-29 after a
+    # hover crash traced directly to tau_xy_max=0.010: that value came from the "physical
+    # headroom at hover" formula, which is NOT enough torque authority to correct a real
+    # disturbance -- brushless hit this exact failure (chattering/non-convergence) at its own
+    # headroom-formula value (0.030) and needed loosening to 0.045 before it worked. clamp_en
+    # (and this whole clamp system) did not exist when this config was locked on Jul 15, so
+    # clamp_en=0 here is not a new setting -- it is the exact config that was actually
+    # validated over 11 flights. Only re-enable clamp_en=11 (tilt clamp off, needed for the
+    # inversion) immediately before flying the loop, with a properly loosened tau_xy_max
+    # (not the raw headroom-formula value) -- do not fly it for a plain hover check.
     # To switch back to brushless: comment this block, uncomment the CF21BL block below.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
@@ -220,7 +221,7 @@ all:
       kt2: 2.4668e-10
       kt3: 2.0250e-10
       kt4: 2.5288e-10
-      clamp_en: 11
+      clamp_en: 0
       tau_xy_max: 0.010
       tau_z_max: 0.0017
       tilt_max_deg: 30.0
