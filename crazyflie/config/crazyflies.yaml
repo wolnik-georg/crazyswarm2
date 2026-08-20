@@ -18,6 +18,36 @@ robots:
     #       vars: ["acc.x", "acc.y"]
     # reference_frame: "odom_cf231" # use a custom reference frame if no global coordinate system is available
 
+  # ── Second drone for thesis formation flight (2026-08-19) ──────────────────
+  # Used by `ros2 run crazyflie_examples formation_flight`. Left DISABLED until the
+  # three TODOs below are filled in with the real hardware values -- enabling it with
+  # a placeholder URI will fail to connect (or, worse, address the wrong drone).
+  #
+  # TODO(1) uri: set the second drone's actual radio address. It MUST differ from
+  #         cf231_active's E7E7E7E7E7. Two drones sharing one address is undefined.
+  # TODO(2) initial_position: where this drone physically sits on the floor [x, y, z].
+  #         formation_flight anchors the formation on the FIRST enabled drone, so this
+  #         only sets the takeoff spot -- but it must be accurate or the stage-2 XY
+  #         transit distance (and the collision warning) will be wrong.
+  # TODO(3) confirm the platform matches cf231_active -- see the WARNING below.
+  #
+  # WARNING -- shared gains: all.firmware_params (stabilizer.controller, indi_gains.*,
+  # pos_gains.*) is pushed to EVERY enabled robot, and that block is currently tuned
+  # for the UPGRADED CF2.1 (see the comment at indi_gains). Two *identical* drones are
+  # fine. A mixed pair is NOT: mass / kt1..kt4 / J and the INDI gains would be wrong on
+  # one of them. For a mixed pair, move firmware_params out of `all:` into the per-robot
+  # or per-robot_type blocks first. The thesis protocol calls for 2x identical brushless.
+  #
+  # WARNING -- radio bandwidth: all: currently streams 6 custom topics at 100 Hz per
+  # drone (~600 packets/s). One Crazyradio cannot carry two drones at that rate. Either
+  # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
+  # dongle (radio://1/...) / a different channel.
+  cf_second:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E7E7E8   # TODO(1) placeholder -- set the real address
+    initial_position: [-0.3, 0.0, 0.0]  # TODO(2) placeholder -- set the real spot
+    type: cf21  # TODO(3) match cf231_active's platform
+
   cf5:
     enabled: false
     uri: radio://0/80/2M/E7E7E7E705
