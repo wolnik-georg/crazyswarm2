@@ -137,22 +137,28 @@ def formation_offsets(kind: str, n: int, sep: float) -> np.ndarray:
 CSV_COLS = ["time_s", "pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z",
             "roll", "pitch", "yaw", "thrust", "vbat",
             "gyro_x", "gyro_y", "gyro_z", "acc_x", "acc_y", "acc_z",
-            "tau_x", "tau_y", "tau_z", "alp_x", "alp_y", "alp_z"]
+            "tau_x", "tau_y", "tau_z", "alp_x", "alp_y", "alp_z",
+            "a_res_x", "a_res_y", "a_res_z"]
 
 
 class DroneLogger:
     """Caches the latest value of each log topic; emits a CSV row per `state` message."""
 
-    def __init__(self, node, name):
+    def __init__(self, node, name, t0):
         self.name = name
         self.latest = defaultdict(float)
         self.rows = []
         self.active = False
-        self.t0 = time.monotonic()
+        # ONE clock shared by every drone in the run. Each logger having its own t0 would offset
+        # the drones by however long their construction took, and the whole point of these logs is
+        # to correlate one drone's residual against another's relative position -- that needs a
+        # common time base.
+        self.t0 = t0
         node.create_subscription(LogDataGeneric, f"{name}/state", self._state, 10)
         node.create_subscription(LogDataGeneric, f"{name}/attitude", self._att, 10)
         node.create_subscription(LogDataGeneric, f"{name}/gyro_acc", self._imu, 10)
         node.create_subscription(LogDataGeneric, f"{name}/indi_state", self._indi, 10)
+        node.create_subscription(LogDataGeneric, f"{name}/indi_a_res", self._a_res, 10)
 
     def _state(self, msg):
         v = msg.values
@@ -172,6 +178,10 @@ class DroneLogger:
         self.latest.update(
             zip(("tau_x", "tau_y", "tau_z", "alp_x", "alp_y", "alp_z"), msg.values))
 
+    def _a_res(self, msg):
+        """Residual acceleration [m/s^2], world frame. f_res = mass * a_res."""
+        self.latest.update(zip(("a_res_x", "a_res_y", "a_res_z"), msg.values))
+
     def position(self):
         return np.array([self.latest["pos_x"], self.latest["pos_y"], self.latest["pos_z"]])
 
@@ -184,6 +194,22 @@ class DroneLogger:
             for r in self.rows:
                 f.write(",".join(f"{x:.6f}" for x in r) + "\n")
         print(f"[log] {self.name}: {len(self.rows)} rows -> {path}")
+
+
+def residual_report(loggers, mass):
+    """Residual force per drone -- the quantity the thesis is measuring."""
+    print("\n[formation] residual force |f_res| = mass * |a_res| (downwash signature):")
+    for lg in loggers:
+        if not lg.rows:
+            continue
+        a = np.array([r[24:27] for r in lg.rows])
+        if not np.any(a):
+            print(f"  {lg.name}: all zero -- no RPM source? a_res needs rpm/motor telemetry")
+            continue
+        mag = np.linalg.norm(a, axis=1)
+        print(f"  {lg.name}: |a_res| mean {mag.mean():.3f} max {mag.max():.3f} m/s^2   "
+              f"|f_res| mean {1000*mass*mag.mean():.1f} max {1000*mass*mag.max():.1f} mN   "
+              f"(a_res_z mean {a[:, 2].mean():+.3f})")
 
 
 def separation_report(loggers):
@@ -293,7 +319,8 @@ def main():
             print("\n[formation] aborted.")
             return
 
-    loggers = [DroneLogger(allcfs, c.prefix.lstrip("/")) for c in cfs]
+    log_t0 = time.monotonic()
+    loggers = [DroneLogger(allcfs, c.prefix.lstrip("/"), log_t0) for c in cfs]
     print(f"[log] subscribed to {n} drone(s)")
     th.sleep(2.0)  # let the EKF settle on mocap and the log streams start
 
@@ -394,6 +421,7 @@ def main():
         for lg in loggers:
             lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta)
         separation_report(loggers)
+        residual_report(loggers, float(indi_gains.get("mass", 0.041)))
 
 
 if __name__ == "__main__":

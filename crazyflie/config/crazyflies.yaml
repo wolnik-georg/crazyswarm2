@@ -158,6 +158,13 @@ all:
       indi_alp_raw:
         frequency: 100 # Hz
         vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
+      # /cfXXX/indi_a_res — residual acceleration a_res = a_meas - a_model [m/s^2], world frame.
+      # Equals f_res/m: the unmodelled force, dominated by other drones' downwash in close
+      # formation. THE core measurement for the thesis. Logged in ALL controller modes (needs an
+      # RPM source only), so downwash can be recorded while flying plain geometric too.
+      indi_a_res:
+        frequency: 100 # Hz
+        vars: ["indi.a_res_x", "indi.a_res_y", "indi.a_res_z"]
       # /cf231/indi_alp_notch — stage-2 notch-filtered angular accel (3 floats = 12 bytes,
       # separate packet, same 6-float/packet limit as indi_alp_raw above). Added 2026-07-28
       # (shake investigation): always computed/logged regardless of indi_gains.notch_en so
