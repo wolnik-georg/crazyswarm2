@@ -321,6 +321,7 @@ def main():
 
     log_t0 = time.monotonic()
     loggers = [DroneLogger(allcfs, c.prefix.lstrip("/"), log_t0) for c in cfs]
+    usd_start = None
     print(f"[log] subscribed to {n} drone(s)")
     th.sleep(2.0)  # let the EKF settle on mocap and the log streams start
 
@@ -333,6 +334,7 @@ def main():
         "height": args.height, "n_drones": n,
         "controller": controller, "ctrl_mode": traj_ctrl_mode,
         "csv": csv_path.name,
+        "usd_start_s": "",   # filled in below once the broadcast has happened
     }
     meta.update({f"indi_{k}": v for k, v in indi_gains.items()})
     meta.update({f"pos_{k}": v for k, v in pos_gains.items()})
@@ -388,11 +390,21 @@ def main():
         th.sleep(0.5)
 
         apply("trajectory", controller, traj_ctrl_mode, indi_gains, pos_gains)
-        for c in cfs:
-            try:
-                c.setParam("usd.logging", 1)
-            except Exception:
-                pass  # no uSD deck
+
+        # uSD logging start — ONE BROADCAST, not a per-drone loop. This is what makes the
+        # per-drone SD logs mergeable: each drone stamps samples with its own usecTimestamp()
+        # (µs since ITS OWN boot), so the logs share no clock. Starting them on a single
+        # broadcast gives a common origin -- subtract each log's first timestamp and the
+        # drones line up to within the broadcast jitter plus one logging period.
+        # A loop of individual setParam calls would stagger the starts by tens of ms and
+        # destroy that. See tools/merge_usd_logs.py.
+        try:
+            allcfs.setParam("usd.logging", 1)
+            usd_start = time.monotonic()   # ROS-clock instant of the broadcast, for the merge
+            print(f"[formation] uSD logging started (broadcast) at t={usd_start - log_t0:.3f}s")
+        except Exception as e:
+            usd_start = None
+            print(f"[formation] uSD logging not started ({e}) — no deck? radio logs only")
 
         for rep in range(args.reps):
             if rep > 0:
@@ -403,11 +415,10 @@ def main():
 
         print("[formation] done, landing...")
         apply("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-        for c in cfs:
-            try:
-                c.setParam("usd.logging", 0)
-            except Exception:
-                pass
+        try:
+            allcfs.setParam("usd.logging", 0)   # broadcast stop, mirrors the start
+        except Exception:
+            pass
         allcfs.land(targetHeight=0.06, duration=3.0)
         th.sleep(4.0)
         if args.brushless:
@@ -417,6 +428,8 @@ def main():
     finally:
         for lg in loggers:
             lg.active = False
+        if usd_start is not None:
+            meta["usd_start_s"] = f"{usd_start - log_t0:.6f}"
         label = f"{args.trajectory}_{args.formation}{args.separation:.2f}"
         for lg in loggers:
             lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta)
