@@ -28,6 +28,8 @@ import time
 
 import numpy as np
 
+import json
+
 from .formations import poly4d, safety, scenarios
 
 DATA_DIR = Path(__file__).parent / 'data' / 'formations'
@@ -355,6 +357,22 @@ def main():
                   f't={usd_start - log_t0:.3f}s')
         except Exception as e:
             print(f'[formation] uSD logging not started ({e}) -- radio logs only')
+
+        # Record the exact simulation-clock instant the trajectory starts. Verification
+        # afterwards needs the window, and guessing it from the recorded states is
+        # impossible for a scenario like A1 where nothing moves.
+        t_start = float(th.time())
+        meta['t_start_sim'] = f'{t_start:.4f}'
+        sidecar = LOG_DIR / f'{sc.sid}_{stamp}.meta.json'
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with open(sidecar, 'w') as fh:
+            json.dump({'scenario': sc.sid, 'params': sc.params,
+                       'roles': [r.role for r in sc.robots],
+                       'names': [c.prefix.lstrip('/') for c in cfs],
+                       'height': args.height, 'anchor': list(map(float, anchor)),
+                       't_start_sim': t_start, 'duration': sc.duration,
+                       'timescale': args.timescale}, fh, indent=2)
+        print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
 
         print(f'[formation] running {sc.sid} ({sc.duration:.1f} s)...')
         allcfs.startTrajectory(0, timescale=args.timescale)
