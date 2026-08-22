@@ -16,7 +16,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .np import Quadrotor
+from .np import Quadrotor, uav_params
 from ..sim_data_types import Action, State
 
 
@@ -110,9 +110,10 @@ class Backend:
         self.t = 0
         self.dt = 0.0005
 
+        params = uav_params(node)
         self.uavs = []
         for state in states:
-            uav = Quadrotor(state)
+            uav = Quadrotor(state, params)
             self.uavs.append(uav)
         self.neuralswarm = NeuralSwarm(Path(__file__).parent / 'data/neuralswarm2')
 

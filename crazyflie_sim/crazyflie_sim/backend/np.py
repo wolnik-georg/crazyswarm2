@@ -19,9 +19,10 @@ class Backend:
         self.t = 0
         self.dt = 0.0005
 
+        params = uav_params(node)
         self.uavs = []
         for state in states:
-            uav = Quadrotor(state)
+            uav = Quadrotor(state, params)
             self.uavs.append(uav)
 
     def time(self) -> float:
@@ -49,10 +50,18 @@ class Backend:
         pass
 
 
+def uav_params(node):
+    """Read the optional sim.physics block. None means 'keep the built-in CF2.0 model'."""
+    try:
+        return dict(node._ros_parameters['sim']['physics'])
+    except (AttributeError, KeyError, TypeError):
+        return None
+
+
 class Quadrotor:
     """Basic rigid body quadrotor model (no drag) using numpy and rowan."""
 
-    def __init__(self, state):
+    def __init__(self, state, params=None):
         # parameters (Crazyflie 2.0 quadrotor)
         self.mass = 0.034  # kg
         # self.J = np.array([
@@ -79,12 +88,42 @@ class Quadrotor:
         else:
             self.inv_J = 1 / self.J  # diagonal matrix -> division
 
+        # Optional override of the vehicle being simulated. The defaults above are a
+        # brushed CF2.0; our thesis drone is a brushless CF21BL, and a model-inverting
+        # controller (INDI) reconstructs the thrust from RPM using ITS OWN constants.
+        # If the plant and the controller disagree about kt or mass, the mismatch shows
+        # up as a residual force that no amount of tuning removes -- and residual force
+        # is the thing this thesis measures. So the plant is made to match the firmware.
+        self.kt = None
+        if params:
+            self.mass = float(params.get('mass', self.mass))
+            if 'inertia' in params:
+                self.J = np.array(params['inertia'], dtype=float)
+                self.inv_J = np.linalg.pinv(self.J) if self.J.shape == (3, 3) else 1 / self.J
+            if 'kt' in params:
+                kt = params['kt']
+                self.kt = np.full(4, float(kt)) if np.isscalar(kt) \
+                    else np.array(kt, dtype=float)
+            arm_length = float(params.get('arm_length', 0.046))
+            t2t = float(params.get('t2t', 0.006))
+            arm = 0.707106781 * arm_length
+            self.B0 = np.array([
+                [1, 1, 1, 1],
+                [-arm, -arm, arm, arm],
+                [-arm, arm, arm, -arm],
+                [-t2t, t2t, -t2t, t2t]
+                ])
+
         self.state = state
 
     def step(self, action, dt, f_a=np.zeros(3)):
 
         # convert RPM -> Force
         def rpm_to_force(rpm):
+            if self.kt is not None:
+                # Quadratic propeller model, thrust = kt * RPM^2 -- the same form the
+                # firmware inverts (indi_gains.kt1..kt4).
+                return self.kt * np.square(np.asarray(rpm, dtype=float))
             # polyfit using data and scripts from https://github.com/IMRCLab/crazyflie-system-id
             p = [2.55077341e-08, -4.92422570e-05, -1.51910248e-01]
             force_in_grams = np.polyval(p, rpm)
@@ -120,10 +159,20 @@ class Quadrotor:
         omega_next = self.state.omega + (
             self.inv_J * (np.cross(self.J * self.state.omega, self.state.omega) + tau_u)) * dt
 
+        # What an onboard IMU would measure: specific force, body frame, in g.
+        # Gravity is excluded by construction (an accelerometer measures every force
+        # EXCEPT gravity), so this is (thrust + f_a) / m expressed in the body frame.
+        # f_a is the aerodynamic interaction force -- so with the neuralswarm backend
+        # the simulated accelerometer genuinely feels the downwash, which is what
+        # makes the residual a_meas - a_model measurable in simulation at all.
+        acc_body = (f_u + rowan.rotate(rowan.inverse(self.state.quat), f_a)) \
+            / (self.mass * self.g)
+
         self.state.pos = pos_next
         self.state.vel = vel_next
         self.state.quat = q_next
         self.state.omega = omega_next
+        self.state.acc = acc_body
 
         # if we fall below the ground, set velocities to 0
         if self.state.pos[2] < 0:

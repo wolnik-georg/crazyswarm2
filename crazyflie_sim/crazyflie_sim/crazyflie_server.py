@@ -84,6 +84,11 @@ class CrazyflieServer(Node):
                             pass
                     reference_frames.append(reference_frame)
 
+        # Configure the out-of-tree controller BEFORE the backend exists, because the
+        # backend builds its vehicle model from these numbers.
+        if self._ros_parameters['sim'].get('controller') == 'oot':
+            self._setup_oot()
+
         # initialize backend by dynamically loading the module
         backend_name = self._ros_parameters['sim']['backend']
         module = importlib.import_module(
@@ -211,6 +216,129 @@ class CrazyflieServer(Node):
             else self._ros_parameters['sim']['max_dt']
         self.timer = self.create_timer(max_dt, self._timer_callback)
         self.is_shutdown = False
+
+    # indi_gains.<key> / pos_gains.<key> -> firmware global. Only these are settable;
+    # anything else in the yaml is either not a controller gain or not exposed by the
+    # bindings, and is reported rather than silently ignored.
+    _OOT_PARAM_MAP = {
+        'indi_gains': {
+            'ctrl_mode': ('g_controller_mode', int),
+            'kr': ('g_indi_kr', float), 'kw': ('g_indi_kw', float),
+            'kr_z': ('g_indi_kr_z', float), 'kw_z': ('g_indi_kw_z', float),
+            'fc_bw': ('g_indi_fc_bw', float), 'mass': ('g_indi_mass', float),
+            'kt1': ('g_indi_kt1', float), 'kt2': ('g_indi_kt2', float),
+            'kt3': ('g_indi_kt3', float), 'kt4': ('g_indi_kt4', float),
+            'ff_free': ('g_indi_ff_free', int),
+            'filt_order': ('g_indi_filt_order', int),
+            'filt_tau': ('g_indi_filt_tau', int),
+            'j_scale': ('g_indi_j_scale', float),
+            'act_tau': ('g_indi_act_tau', float),
+            'clamp_en': ('g_indi_clamp_en', int),
+            'tau_xy_max': ('g_indi_tau_xy_max', float),
+            'tau_z_max': ('g_indi_tau_z_max', float),
+            'tilt_max_deg': ('g_indi_tilt_max_deg', float),
+            'thrust_max': ('g_indi_thrust_max', float),
+            'notch_en': ('g_indi_notch_en', int),
+            'notch_f0': ('g_indi_notch_f0', float),
+            'notch_bw': ('g_indi_notch_bw', float),
+            'omega_src': ('g_indi_omega_src', int),
+            'frame_conv': ('g_indi_frame_conv', int),
+        },
+        'pos_gains': {
+            'kp_xy': ('g_kp_xy', float), 'kp_z': ('g_kp_z', float),
+            'kv_xy': ('g_kv_xy', float), 'kv_z': ('g_kv_z', float),
+        },
+    }
+
+    def _apply_oot_firmware_params(self, firm):
+        """Push crazyflies.yaml firmware_params into the controller, as CRTP does on hardware.
+
+        There is one compiled controller for every simulated drone, so these gains are
+        necessarily shared. That matches the yaml, where the block lives under `all:`
+        and is pushed to every robot; a per-robot override cannot be honoured here and
+        is reported rather than quietly dropped.
+        """
+        applied, skipped = [], []
+        blocks = dict(self._ros_parameters.get('all', {}).get('firmware_params', {}))
+        for group, keys in self._OOT_PARAM_MAP.items():
+            for key, value in dict(blocks.get(group, {})).items():
+                if key not in keys:
+                    skipped.append('%s.%s' % (group, key))
+                    continue
+                name, cast = keys[key]
+                if not hasattr(firm.cvar, name):
+                    skipped.append('%s.%s' % (group, key))
+                    continue
+                setattr(firm.cvar, name, cast(value))
+                applied.append('%s=%s' % (key, value))
+
+        for robot, cfg in self._ros_parameters.get('robots', {}).items():
+            if any(g in dict(cfg.get('firmware_params', {}))
+                   for g in self._OOT_PARAM_MAP):
+                self.get_logger().warn(
+                    'robot %s has per-robot controller gains; the simulator has one '
+                    'shared controller and cannot apply them' % robot)
+
+        if applied:
+            self.get_logger().info(
+                'applied %d firmware_params to the out-of-tree controller: %s'
+                % (len(applied), ', '.join(applied)))
+        if skipped:
+            self.get_logger().info(
+                'firmware_params not applicable to the controller: %s'
+                % ', '.join(sorted(set(skipped))))
+
+    def _setup_oot(self):
+        """Configure the out-of-tree controller and match the plant to it.
+
+        Two things have to agree or the simulation is not of our drone:
+
+        1. Which control law runs -- sim.oot_ctrl_mode, the same 0/1/2/3 selector as
+           indi_gains.ctrl_mode on hardware.
+        2. The airframe. INDI inverts the vehicle model, so if the simulated plant has
+           a different mass, thrust constant or arm length than the firmware was
+           compiled with, the mismatch appears as a residual force -- and residual
+           force is exactly what this thesis measures. The plant is therefore built
+           from the firmware's own constants rather than from a second set of numbers
+           in the yaml, so the two cannot drift apart. An explicit sim.physics block
+           still wins if one is given.
+        """
+        import cffirmware as _firm
+        sim = self._ros_parameters['sim']
+
+        # Apply firmware_params exactly as hardware does. On a real flight
+        # crazyflies.yaml is pushed to the drone over CRTP at connect; nothing did that
+        # in simulation, so the controller ran on traj_iface.c compile-time defaults --
+        # a different mass, different kt, kr=100/kw=30 instead of 2400/170, and
+        # filt_order/filt_tau off. Those last two are the phase-matching filters whose
+        # absence the firmware comments identify as driving a limit cycle, and the
+        # attitude INDI loop duly diverged in sim while flying fine on the drone.
+        # Simulating gains nobody flies is worse than not simulating at all.
+        self._apply_oot_firmware_params(_firm)
+
+        if 'oot_ctrl_mode' in sim:
+            # The per-run selector wins over the yaml's ctrl_mode, so one config file
+            # can be flown under several control laws.
+            _firm.cvar.g_controller_mode = int(sim['oot_ctrl_mode'])
+        names = {0: 'geometric SE(3)', 1: 'position INDI',
+                 2: 'attitude INDI', 3: 'full INDI'}
+        mode = int(_firm.cvar.g_controller_mode)
+        self.get_logger().info(
+            'out-of-tree controller: ctrl_mode=%d (%s)' % (mode, names.get(mode, '?')))
+
+        if 'physics' not in sim:
+            sim['physics'] = {
+                'mass': float(_firm.cvar.g_indi_mass),
+                'kt': [float(_firm.cvar.g_indi_kt1), float(_firm.cvar.g_indi_kt2),
+                       float(_firm.cvar.g_indi_kt3), float(_firm.cvar.g_indi_kt4)],
+                'arm_length': float(_firm.oot_arm_length()),
+                't2t': float(_firm.oot_thrust2torque()),
+            }
+            self.get_logger().info(
+                'simulated airframe taken from firmware: mass=%.4f kg, '
+                'THRUST_MAX=%.3f N/motor, arm=%.3f m'
+                % (sim['physics']['mass'], _firm.oot_thrust_max(),
+                   sim['physics']['arm_length']))
 
     def on_shutdown_callback(self):
         if not self.is_shutdown:

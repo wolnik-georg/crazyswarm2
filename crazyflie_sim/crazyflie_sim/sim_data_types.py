@@ -5,13 +5,20 @@ class State:
     """Class that stores the state of a UAV as used in the simulator interface."""
 
     def __init__(self, pos=np.zeros(3), vel=np.zeros(3),
-                 quat=np.array([1, 0, 0, 0]), omega=np.zeros(3)):
+                 quat=np.array([1, 0, 0, 0]), omega=np.zeros(3),
+                 acc=np.array([0, 0, 1.0])):
         # internally use one numpy array
         self._state = np.empty(13)
         self.pos = pos
         self.vel = vel
         self.quat = quat
         self.omega = omega
+        # Specific force as an IMU measures it: body frame, in g, gravity INCLUDED.
+        # At rest this is (0,0,1), in free fall (0,0,0). Kept outside _state so the
+        # 13-element layout other code relies on is unchanged.
+        # Accelerometer-based controllers (INDI) are driven entirely by this; a
+        # backend that leaves it at the default is telling them the vehicle is at rest.
+        self.acc = acc
 
     @property
     def pos(self):

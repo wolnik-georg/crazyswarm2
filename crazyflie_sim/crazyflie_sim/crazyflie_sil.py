@@ -31,6 +31,8 @@ def copy_svec(v):
 class CrazyflieSIL:
 
     # Flight modes.
+    _oot_count = 0
+
     MODE_IDLE = 0
     MODE_HIGH_POLY = 1
     MODE_LOW_FULLSTATE = 2
@@ -75,6 +77,18 @@ class CrazyflieSIL:
         self.sensors.gyro.y = 0
         self.sensors.gyro.z = 0
 
+        self.motors_rpm = [0.0, 0.0, 0.0, 0.0]
+        self.kt = None  # set only by the 'oot' controller
+        self.thrust_max = None
+        self._last_ctrl_tick = -1
+        self._last_action = None
+        # Index into the simulator's per-vehicle controller state. The compiled
+        # controller keeps its filters and integrators in one static -- correct on a
+        # drone, where there is one vehicle per MCU, but every simulated drone runs
+        # through that same static here. See oot_select_drone in oot_host.c.
+        self._oot_index = CrazyflieSIL._oot_count
+        CrazyflieSIL._oot_count += 1
+
         # current controller output
         self.control = firm.control_t()
         self.motors_thrust_uncapped = firm.motors_thrust_uncapped_t()
@@ -95,6 +109,28 @@ class CrazyflieSIL:
         elif controller_name == 'brescianini':
             firm.controllerBrescianiniInit()
             self.controller = firm.controllerBrescianini
+        elif controller_name == 'oot':
+            # The thesis controller: the SAME geometric SE(3) / INDI Rust source that
+            # flies on the drone (flying_drone_stack/firmware_app), compiled for the
+            # host and linked into cffirmware -- not a reimplementation. Which law runs
+            # is indi_gains.ctrl_mode, exactly as on hardware:
+            #   0 geometric | 1 position INDI | 2 attitude INDI | 3 full INDI
+            # Gains come from traj_iface.c's defaults and can be overridden through
+            # firm.cvar.g_indi_* / g_kp_* the same way crazyflies.yaml does over CRTP.
+            if not hasattr(firm, 'controllerOutOfTree'):
+                raise ValueError(
+                    "controller 'oot' needs cffirmware built with the out-of-tree "
+                    'controller. Build it with:\n'
+                    '  cd flying_drone_stack/firmware_app && RUSTFLAGS="-C panic=abort" \\\n'
+                    '      cargo build --release --target x86_64-unknown-linux-gnu\n'
+                    '  cd crazyflie-firmware && make bindings_python')
+            firm.controllerOutOfTreeInit()
+            self.controller = firm.controllerOutOfTree
+            # Thrust constants the controller inverts. Used below to make the
+            # PWM -> RPM -> force chain self-consistent; see pwm_to_rpm.
+            self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
+                       firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
+            self.thrust_max = firm.oot_thrust_max()
         else:
             raise ValueError('Unknown controller {}'.format(controller_name))
 
@@ -308,7 +344,11 @@ class CrazyflieSIL:
         self.sensors.gyro.y = np.degrees(state.omega[1])
         self.sensors.gyro.z = np.degrees(state.omega[2])
 
-        # TODO: state technically also has acceleration, but sim_data_types does not
+        # Accelerometer. INDI inverts the measured acceleration, so without this it
+        # reads a permanent free-fall and the controller is not the one that flies.
+        self.sensors.acc.x = state.acc[0]
+        self.sensors.acc.y = state.acc[1]
+        self.sensors.acc.z = state.acc[2]
 
     def executeController(self):
         if self.controller is None:
@@ -320,7 +360,33 @@ class CrazyflieSIL:
         time_in_seconds = self.time_func()
         # ticks is essentially the time in milliseconds as an integer
         tick = int(time_in_seconds * 1000)
-        if self.controller_name != 'mellinger':
+
+        # The backend substeps at 2 kHz but the tick above only advances every second
+        # call, and the firmware derives its dt from the tick delta -- so half the
+        # invocations would run with dt = 0. A controller that differentiates (INDI
+        # takes the angular acceleration from the gyro) is destroyed by that; on the
+        # ROS side full INDI never left the ground while geometric, which does not
+        # differentiate, looked fine. Hardware does not work this way: the stabilizer
+        # loop is discrete at 1 kHz while the physics is continuous. So run the
+        # controller once per millisecond and hold the command over the substeps.
+        # Only the out-of-tree controller is affected -- every other controller keeps
+        # its original call pattern so existing simulation results still reproduce.
+        if self.controller_name == 'oot':
+            if tick == self._last_ctrl_tick and self._last_action is not None:
+                return self._last_action
+            self._last_ctrl_tick = tick
+
+        if self.controller_name == 'oot':
+            # Hand the controller this vehicle's own state before it runs.
+            firm.oot_select_drone(self._oot_index)
+            # Attitude INDI derives tau_current from measured RPM^2. On the drone that
+            # comes from the RPM deck / DShot telemetry; here the simulator knows the
+            # true motor speeds, so hand them over. Without this the controller silently
+            # falls back to tau_prev and the INDI being tested is the degraded variant.
+            r = self.motors_rpm if hasattr(self, 'motors_rpm') else [0, 0, 0, 0]
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
+        elif self.controller_name != 'mellinger':
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         else:
             self.controller(
@@ -330,7 +396,8 @@ class CrazyflieSIL:
                 self.sensors,
                 self.state,
                 tick)
-        return self._fwcontrol_to_sim_data_types_action()
+        self._last_action = self._fwcontrol_to_sim_data_types_action()
+        return self._last_action
 
     # 'private' methods
     def _isGroup(self, groupMask):
@@ -343,25 +410,49 @@ class CrazyflieSIL:
 
         # self.motors_thrust_pwm.motors.m{1,4} contain the PWM
         # convert PWM -> RPM
-        def pwm_to_rpm(pwm):
-            # polyfit using data and scripts from https://github.com/IMRCLab/crazyflie-system-id
-            if pwm < 10000:
-                return 0
-            p = [3.26535711e-01, 3.37495115e+03]
-            return np.polyval(p, pwm)
-
         def pwm_to_force(pwm):
+            if self.kt is not None:
+                # Exact inverse of powerDistributionForceTorque, which does
+                # pwm = force / THRUST_MAX * UINT16_MAX. Using the CF2.0 system-id
+                # polynomial here instead would deliver roughly a third of the
+                # commanded thrust, which every controller then shows as the same
+                # large steady-state height droop -- a plant error that reads as a
+                # tuning problem.
+                return pwm / 65535.0 * self.thrust_max
             # polyfit using data and scripts from https://github.com/IMRCLab/crazyflie-system-id
             p = [1.71479058e-09,  8.80284482e-05, -2.21152097e-01]
             force_in_grams = np.polyval(p, pwm)
             force_in_newton = force_in_grams * 9.81 / 1000.0
             return np.maximum(force_in_newton, 0)
 
-        return sim_data_types.Action(
-            [pwm_to_rpm(self.motors_thrust_pwm.motors.m1),
-             pwm_to_rpm(self.motors_thrust_pwm.motors.m2),
-             pwm_to_rpm(self.motors_thrust_pwm.motors.m3),
-             pwm_to_rpm(self.motors_thrust_pwm.motors.m4)])
+        def pwm_to_rpm(pwm, i=0):
+            if pwm < 10000:
+                return 0
+            if self.kt is not None:
+                # Three different motor calibrations meet here: the firmware's
+                # powerDistribution (force -> PWM), this file's PWM -> RPM fit, and the
+                # plant's kt * RPM^2. Chaining them unchanged means the force finally
+                # produced is not the force the controller asked for, and an
+                # inverting controller cannot recover from that -- attitude INDI simply
+                # never lifts off. Inverting kt here instead makes the chain exact:
+                #   plant force = kt * rpm^2 = pwm_to_force(pwm)
+                # so one force model (the system-id fit) holds end to end, and the RPM
+                # handed back to INDI is the one consistent with it.
+                return float(np.sqrt(pwm_to_force(pwm) / self.kt[i]))
+            # polyfit using data and scripts from https://github.com/IMRCLab/crazyflie-system-id
+            p = [3.26535711e-01, 3.37495115e+03]
+            return np.polyval(p, pwm)
+
+        # Latch the resulting motor speeds. The out-of-tree controller reads these back
+        # on the next step as its RPM measurement -- the simulator's stand-in for the
+        # RPM deck / DShot telemetry. One step of delay is the honest model: on
+        # hardware the measurement also lags the command.
+        self.motors_rpm = [pwm_to_rpm(self.motors_thrust_pwm.motors.m1, 0),
+                           pwm_to_rpm(self.motors_thrust_pwm.motors.m2, 1),
+                           pwm_to_rpm(self.motors_thrust_pwm.motors.m3, 2),
+                           pwm_to_rpm(self.motors_thrust_pwm.motors.m4, 3)]
+
+        return sim_data_types.Action(list(self.motors_rpm))
 
     @staticmethod
     def _fwsetpoint_to_sim_data_types_state(fwsetpoint):
