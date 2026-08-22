@@ -471,7 +471,23 @@ all:
       # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
       kp_xy: 64.0
       kp_z:  48.0
-      kv_xy: 5.0
+      # ⚠️ SIMULATION ONLY. Hardware uses kv_xy: 5.0 (crazyflies.yaml) and must keep it.
+      #
+      # kv_xy=5 (zeta 0.31) is flight-proven -- the notes above record it as the best
+      # measured result, 2.4 cm RMSE. In simulation the identical config oscillates at
+      # 1.33 Hz, which is the position loop's own frequency (sqrt(64) = 8 rad/s), and
+      # diverges on any curved trajectory. The sim's stability wall sits near zeta
+      # 0.5-0.6 where hardware's sits near 0.25-0.31: the same phenomenon, about twice
+      # as close. Note the hardware wall is razor-thin too -- kv=4 crashed 2 of 2.
+      #
+      # zeta 0.625 (kv_xy=10) is not arbitrary: the notes above say the whole tuning
+      # campaign held that ratio until the 2026-07-19 decoupling test lowered it. So
+      # this restores the long-standing configuration rather than inventing one.
+      #
+      # This is a workaround for an unresolved simulator-fidelity gap, NOT a tuning
+      # recommendation. Do not copy it to hardware. See docs/09_Simulation.md for what
+      # has already been ruled out.
+      kv_xy: 10.0
       kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3

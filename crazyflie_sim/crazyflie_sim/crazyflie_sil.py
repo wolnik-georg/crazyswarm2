@@ -440,20 +440,23 @@ class CrazyflieSIL:
             return np.maximum(force_in_newton, 0)
 
         def pwm_to_rpm(pwm, i=0):
-            if pwm < 10000:
-                return 0
             if self.kt is not None:
-                # Three different motor calibrations meet here: the firmware's
-                # powerDistribution (force -> PWM), this file's PWM -> RPM fit, and the
-                # plant's kt * RPM^2. Chaining them unchanged means the force finally
-                # produced is not the force the controller asked for, and an
-                # inverting controller cannot recover from that -- attitude INDI simply
-                # never lifts off. Inverting kt here instead makes the chain exact:
-                #   plant force = kt * rpm^2 = pwm_to_force(pwm)
-                # so one force model (the system-id fit) holds end to end, and the RPM
-                # handed back to INDI is the one consistent with it.
+                # Exact inverse of the force model above, so the plant produces the force
+                # powerDistribution asked for and the RPM handed back to INDI agrees with
+                # it -- one force model end to end.
+                #
+                # Deliberately NO idle deadband on this path. The 10000-PWM cutoff below
+                # exists because the CF2.0 system-id polynomial is not valid at low PWM;
+                # the kt inversion is exact down to zero. Applying the cutoff here zeroes
+                # a motor that was legitimately given a small force, which loses thrust
+                # AND delivers more torque than commanded -- measured at +21% for a
+                # 10 mNm request. An attitude loop whose gain is a fifth higher than the
+                # controller believes, by an amount that grows with the command, turns an
+                # adequately damped cascade into an oscillating one.
                 return float(np.sqrt(pwm_to_force(pwm) / self.kt[i]))
             # polyfit using data and scripts from https://github.com/IMRCLab/crazyflie-system-id
+            if pwm < 10000:
+                return 0
             p = [3.26535711e-01, 3.37495115e+03]
             return np.polyval(p, pwm)
 
