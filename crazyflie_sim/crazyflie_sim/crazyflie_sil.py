@@ -181,7 +181,14 @@ class CrazyflieSIL:
             traj.t_begin = self.time_func()
             traj.timescale = timescale
             startfrom = self.cmdHl_pos
-            firm.plan_start_trajectory(self.planner, traj, reverse, relative, startfrom)
+            # Signature fix (2026-08-22): this firmware's plan_start_trajectory takes 7 args
+            #   (planner, traj, reversed, relative_position, relative_yaw, start_from, start_yaw)
+            # while upstream crazyflie_sim still calls the older 5-arg form, which put
+            # `startfrom` in the relative_yaw slot -> TypeError, killing the sim server the
+            # moment a trajectory started. Argument order mirrors the real firmware call in
+            # crtp_commander_high_level.c:750, which passes relative_yaw=false.
+            firm.plan_start_trajectory(self.planner, traj, reverse, relative, False,
+                                       startfrom, self.cmdHl_yaw)
 
     # def notifySetpointsStop(self, remainValidMillisecs=100):
     #     # No-op - the real Crazyflie prioritizes streaming setpoints over
