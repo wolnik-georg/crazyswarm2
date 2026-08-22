@@ -41,37 +41,68 @@ def main():
     d_dw = sys.argv[2] if len(sys.argv) > 2 else 'state_dw'
     A, B = load(d_np), load(d_dw)
     if not A or not B:
-        sys.exit(f'[compare] no CSVs in {d_np} and/or {d_dw} — did both runs finish?')
+        sys.exit(f'[compare] no CSVs in {d_np} and/or {d_dw} - did both runs finish?')
 
-    print('=' * 66)
+    print('=' * 68)
     print('DOWNWASH EFFECT  (neuralswarm vs np, identical flights)')
-    print('=' * 66)
+    print('=' * 68)
+
+    # Compare on SIM TIME, never by row index. The neuralswarm backend runs several
+    # times slower than real time (torch inference every step), so for the same
+    # wall-clock run it covers far less simulated time and produces far fewer rows.
+    # Index-wise comparison then lines up mid-climb against settled hover.
     any_diff = False
+    warned = False
     for name in sorted(set(A) & set(B)):
-        za, zb = zcol(A[name]), zcol(B[name])
+        a, b = A[name], B[name]
+        ta, tb = a['timestamp'], b['timestamp']
+        za, zb = zcol(a), zcol(b)
         if za is None or zb is None:
             continue
-        n = min(len(za), len(zb))
-        za, zb = za[:n], zb[:n]
-        d = zb - za                      # downwash minus baseline
-        settled = slice(int(0.5 * n), n)  # ignore takeoff transient
-        print(f'\n  {name}')
-        print(f'     height  no-downwash {za[settled].mean():.4f} m   '
-              f'with-downwash {zb[settled].mean():.4f} m')
-        print(f'     delta   mean {1000*d[settled].mean():+.1f} mm   '
-              f'max |{1000*np.abs(d).max():.1f}| mm')
+        lo, hi = max(ta[0], tb[0]), min(ta[-1], tb[-1])
+        if hi - lo < 1.0:
+            print(f'\n  {name}: overlap only {hi-lo:.1f} s - too short')
+            continue
+        grid = np.linspace(lo, hi, 2000)
+        ia, ib = np.interp(grid, ta, za), np.interp(grid, tb, zb)
+        d = ib - ia
+
+        # Compare only the STEADY HOVER, found as the longest stretch where both runs
+        # are near-stationary. Takeoff, the goTo climb and the landing are large
+        # transients that swamp a centimetre-scale effect, and the two runs do not
+        # even reach them at identical times -- averaging over them says nothing.
+        va = np.abs(np.gradient(ia, grid))
+        vb = np.abs(np.gradient(ib, grid))
+        still = (va < 0.02) & (vb < 0.02) & (ia > 0.2) & (ib > 0.2)
+        if still.sum() < 50:
+            print(f'\n  {name}: no common steady hover found')
+            continue
+        idx = np.flatnonzero(still)
+        # longest contiguous run of `still`
+        splits = np.split(idx, np.flatnonzero(np.diff(idx) > 1) + 1)
+        settled_idx = max(splits, key=len)
+        settled = np.zeros_like(still)
+        settled[settled_idx] = True
+        t0, t1 = grid[settled_idx[0]], grid[settled_idx[-1]]
+
+        print(f'\n  {name}   [steady hover {t0:.1f}-{t1:.1f} s of {lo:.0f}-{hi:.0f} s]')
+        print(f'     height  no-downwash {ia[settled].mean():.4f} m   '
+              f'with-downwash {ib[settled].mean():.4f} m')
+        print(f'     sag     {1000*d[settled].mean():+.1f} mm')
+
         if abs(d[settled].mean()) > 0.002:
             any_diff = True
-            print('     -> DOWNWASH IS ACTING on this drone')
+            print('     -> DOWNWASH ACTING')
         else:
             print('     -> no significant difference')
 
     print()
-    if any_diff:
-        print('  RESULT: the downwash model is live and measurable.')
+    if not any_diff:
+        print('  RESULT: no measurable difference.')
     else:
-        print('  RESULT: no difference. Either the drones were not vertically')
-        print('  stacked within |dx|,|dy| < 0.2 m, or the backend did not switch.')
+        print('  RESULT: downwash is live and measurable in steady hover.')
+        print('  The lower drone should sag several times more than the upper one --')
+        print('  that asymmetry is the signature that this is really downwash.')
     print()
 
 

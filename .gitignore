@@ -8,3 +8,6 @@ CLAUDE.md
 build/
 install/
 log/
+state_np/
+state_dw/
+state_info/
