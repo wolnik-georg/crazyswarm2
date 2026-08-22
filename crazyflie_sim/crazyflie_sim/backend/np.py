@@ -95,6 +95,10 @@ class Quadrotor:
         # up as a residual force that no amount of tuning removes -- and residual force
         # is the thing this thesis measures. So the plant is made to match the firmware.
         self.kt = None
+        # Rotor drag, body-frame diagonal, in 1/s: a_drag = -R D R^T v. Absent from this
+        # model entirely ("no drag" in the class docstring), so it is opt-in rather than
+        # assumed. Rotor/induced drag dominates body drag at the speeds flown here.
+        self.drag = None
         if params:
             self.mass = float(params.get('mass', self.mass))
             if 'inertia' in params:
@@ -104,6 +108,10 @@ class Quadrotor:
                 kt = params['kt']
                 self.kt = np.full(4, float(kt)) if np.isscalar(kt) \
                     else np.array(kt, dtype=float)
+            if 'drag' in params and params['drag'] is not None:
+                d = params['drag']
+                self.drag = np.full(3, float(d)) if np.isscalar(d) \
+                    else np.array(d, dtype=float)
             arm_length = float(params.get('arm_length', 0.046))
             t2t = float(params.get('t2t', 0.006))
             arm = 0.707106781 * arm_length
@@ -136,6 +144,14 @@ class Quadrotor:
         eta = np.dot(self.B0, force)
         f_u = np.array([0, 0, eta[0]])
         tau_u = np.array([eta[1], eta[2], eta[3]])
+
+        # Rotor drag, body frame, opposing the body-frame velocity. Folded into f_u so it
+        # reaches the accelerometer as well as the dynamics -- an IMU measures every force
+        # except gravity, and a drag term that moved the vehicle without being felt would
+        # show up as a spurious residual, which is the one quantity this thesis measures.
+        if self.drag is not None:
+            v_body = rowan.rotate(rowan.inverse(self.state.quat), self.state.vel)
+            f_u = f_u - self.mass * self.drag * v_body
 
         # dynamics
         # dot{p} = v
