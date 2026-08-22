@@ -486,8 +486,12 @@ all:
       #
       # This is a workaround for an unresolved simulator-fidelity gap, NOT a tuning
       # recommendation. Do not copy it to hardware. See docs/09_Simulation.md for what
-      # has already been ruled out.
-      kv_xy: 10.0
+      # has already been ruled out (KI_P, rotor drag, inertia, airframe -- all refuted).
+      #
+      # Lowered 10.0 -> 8.0 on 2026-08-22 after first-order motor lag was added to the
+      # plant, which moved the simulator's wall from kv_xy 10 to 8. Still not hardware's
+      # 5.0, but closer, and the plant is more faithful for it.
+      kv_xy: 8.0
       kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3

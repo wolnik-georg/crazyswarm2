@@ -451,6 +451,13 @@ all:
       # KV FLOOR FOUND: kv=4 (zeta=0.250) CRASHED 2 out of 2 flights. Hard stability wall, not
       # gradual — do not go below kv=5. LOCKED at kv=5 (this row) — the final position config.
       # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
+      #
+      # ⚠️ THESE ARE THE HARDWARE GAINS. crazyflies_sim.yaml deliberately runs a DIFFERENT
+      # kv_xy (10.0 instead of 5.0). The simulator needs roughly twice the position damping
+      # of the real vehicle for reasons not yet understood -- see docs/09_Simulation.md,
+      # where rotor drag, inertia and airframe have already been ruled out. Do not copy the
+      # simulator value here, and do not treat a sim-validated result as validated at these
+      # gains. Comment-only note; no value on this row has been changed.
       kp_xy: 64.0
       kp_z:  48.0
       kv_xy: 5.0

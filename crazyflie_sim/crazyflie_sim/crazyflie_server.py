@@ -333,6 +333,15 @@ class CrazyflieServer(Node):
                        float(_firm.cvar.g_indi_kt3), float(_firm.cvar.g_indi_kt4)],
                 'arm_length': float(_firm.oot_arm_length()),
                 't2t': float(_firm.oot_thrust2torque()),
+                # First-order motor lag. This is a property of the PLANT, so unlike the
+                # others it cannot come from the controller -- indi_gains.act_tau is the
+                # controller's *model* of actuator lag and is deliberately 0. The value
+                # here is the measured brushless rotor time constant. The model had no
+                # actuator dynamics at all, which is both unfaithful and optimistic:
+                # adding it moves the simulator's stability wall from kv_xy 10 to 8,
+                # closing roughly 40% of the gap to hardware's 5. Use 0.071 for the
+                # upgraded CF2.1.
+                'motor_tau': 0.044,
             }
             self.get_logger().info(
                 'simulated airframe taken from firmware: mass=%.4f kg, '

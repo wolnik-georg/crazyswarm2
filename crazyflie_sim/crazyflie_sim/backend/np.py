@@ -99,6 +99,13 @@ class Quadrotor:
         # model entirely ("no drag" in the class docstring), so it is opt-in rather than
         # assumed. Rotor/induced drag dominates body drag at the speeds flown here.
         self.drag = None
+        # First-order motor lag [s]: the rotor cannot change speed instantly. Absent from
+        # this model (thrust is applied the instant it is commanded), though the project's
+        # own Rust simulator carries motor_time_constant = 0.03 and the measured hardware
+        # value is 44 ms brushless / 71 ms upgraded. Opt-in; None means the original
+        # instantaneous behaviour.
+        self.motor_tau = None
+        self._rpm = None
         if params:
             self.mass = float(params.get('mass', self.mass))
             if 'inertia' in params:
@@ -108,6 +115,8 @@ class Quadrotor:
                 kt = params['kt']
                 self.kt = np.full(4, float(kt)) if np.isscalar(kt) \
                     else np.array(kt, dtype=float)
+            if params.get('motor_tau'):
+                self.motor_tau = float(params['motor_tau'])
             if 'drag' in params and params['drag'] is not None:
                 d = params['drag']
                 self.drag = np.full(3, float(d)) if np.isscalar(d) \
@@ -138,7 +147,16 @@ class Quadrotor:
             force_in_newton = force_in_grams * 9.81 / 1000.0
             return np.maximum(force_in_newton, 0)
 
-        force = rpm_to_force(action.rpm)
+        rpm = np.asarray(action.rpm, dtype=float)
+        if self.motor_tau:
+            # Rotor speed chases the commanded speed with a first-order lag.
+            if self._rpm is None:
+                self._rpm = rpm.copy()
+            alpha = dt / (self.motor_tau + dt)
+            self._rpm = self._rpm + alpha * (rpm - self._rpm)
+            rpm = self._rpm
+
+        force = rpm_to_force(rpm)
 
         # compute next state
         eta = np.dot(self.B0, force)
