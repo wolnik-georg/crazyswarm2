@@ -4,3 +4,7 @@ crazyswarm2_sim_webots/
 *.o
 *~
 CLAUDE.md
+
+build/
+install/
+log/

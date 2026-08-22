@@ -466,3 +466,53 @@ all:
   broadcasts:
     num_repeats: 15 # number of times broadcast commands are repeated
     delay_between_repeats_ms: 1 # delay in milliseconds between individual repeats
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIMULATION (launch with backend:=sim)
+# ══════════════════════════════════════════════════════════════════════════════
+# Only read when the sim backend is launched; ignored for real flights.
+#
+#   backend  — physics:
+#     np           rigid body + motor lag. No aerodynamics. Fast.
+#     neuralswarm  np PLUS the Neural-Swarm2 learned interaction force between
+#                  drones (pretrained weights ship in backend/data/neuralswarm2).
+#                  This is the only backend that models DOWNWASH, i.e. the thing
+#                  the thesis is about. Needs torch.
+#     none         no physics; state = setpoint. Useful for checking plumbing.
+#
+#   controller — which firmware controller runs in the loop (software-in-the-loop,
+#     the REAL firmware C code via cffirmware bindings): none | pid | mellinger |
+#     brescianini. NOTE our OOT geometric/INDI controller is NOT available here —
+#     crazyflie_sil.py would need a 'lee' branch adding (controllerLeeInit IS in
+#     the bindings) to get the closest equivalent.
+#
+#   visualizations — a LIST, each independently enabled, and they are pure
+#     consumers of state: the server calls vis.step(t, states, ...) after the
+#     physics step, and a visualizer can never affect physics. That is why a
+#     renderer can be swapped or added (e.g. Isaac Sim) with the downwash model
+#     untouched, and why several can run at once on the same simulation.
+sim:
+  max_dt: 0.1
+  backend: np
+  controller: mellinger
+  visualizations:
+    rviz:
+      enabled: true
+    pdf:
+      enabled: false
+      output_file: result.pdf
+    record_states:
+      enabled: false
+      output_dir: state_info
+      logging_time: 0
+      file_formats:
+        - csv
+    blender:
+      enabled: false
+      fps: 1
+      cycle_bg: false
+      cf_cameras:
+        cf231_active:
+          calibration:
+            tvec: [0, 0, 0]
+            rvec: [1.24, -1.2, 1.2]
