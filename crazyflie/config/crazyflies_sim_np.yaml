@@ -520,9 +520,9 @@ sim:
       enabled: false
       output_file: result.pdf
     record_states:
-      enabled: false
-      output_dir: state_info
-      logging_time: 0
+      enabled: true
+      output_dir: state_np
+      logging_time: 0.05
       file_formats:
         - csv
     blender:

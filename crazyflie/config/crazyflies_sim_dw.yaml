@@ -511,7 +511,7 @@ all:
 #     untouched, and why several can run at once on the same simulation.
 sim:
   max_dt: 0.1
-  backend: np
+  backend: neuralswarm
   controller: mellinger
   visualizations:
     rviz:
@@ -520,9 +520,9 @@ sim:
       enabled: false
       output_file: result.pdf
     record_states:
-      enabled: false
-      output_dir: state_info
-      logging_time: 0
+      enabled: true
+      output_dir: state_dw
+      logging_time: 0.05
       file_formats:
         - csv
     blender:
