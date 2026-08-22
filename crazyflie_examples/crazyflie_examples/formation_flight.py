@@ -28,6 +28,11 @@ Usage
   ros2 run crazyflie_examples formation_flight -- --trajectory figure8 --mode 1 --kt 0.05 \
       --formation vertical --separation 0.4 --brushless
 
+  # Continuous multi-lap (export the laps first, then fly one uninterrupted flight)
+  cargo run --release --bin export_poly4d -- --trajectory circle --mode 1 --kt 0.1 --laps 3
+  ros2 run crazyflie_examples formation_flight -- --trajectory circle --mode 1 --kt 0.1 \
+      --laps 3 --formation vertical --separation 0.4 --brushless
+
 CSV per drone -> experiments/logs/{traj}_{formation}{sep}_{cfname}_{timestamp}.csv
 
 Not yet covered (deliberately, pending first flights): per-drone distinct trajectories,
@@ -83,22 +88,25 @@ def load_controller_config():
     return int(stab["controller"]), int(indi["ctrl_mode"]), gains, pos_gains
 
 
-def csv_label(trajectory, mode, kt, speed):
+def csv_label(trajectory, mode, kt, speed, laps=1):
     """Must match export_poly4d's naming."""
     if mode == 0:
-        return f"{trajectory}_mode0" if abs(speed - 1.0) < 1e-3 \
+        base = f"{trajectory}_mode0" if abs(speed - 1.0) < 1e-3 \
             else f"{trajectory}_mode0_speed{speed:.2f}"
-    return f"{trajectory}_mode{mode}_kt{('%.6f' % kt).rstrip('0').rstrip('.')}"
+    else:
+        base = f"{trajectory}_mode{mode}_kt{('%.6f' % kt).rstrip('0').rstrip('.')}"
+    return f"{base}_laps{laps}" if laps > 1 else base
 
 
-def find_csv(trajectory, mode, kt, speed):
-    label = csv_label(trajectory, mode, kt, speed)
+def find_csv(trajectory, mode, kt, speed, laps=1):
+    label = csv_label(trajectory, mode, kt, speed, laps)
     path = DATA_DIR / f"{label}.csv"
     if not path.exists():
+        lap_arg = f" --laps {laps}" if laps > 1 else ""
         print(f"[formation] ERROR: {path} not found.\n"
               f"  Generate it with:\n"
               f"    cargo run --release --bin export_poly4d -- "
-              f"--trajectory {trajectory} --mode {mode} --kt {kt}")
+              f"--trajectory {trajectory} --mode {mode} --kt {kt}{lap_arg}")
         sys.exit(1)
     return path
 
@@ -203,7 +211,12 @@ def main():
     p.add_argument("--mode", type=int, default=1, choices=[0, 1, 2, 3])
     p.add_argument("--kt", type=float, default=0.05)
     p.add_argument("--speed", type=float, default=1.0, help="HLC timescale")
-    p.add_argument("--reps", type=int, default=1)
+    p.add_argument("--laps", type=int, default=1,
+                   help="continuous core laps baked into one upload (needs a matching "
+                        "export_poly4d --laps N); flown as ramp-up -> N laps -> ramp-down")
+    p.add_argument("--reps", type=int, default=1,
+                   help="repeat the WHOLE flight this many times (separate runs, with a "
+                        "pause and ramps each time). For continuous laps use --laps.")
     p.add_argument("--height", type=float, default=1.0,
                    help="height of the LOWEST drone in the formation [m]")
     p.add_argument("--formation", default="vertical",
@@ -222,7 +235,7 @@ def main():
               f"  fly them with flight.py --onboard instead. See TRAJECTORY_UPLOAD_PATHS.md.")
         sys.exit(1)
 
-    csv_path = find_csv(args.trajectory, args.mode, args.kt, args.speed)
+    csv_path = find_csv(args.trajectory, args.mode, args.kt, args.speed, args.laps)
     traj = Trajectory()
     traj.loadcsv(csv_path)
     controller, traj_ctrl_mode, indi_gains, pos_gains = load_controller_config()
@@ -246,7 +259,8 @@ def main():
     starts = [np.array(c.initialPosition) for c in cfs]
     transits = [float(np.linalg.norm(t[:2] - s[:2])) for s, t in zip(starts, targets)]
 
-    print(f"\n[formation] {csv_path.name}  dur={traj.duration:.2f}s/rep  reps={args.reps}")
+    print(f"\n[formation] {csv_path.name}  dur={traj.duration:.2f}s  "
+          f"laps={args.laps} (continuous)  reps={args.reps} (separate runs)")
     print(f"[formation] {args.formation} formation, {args.separation:.2f} m separation, "
           f"{n} drone(s)")
     print(f"[formation] anchored on {cfs[0].prefix.lstrip('/')} at {anchor.round(2)}")
@@ -287,7 +301,7 @@ def main():
     meta = {
         "run_eval_mode": "hlc_e",
         "trajectory": args.trajectory, "mode": args.mode, "kt": args.kt,
-        "speed": args.speed, "reps": args.reps,
+        "speed": args.speed, "reps": args.reps, "laps": args.laps,
         "formation": args.formation, "separation": args.separation,
         "height": args.height, "n_drones": n,
         "controller": controller, "ctrl_mode": traj_ctrl_mode,
