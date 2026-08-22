@@ -301,6 +301,20 @@ class CrazyflieSIL:
                 self.setpoint.acceleration.y = ev.acc.y
                 self.setpoint.acceleration.z = ev.acc.z
 
+                # Jerk and snap, exactly as crtp_commander_high_level.c does on the drone
+                # (see setpoint->jerk there). traj_eval carries both and the setpoint
+                # struct has fields for both, but this function used to stop at
+                # acceleration -- so in simulation a flatness-based controller received a
+                # permanently zero jerk. Position and velocity still looked right, which
+                # is what makes it hard to spot: the attitude FEEDFORWARD is what breaks.
+                # A straight line has almost no jerk and flies fine; a circle is nothing
+                # but jerk and diverges. Measured on the stock circle trajectory: 139 deg
+                # of tilt with jerk dropped, against 27 deg for the in-tree controllers
+                # that do not use it.
+                for src, dst in ((ev.jerk, self.setpoint.jerk),
+                                 (ev.snap, self.setpoint.snap)):
+                    dst.x, dst.y, dst.z = src.x, src.y, src.z
+
                 self.cmdHl_pos = copy_svec(ev.pos)
                 self.cmdHl_vel = copy_svec(ev.vel)
                 self.cmdHl_yaw = ev.yaw
