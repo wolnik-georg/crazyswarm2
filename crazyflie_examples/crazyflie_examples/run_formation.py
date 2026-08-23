@@ -68,6 +68,10 @@ def build_parser():
     g.add_argument('--r', type=float, help='V-stack lateral offset [m]')
     g.add_argument('--hold', type=float, help='hover duration [s]')
     g.add_argument('--n', type=int, help='robot count where the scenario allows it')
+    g.add_argument('--rotate', type=float, default=None,
+                   help='turn the whole formation about the vertical axis [deg]. Rigid, so '
+                        'no inter-robot distance changes -- use it to lay a translating '
+                        'scenario along the long axis of the room')
 
     s = p.add_argument_group('execution and safety')
     s.add_argument('--height', type=float, default=1.0,
@@ -82,6 +86,10 @@ def build_parser():
     s.add_argument('--check', action='store_true',
                    help='build, verify and compile the scenario, then exit (no ROS)')
     s.add_argument('--dry-run', action='store_true', help='print the plan and exit')
+    s.add_argument('--auto-center', action='store_true',
+                   help='place the formation centred in the flight volume instead of on '
+                        'drone 0 (recommended in a tight lab; relative geometry is '
+                        'unchanged, only where it flies)')
     s.add_argument('--yes', action='store_true', help='skip the confirmation prompt')
     s.add_argument('--brushless', action='store_true', help='arm ESCs (required for CF21BL)')
     s.add_argument('--timescale', type=float, default=1.0,
@@ -90,10 +98,13 @@ def build_parser():
 
 
 def scenario_params(args) -> dict:
-    keys = ('dz', 'dz1', 'dz2', 'dz_start', 'dz_end', 'path', 'motion', 'offset', 'axis',
+    keys = ('rotate_deg', 'dz', 'dz1', 'dz2', 'dz_start', 'dz_end', 'path', 'motion', 'offset', 'axis',
             'speed', 'length', 'radius', 'period', 'laps', 'passes', 'span', 'sep', 'gap',
             'r', 'hold', 'n')
-    return {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
+    out = {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
+    if args.rotate is not None:
+        out['rotate_deg'] = args.rotate
+    return out
 
 
 def make_limits(args) -> safety.Limits:
@@ -128,6 +139,21 @@ def compile_scenario(sc, base_height: float):
     return paths, tables
 
 
+def centred_anchor(sc, lim) -> np.ndarray:
+    """Anchor that puts the scenario's commanded bounding box in the middle of the volume.
+
+    Only moves WHERE the formation flies. Every relative distance -- what the scenario
+    specifies and what verification checks -- is unchanged.
+    """
+    _, box = safety.sample_positions(sc, base=np.zeros(3))
+    lo, hi = box.reshape(-1, 3).min(axis=0), box.reshape(-1, 3).max(axis=0)
+    gf = lim.geofence
+    mid = np.array([(gf['x'][0] + gf['x'][1]) / 2,
+                    (gf['y'][0] + gf['y'][1]) / 2,
+                    (gf['z'][0] + gf['z'][1]) / 2])
+    return mid - (lo + hi) / 2
+
+
 def geometry_table(sc, n: int = 400) -> str:
     """Commanded relative geometry over the flight -- what the scenario promises."""
     ts = np.linspace(0.0, sc.duration, n)
@@ -150,8 +176,9 @@ def print_plan(sc, lim, base_height, tables, problems, spec_problems):
     print(f'[formation] {sc.notes}')
     print(f'[formation] {sc.n_robots} robot(s), {sc.duration:.1f} s, '
           f'tags: {", ".join(sc.tags)}')
-    print(f'[formation] base height {base_height:.2f} m (lowest robot)')
-    print(safety.describe(sc, lim, base=np.array([0.0, 0.0, base_height])))
+    print(f'[formation] anchor {np.round(base_height, 2) if hasattr(base_height, "shape") else base_height}')
+    print(safety.describe(sc, lim, base=base_height if hasattr(base_height, 'shape')
+                          else np.array([0.0, 0.0, base_height])))
     for i, t in enumerate(tables):
         print(f'    robot {i} trajectory: {len(t):2d} pieces, '
               f'{t[:, 0].sum():.2f} s')
@@ -213,10 +240,12 @@ def main():
     # fence is checked about the origin at the requested base height. The runner
     # re-checks against the real anchor once ROS reports it.
     base = np.array([0.0, 0.0, args.height])
+    if args.auto_center:
+        base = centred_anchor(sc, lim)
     problems = safety.check(sc, lim, base=base)
     paths, tables = compile_scenario(sc, args.height)
 
-    print_plan(sc, lim, args.height, tables, problems, spec_problems)
+    print_plan(sc, lim, base, tables, problems, spec_problems)
     for p in paths:
         print(f'[formation] wrote {p.relative_to(DATA_DIR.parent.parent)}')
 
@@ -254,6 +283,18 @@ def main():
     # not on each drone's own initial_position, or a stack would inherit the vehicles'
     # differing takeoff XY and never actually be vertical.
     anchor = np.array(cfs[0].initialPosition) + np.array([0.0, 0.0, args.height])
+
+    if args.auto_center:
+        # Anchoring blindly on drone 0 wastes flight volume: the formation lands wherever
+        # that drone happens to sit, and a scenario that would fit comfortably in the
+        # middle of the room gets refused for leaving the far wall. Centring the
+        # scenario's own commanded bounding box inside the geofence changes only WHERE it
+        # flies -- every relative distance, which is what the scenario specifies and what
+        # verification checks, is untouched.
+        anchor = centred_anchor(sc, lim)
+        print(f'[formation] --auto-center: anchor moved to {anchor.round(2)} '
+              f'(was {(np.array(cfs[0].initialPosition) + [0, 0, args.height]).round(2)})')
+
     slots = [anchor + r.slot for r in sc.robots]
 
     # Re-check the geofence now that the true anchor is known -- offline it was assumed at

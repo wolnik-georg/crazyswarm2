@@ -266,3 +266,29 @@ class Pause(Curve):
 
     def at(self, t):
         return np.zeros(4)
+
+
+class Rotated(Curve):
+    """Same curve, turned about the vertical axis.
+
+    Lets a scenario be laid out along whichever axis the room is long in without
+    redefining it. Rotation is rigid, so every distance between vehicles is preserved
+    exactly -- only the direction of travel changes. That is why a rotated run validates
+    the same geometry as an unrotated one.
+    """
+
+    def __init__(self, curve: Curve, deg: float):
+        self.curve = curve
+        self.deg = float(deg)
+        self.duration = curve.duration
+        th = np.radians(self.deg)
+        self._c, self._s = np.cos(th), np.sin(th)
+
+    def knots(self):
+        return self.curve.knots()
+
+    def at(self, t):
+        v = np.asarray(self.curve.at(t), dtype=float)
+        return np.array([self._c * v[0] - self._s * v[1],
+                         self._s * v[0] + self._c * v[1],
+                         v[2], v[3]])

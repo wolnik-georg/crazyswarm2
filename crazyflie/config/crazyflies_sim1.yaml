@@ -1,0 +1,566 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# SINGLE-DRONE SIMULATION ROSTER
+#
+# For C5, the near-ground pass. That scenario characterises GROUND EFFECT, which
+# is a single-vehicle phenomenon and has to be measured without a second drone
+# adding downwash on top of it -- otherwise the two are inseparable.
+#
+#   1 robot -> this file      2 -> crazyflies_sim.yaml      3 -> crazyflies_sim3.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIMULATION-ONLY CONFIG — generated from crazyflies.yaml, 2026-08-22
+# ══════════════════════════════════════════════════════════════════════════════
+# Kept separate so the real-flight crazyflies.yaml is never carrying a second
+# drone that does not physically exist. Launch with:
+#
+#   ros2 launch crazyflie launch.py backend:=sim rviz:=True teleop:=False \
+#        gui:=False crazyflies_yaml_file:=$PWD/crazyflie/config/crazyflies_sim.yaml
+#
+# Differences from the real config:
+#   * cf_second enabled, placed 0.5 m directly ABOVE cf231_active (downwash geometry)
+#   * sim.backend = neuralswarm (Neural-Swarm2 learned interaction force)
+#
+# NOTE logging is NOT available in sim: the sim server publishes only
+# robot_description, not /cfXXX/state, so formation_flight will write empty CSVs.
+# Sim is for rehearsing flight logic; real data comes from the uSD deck in the lab.
+# ══════════════════════════════════════════════════════════════════════════════
+
+# named list of all robots
+fileversion: 3
+#
+# ══════════════════════════════════════════════════════════════════════════════
+# SWITCHING BETWEEN 1 AND N DRONES
+# ══════════════════════════════════════════════════════════════════════════════
+# 1. `enabled:` per robot below is the only switch the flight scripts need --
+#    formation_flight.py sizes the formation from however many are enabled, and
+#    works unchanged with a single drone.
+# 2. For MORE THAN ONE drone also reduce the radio log rates: see the MULTI-DRONE
+#    note in all.firmware_logging. 8 topics x 100 Hz ~= 600 packets/s per drone and
+#    one Crazyradio carries ~1000 packets/s TOTAL. Detailed data should come from
+#    the uSD deck instead -- flying_drone_stack/tools/README_usd_thesis_logging.md.
+# 3. Gains in all.firmware_params go to EVERY enabled robot, so a mixed pair of
+#    platforms is NOT supported without moving firmware_params per robot/type.
+#    The thesis protocol calls for 2x identical brushless.
+# ══════════════════════════════════════════════════════════════════════════════
+
+robots:
+  cf231_active:
+    enabled: true
+    uri: radio://0/80/2M/E7E7E7E7E7
+    initial_position: [0.3, 0.0, 0.0]
+    type: cf21  # see robot_types
+    # firmware_params:
+    #   kalman:
+    #     pNAcc_xy: 1.0 # default 0.5
+    # firmware_logging:
+    #   enabled: true
+    #   custom_topics:
+    #     topic_name3: 
+    #       frequency: 1
+    #       vars: ["acc.x", "acc.y"]
+    # reference_frame: "odom_cf231" # use a custom reference frame if no global coordinate system is available
+
+  # ── Second drone for thesis formation flight (2026-08-19) ──────────────────
+  # Used by `ros2 run crazyflie_examples formation_flight`. Left DISABLED until the
+  # three TODOs below are filled in with the real hardware values -- enabling it with
+  # a placeholder URI will fail to connect (or, worse, address the wrong drone).
+  #
+  # TODO(1) uri: set the second drone's actual radio address. It MUST differ from
+  #         cf231_active's E7E7E7E7E7. Two drones sharing one address is undefined.
+  # TODO(2) initial_position: where this drone physically sits on the floor [x, y, z].
+  #         formation_flight anchors the formation on the FIRST enabled drone, so this
+  #         only sets the takeoff spot -- but it must be accurate or the stage-2 XY
+  #         transit distance (and the collision warning) will be wrong.
+  # TODO(3) confirm the platform matches cf231_active -- see the WARNING below.
+  #
+  # WARNING -- shared gains: all.firmware_params (stabilizer.controller, indi_gains.*,
+  # pos_gains.*) is pushed to EVERY enabled robot, and that block is currently tuned
+  # for the UPGRADED CF2.1 (see the comment at indi_gains). Two *identical* drones are
+  # fine. A mixed pair is NOT: mass / kt1..kt4 / J and the INDI gains would be wrong on
+  # one of them. For a mixed pair, move firmware_params out of `all:` into the per-robot
+  # or per-robot_type blocks first. The thesis protocol calls for 2x identical brushless.
+  #
+  # WARNING -- radio bandwidth: all: currently streams 6 custom topics at 100 Hz per
+  # drone (~600 packets/s). One Crazyradio cannot carry two drones at that rate. Either
+  # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
+  # dongle (radio://1/...) / a different channel.
+  cf_second:
+    enabled: false                       # SIM(1): single-robot roster
+    uri: radio://0/80/2M/E7E7E7E7E8   # TODO(1) placeholder -- set the real address
+    initial_position: [0.3, 0.0, 0.5]   # SIM: directly ABOVE cf231_active
+    type: cf21  # TODO(3) match cf231_active's platform
+
+  cf5:
+    enabled: false
+    uri: radio://0/80/2M/E7E7E7E705
+    initial_position: [0.0, -0.5, 0.0]
+    type: cf21  # see robot_types
+    # firmware_params:
+    #   kalman:
+    #     pNAcc_xy: 1.0 # default 0.5
+    #firmware_logging:
+    #  custom_topics:
+    #    topic_name3: 
+    #      frequency: 1
+    #      vars: ["acc.x", "acc.y", "acc.z"]
+    # reference_frame: "odom_cf5" 
+
+# Definition of the various robot types
+robot_types:
+  cf21:
+    motion_capture:
+      tracking: "librigidbodytracker" # one of "vendor", "librigidbodytracker"
+      # only if enabled; see motion_capture.yaml
+      marker: default_single_marker
+      dynamics: default
+    big_quad: false
+    battery:
+      voltage_warning: 3.8  # V
+      voltage_critical: 3.7 # V
+    # firmware_params:
+    #   kalman:
+    #     pNAcc_xy: 1.0 # default 0.5
+    #firmware_logging:
+    #   enabled: true
+    #   default_topics:
+    #   pose:
+    #     frequency: 1 # Hz
+    #   custom_topics:
+    #    topic_name3: 
+    #      frequency: 1
+    #      vars: ["acc.x", "acc.y", "acc.z"]
+    # reference_frame: "odom" 
+
+  cf21_mocap_deck:
+    motion_capture:
+      tracking: "librigidbodytracker" # one of "vendor", "librigidbodytracker"
+      # only if enabled; see motion_capture.yaml
+      marker: mocap_deck
+      dynamics: default
+    big_quad: false
+    battery:
+      voltage_warning: 3.8  # V
+      voltage_critical: 3.7 # V
+    # firmware_params:
+    #   kalman:
+    #     pNAcc_xy: 1.0 # default 0.5
+    #firmware_logging:
+    #   enabled: true
+    #   default_topics:
+    #   pose:
+    #     frequency: 1 # Hz
+    #   custom_topics:
+    #    topic_name3: 
+    #      frequency: 1
+    #      vars: ["acc.x", "acc.y", "acc.z"]
+    # reference_frame: "mocap" 
+
+# global settings for all robots
+all:
+  # firmware logging for all drones (use robot_types/type_name to set per type, or
+  # robots/drone_name to set per drone)
+  firmware_logging:
+    # ── MULTI-DRONE: reduce these rates ───────────────────────────────────────
+    # The rates below are sized for ONE drone (~600 packets/s). With two drones on a
+    # single Crazyradio this saturates and packets are dropped silently -- which in a
+    # residual-force dataset means quietly corrupt training data.
+    # For 2+ drones either:
+    #   a) drop the custom_topics frequencies to 20 Hz (keep state/attitude for live
+    #      monitoring only) and take the real dataset from the uSD deck at 500 Hz, or
+    #   b) put the second drone on its own dongle (radio://1/...).
+    # See flying_drone_stack/tools/README_usd_thesis_logging.md.
+    # ──────────────────────────────────────────────────────────────────────────
+    enabled: true
+    default_topics:
+     # remove to disable default topic
+      pose:
+        frequency: 10 # Hz
+      status:
+        frequency: 1 # Hz
+    custom_topics:
+      # /cf231/state — pos + vel (6 floats = 24 bytes, fits in one CRTP log packet)
+      state:
+        frequency: 100 # Hz
+        vars: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
+               "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
+      # /cf231/attitude — attitude + thrust + battery (5 floats = 20 bytes)
+      # Bumped 20 -> 100 Hz (2026-07-27, no SD/USD logging available on this drone --
+      # this is the best resolution radio logging can give). Needed to resolve the
+      # post-loop-flip recovery window (~0.3-0.5s, gyro rates 500-1000+ deg/s): at
+      # 20Hz that event only had 6-10 samples. Matches state/indi_state, which already
+      # run at 100Hz without issue, so bandwidth headroom exists. Revert to 20 if this
+      # causes radio packet loss/log gaps.
+      attitude:
+        frequency: 100 # Hz
+        vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
+               "stabilizer.thrust", "pm.vbat"]
+      # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes)
+      # Bumped 20 -> 100 Hz alongside attitude above, same reason.
+      gyro_acc:
+        frequency: 100 # Hz
+        vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
+      # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
+      # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
+      # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
+      indi_state:
+        frequency: 100 # Hz
+        vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
+               "indi.alp_x", "indi.alp_y", "indi.alp_z"]
+      # /cf231/indi_alp_raw — pre-filter angular accel (3 floats = 12 bytes, separate packet)
+      indi_alp_raw:
+        frequency: 100 # Hz
+        vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
+      # /cfXXX/indi_a_res — residual acceleration a_res = a_meas - a_model [m/s^2], world frame.
+      # Equals f_res/m: the unmodelled force, dominated by other drones' downwash in close
+      # formation. THE core measurement for the thesis. Logged in ALL controller modes (needs an
+      # RPM source only), so downwash can be recorded while flying plain geometric too.
+      indi_a_res:
+        frequency: 100 # Hz
+        vars: ["indi.a_res_x", "indi.a_res_y", "indi.a_res_z"]
+      # /cf231/indi_alp_notch — stage-2 notch-filtered angular accel (3 floats = 12 bytes,
+      # separate packet, same 6-float/packet limit as indi_alp_raw above). Added 2026-07-28
+      # (shake investigation): always computed/logged regardless of indi_gains.notch_en so
+      # alp_raw / alp (stage-1 BW) / alp_notch (stage-2 notch) can be compared from one flight.
+      indi_alp_notch:
+        frequency: 100 # Hz
+        vars: ["indi.alp_notch_x", "indi.alp_notch_y", "indi.alp_notch_z"]
+      # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
+      # fc_bw=70 Hz confirmed 2026-07-11 on UPGRADED drone (same result as standard 2026-07-03).
+      # Motor noise at 350-700 Hz, above 50 Hz Nyquist of 100 Hz log — filter works in firmware.
+      # indi_filter_char:
+      #   frequency: 100 # Hz
+      #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
+      #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
+      # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
+      # ── SWITCH when changing drone ──────────────────────────────────────────
+      # EXPERIMENT (2026-07-16): brushless reading OPTICAL RPM DECK (like brushed drones)
+      # to test DShot-telemetry-delay hypothesis. ACTIVE:
+      rpm:
+        frequency: 20 # Hz
+        vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      # CF21BL brushless DShot bidirectional ESC telemetry (default — restore to switch back):
+      # rpm:
+      #   frequency: 20 # Hz
+      #   vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
+  # firmware parameters for all drones (use robot_types/type_name to set per type, or
+  # robots/drone_name to set per drone)
+  firmware_params:
+    commander:
+      enHighLevel: 1
+    stabilizer:
+      estimator: 2 # 1: complementary, 2: kalman
+      controller: 6 # 1: PID, 2: mellinger, 6: geometric SE(3) (OOT — requires CONFIG_CONTROLLER_OOT=y)
+    # ring:
+    #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
+    #   solidBlue: 255 # if set to solid color
+    #   solidGreen: 0 # if set to solid color
+    #   solidRed: 0 # if set to solid color
+    #   headlightEnable: 0
+    deck:
+      bcRpm: 1  # RPM deck force-enable. REQUIRED: driver has vid/pid=0x00 (no 1-wire id),
+                # so it never auto-detects and rpm.* stays 0 without this. Needed on the
+                # brushless too while testing the optical deck. (Comment out to return to DShot.)
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF2.1 STANDARD MOTORS — locked Jul 2 2026
+    # Final: Geom RMSE 2.0 cm (kt=0.05), speed limit kt=0.15 (5.32 s/lap).
+    # To reactivate: uncomment this block and deck.bcRpm above, comment out active block below.
+    # ════════════════════════════════════════════════════════════════════════════
+    # indi_gains:
+    #   ctrl_mode: 0
+    #   kr: 1050.0
+    #   kw: 87.0
+    #   kr_z: 1050.0
+    #   kw_z: 87.0
+    #   fc_bw: 70.0
+    #   mass: 0.0364          # AUW 36.4 g (CF2.1 + USD + RPM decks)
+    #   kt1: 1.4193e-10       # identified 2026-06-30
+    #   kt2: 1.4534e-10
+    #   kt3: 1.4997e-10
+    #   kt4: 1.4655e-10
+    # pos_gains:
+    #   kp_xy: 40.0
+    #   kp_z:  30.0
+    #   kv_xy: 8.0
+    #   kv_z:  7.0
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF2.1 UPGRADED MOTORS — locked Jul 15 2026, 3.7 cm mean RMSE (n=11)
+    # REACTIVATED 2026-07-29 to test the inverted-loop maneuver (unchanged, no new tuning)
+    # on this platform for comparison against the brushless recovery result. Core gains
+    # unchanged from the Jul 15 lock. clamp_en REVERTED to 0 (no clamps) 2026-07-29 after a
+    # hover crash traced directly to tau_xy_max=0.010: that value came from the "physical
+    # headroom at hover" formula, which is NOT enough torque authority to correct a real
+    # disturbance -- brushless hit this exact failure (chattering/non-convergence) at its own
+    # headroom-formula value (0.030) and needed loosening to 0.045 before it worked. clamp_en
+    # (and this whole clamp system) did not exist when this config was locked on Jul 15, so
+    # clamp_en=0 here is not a new setting -- it is the exact config that was actually
+    # validated over 11 flights. Only re-enable clamp_en=11 (tilt clamp off, needed for the
+    # inversion) immediately before flying the loop, with a properly loosened tau_xy_max
+    # (not the raw headroom-formula value) -- do not fly it for a plain hover check.
+    # To switch back to brushless: comment this block, uncomment the CF21BL block below.
+    # ════════════════════════════════════════════════════════════════════════════
+#    indi_gains:
+#      ctrl_mode: 3
+#      kr: 603.0
+#      kw: 90.0
+#      kr_z: 603.0
+#      kw_z: 90.0
+#      fc_bw: 70.0
+#      mass: 0.0386            # AUW 38.6 g (measured 2026-07-09)
+#      kt1: 2.2959e-10         # identified 2026-07-09
+#      kt2: 2.4668e-10
+#      kt3: 2.0250e-10
+#      kt4: 2.5288e-10
+#      clamp_en: 0
+#      tau_xy_max: 0.010
+#      tau_z_max: 0.0017
+#      tilt_max_deg: 30.0
+#      thrust_max: 0.8
+#    pos_gains:
+#      kp_xy: 40.0
+#      kp_z:  30.0
+#      kv_xy: 8.0
+#      kv_z:  10.0
+    # ════════════════════════════════════════════════════════════════════════════
+    # CF21BL BRUSHLESS — PARKED 2026-07-29 (switching to upgraded for the inverted-loop
+    # cross-platform comparison test). Guards back on, kt/mass at the guards-on
+    # identification; no-guards experiment from 2026-07-25 fully reverted — see
+    # FINALIZE_PROJECT.md §10a, slalom kt sweep at a lower kt range on both platforms.
+    # Inertia: Busetto et al. 2025 (JXX=23.951e-6, ARM_M=35.4mm, TORQUE_RATIO=0.002078)
+    # RPM: optical RPM deck (2026-07-16 experiment, kept active) → log topic "rpm" uses
+    # rpm.m1..m4 (NOT motor.m1_rpm..m4_rpm, the DShot alternative — see log topic above).
+    # Tuning order: kt ID from hover → fc_bw → KR/KW → pos KV/KP → figure-8
+    # To switch back to brushless: comment out the UPGRADED block above, uncomment this block.
+    # ════════════════════════════════════════════════════════════════════════════
+    indi_gains:
+      ctrl_mode: 3              # full INDI
+      # 2026-07-19 PUSHING FURTHER — operator priority is figure-8 tracking error (position AND
+      # attitude flatness), not hover cleanliness. Ladder (ratios zeta_att=2.324, kp_ratio=0.0267/
+      # cascade=6.12x, zeta_pos=0.632), figure-8 metrics only:
+      #   kr=1500: RMSE 4.2/4.2/4.4cm
+      #   kr=1650: RMSE 4.0/4.2cm
+      #   kr=1800: RMSE 3.8/3.9cm, roll/pitch err 5.8/4.1, 4.3/5.2 deg
+      #   kr=2000: RMSE 3.3/3.9cm, roll/pitch err 5.4/5.9, 6.5/7.0 deg
+      #   kr=2200: RMSE 3.1/3.1/3.2cm, roll/pitch err 7.0/5.2, 5.2/3.7, 6.1/5.0 deg
+      #   kr=2400: RMSE 2.9/3.1cm (BEST tracking), roll/pitch err 4.9/5.7, 5.7/4.1 deg
+      #   kr=2600: hover confirmed worse. kr=2800 identified as the hover ceiling — climb halted.
+      # ANALYSIS: pos RMSE improved monotonically the whole ladder (bandwidth/lag effect from KR),
+      # but roll/pitch flatness err stayed flat/noisy 3.9-6.5deg the whole time — did NOT track KR.
+      # Mechanism (verified in code): delta_tau = J*(alpha_ref_filt - alpha_meas); alpha_meas noise
+      # is scaled by fixed J (gain-invariant — explains why attitude err never improved with KR).
+      # alpha_ref = alpha_des - KR*eR - KW*e_omega: KW directly, linearly injects raw gyro noise
+      # here — this path DOES scale with KW specifically, independent of KR's bandwidth benefit.
+      # DECOUPLING TEST CONFIRMED 2026-07-19: kr=2400/kw=170 (zeta=1.74, down from 228/zeta=2.33)
+      # gave RMSE 2.8/2.9/3.0cm (matches or BEATS kw=228's 2.9/3.1) AND roll/pitch flatness err
+      # dropped to a tight, consistent 4.0/4.0/4.1deg roll, 3.3/4.5/3.7deg pitch (was noisy 4-7deg
+      # band the whole ladder). Clean win on BOTH metrics — confirms KW (not KR) was driving
+      # attitude noise via KW*e_omega, independent of KR's position-RMSE bandwidth benefit.
+      # KW FLOOR FOUND 2026-07-19: kw=130 (zeta=1.33) FAILED — flight 1 fine (RMSE 2.8, roll 4.4,
+      # pitch 3.4) but flight 2 blew up (RMSE 6.1, roll 21.6deg, pitch 13.8deg — an order of
+      # magnitude worse than anything else this session). Inconsistent pass/fail = marginal
+      # stability, not smooth degradation — a real floor, not noise-band scatter. REVERTED to
+      # kw=170 (zeta=1.74), the confirmed best point on both RMSE and attitude flatness err
+      # (2.8-3.0cm, ~4.0deg roll, ~3.8deg pitch, consistent across 3 flights). THIS IS THE LOCKED
+      # CONFIG — do not go below kw=170 at kr=2400 (marginal/unsafe below this point).
+      kr: 2400.0
+      kw: 170.0
+      kr_z: 2400.0
+      kw_z: 170.0
+      fc_bw: 60.0
+      # mass/kt REVERTED 2026-07-27 to the guards-on identification (guards physically
+      # reinstalled). The no-guards values from 2026-07-25 (mass=0.0367, kt=4.06/4.08/3.97/4.22e-10)
+      # are superseded — see FINALIZE_PROJECT.md closing aside for why they existed at all
+      # (J-mismatch from lower rotational inertia without guards, correctly not pursued further).
+      mass: 0.041                # AUW 41.0 g (measured 2026-07-15, WITH prop guards)
+      kt1: 4.1623e-10             # identified 2026-07-15, with guards
+      kt2: 4.0592e-10
+      kt3: 4.1116e-10
+      kt4: 4.0631e-10
+      # H1a diagnostic (2026-07-18, requires cload'd firmware with the ff_free toggle):
+      # 0 = normal RPM feedback (default). Set to 1 via cfclient ONLY for the ff_free A/B test
+      # (results_2026-07-15_brushless.md §4b-diagnosis-toggle), then set back to 0 — do not fly
+      # the figure-8 or any real trajectory with ff_free=1.
+      ff_free: 0
+      # Filter-order fix (2026-07-18, requires cload'd firmware with the filt_order toggle):
+      # 0 = legacy diff-then-filter (default, byte-identical to prior behaviour, standard/
+      # upgraded unaffected). 1 = paper order (Tal & Karaman 2021 Sec. III-D + stock
+      # crazyflie-firmware controller_indi.c): filter gyro BEFORE differentiating. Set to 1 for
+      # the low-bandwidth regime — at fc_bw=12 filtering BEFORE the differentiation matters.
+      filt_order: 1
+      # Increment-base filter (2026-07-18, requires cload'd firmware with filt_tau toggle):
+      # 0 = legacy unfiltered tau_current. 1 = filter tau_current (mu_f) with the same Butterworth
+      # as alpha_meas so the INDI increment is phase-matched (Tal & Karaman Eq.29/31 + stock
+      # controller_indi.c). CANDIDATE ROOT-CAUSE FIX for the ~5-8 Hz attitude limit cycle — set
+      # to 1 and hover-test vs 0. Standard/upgraded unaffected (default 0 in their yaml blocks).
+      filt_tau: 1
+      # INDI effectiveness scale (2026-07-18, requires cload'd firmware with j_scale). Multiplies J
+      # in the increment delta_tau = j_scale*J*(alpha_ref - alpha_meas). 1.0 = J as-is. The
+      # brushless J (Busetto 2025) is a Crazyflow SIMULATOR DEFAULT for a 45g drone under a
+      # GEOMETRIC controller — not measured, not for this 41g drone, not validated for INDI. If J
+      # is too high, INDI over-corrects -> ~5-8 Hz limit cycle. Sweep down (1.0 -> 0.8 -> 0.65 ->
+      # 0.5) to find where the oscillation stops. Runtime-tunable (pushed like kr/kw, no reflash).
+      # 2026-07-18 DATA-DRIVEN RESULT: total-least-squares regression of RPM-torque vs gyro-accel
+      # across 18 stable figure-8 logs gives Jx=23.9e-6, Jy=24.8e-6 — MATCHING firmware 23.95e-6
+      # to ~1-3%. (An earlier OLS-only pass gave ~20.5e-6 but that is attenuation-biased LOW; TLS
+      # is the correct errors-in-variables estimator and confirms firmware J is right.) So the
+      # inertia is NOT the problem — kept at 1.0. Still a runtime knob for a quick sanity sweep
+      # (0.85/1.0/1.15) if desired, but expect no improvement since J is data-validated.
+      j_scale: 1.0
+      # Output clamps (2026-07-22, NEW — requires cload'd firmware with clamp_en; mirrors stock C
+      # INDI bounds, see flying_drone_stack/docs/investigation §15.10). Blow-up containment,
+      # NOT the 6.3 Hz fix. Bitmask: bit0=tau_xy, bit1=tau_z, bit2=tilt, bit3=thrust → 15 = all.
+      # For Phase-4 inverted/loop flight set clamp_en: 11 (tilt clamp off, tau clamps stay on).
+      # Values = physical headroom at hover: tau_xy = ARM*4*0.1N, tau_z = TORQUE_RATIO*4*0.1N.
+      # (Upgraded block would use ~0.010/0.0017; standard ~0.007/0.0012 by the same formula.)
+      # 2026-07-27: clamp_en=11 (tilt clamp OFF, tau/thrust clamps stay on), per this
+      # block's own anticipated fix above ("For Phase-4 inverted/loop flight set
+      # clamp_en: 11"). The tilt clamp lives in the POSITION loop and caps the
+      # desired-thrust-vector angle at tilt_max_deg=30 deg before it ever reaches the
+      # attitude controller -- it's only skipped when an explicit attitude override
+      # is active, which flatness-derived loop/teardrop trajectories do NOT use. Any
+      # genuine inversion (needs ~180 deg tilt at the apex) requires this clamp OFF,
+      # regardless of how the trajectory itself is generated (pinned or natural).
+      # tau_xy_max LOOSENED further 0.030 -> 0.045 (2026-07-27 evening): post-flip
+      # recovery telemetry from the working entry=exit=0.33s/pin=0.16s loop config
+      # showed tau_x/tau_y saturating at the 0.030 clamp AND chattering (rapid sign
+      # flips) rather than converging -- gyro rates to 500-1000+ deg/s, z fell from
+      # apex to floor in ~1s (near-freefall). 0.045 is still well under the 0.052Nm
+      # blow-up incident that originally motivated this clamp, so containment is not
+      # fully given up, just widened. If the chatter persists at 0.045 unchanged, that
+      # points away from pure saturation and toward an EKF-attitude-estimate-lag
+      # explanation instead (open question, see project memory) -- raising this
+      # further would not help in that case.
+      # ⚠ clamp_en 11 = TILT CLAMP OFF (tau clamps stay on). It was set for the Phase-4
+      # inverted/loop work, NOT for level formation flight. It is left as-is because it is
+      # the state this brushless block was validated and parked in -- but for thesis
+      # formation flights consider re-enabling the tilt clamp, since nothing in
+      # hover/figure8/circle needs tilt beyond the limit. Decide before the first 2-drone flight.
+      clamp_en: 11
+      tau_xy_max: 0.045
+      tau_z_max: 0.0025
+      tilt_max_deg: 30.0
+      thrust_max: 0.8
+      # Optional stage-2 notch (band-reject) filter (2026-07-28, requires cload'd firmware with
+      # the notch_en/notch_f0/notch_bw toggle). The stage-1 Butterworth above (fc_bw=60) sits well
+      # above the 5-10 Hz shake band and measurably does NOT touch it (|alpha_filtered/alpha_raw|
+      # =1.000 at 7.22 Hz, 500 Hz SD-log analysis, docs/results_2026-07-15_brushless.md §16.6) --
+      # and lowering fc_bw down into that band was already tried and made things 3-4x worse. This
+      # targets ONLY the diagnosed narrow band (genuine spectral peak at 7.22 Hz, not broadband),
+      # applied identically to alpha_meas and alpha_ref so the two chains stay phase-matched.
+      # Default OFF = byte-identical to prior behaviour. f0/bw runtime-tunable (no reflash needed
+      # to retune) in case the shake frequency drifts session-to-session (6.3-7.9 Hz measured
+      # across sessions in the prior investigation).
+      # 2026-07-29 lab session: measured resonance sits at 6.9 Hz (not 7.2) across
+      # every flight this session -- recentered f0 and narrowed bw to minimize the
+      # low-frequency phase penalty (wider bw was shown to push phase lag down into
+      # the control-critical <5 Hz range, which is what caused the bw=10/20 crashes
+      # at kr=2400, not a filter-design bug -- see notch_bode_response.png). Also
+      # fixed same day: alpha_ref/tau_current notch+BW filters were gated behind
+      # `mode & 2` in firmware_app/src/lib.rs and never ran during the geometric
+      # ramp phase, causing a cold-start transient at the INDI handover that was
+      # the real cause of every notch_en=1 crash regardless of bw -- see lib.rs
+      # controller_step comments. notch_en=0 here first to sanity-check the
+      # reflashed firmware (with that fix) reproduces normal INDI hover before
+      # re-enabling the notch.
+      notch_en: 0
+      notch_f0: 6.9
+      notch_bw: 3.0
+    pos_gains:
+      # 2026-07-19 KV DECOUPLING TEST — analogous to the KR/KW decoupling that just improved
+      # attitude tracking (KW*e_omega directly injects raw gyro noise into torque, independent of
+      # KR's bandwidth benefit). Position loop has the same structure: KP sets bandwidth, KV
+      # multiplies velocity error into the accel demand — never tested independently, always
+      # scaled with KP at a fixed ratio (zeta_pos=0.625-0.632) the whole session.
+      # FROZEN: kp_xy=64 (proven bandwidth, matches locked kr=2400/kw=170 point).
+      # CONFIRMED 2026-07-19: kv=7 (zeta=0.438, down from 10/zeta=0.625) gave RMSE 2.6/2.8/2.6cm —
+      # BEATS kv=10's 2.8/2.9/3.0, tighter spread, geom RMSE down to 1.5-1.7cm.
+      # CONFIRMED 2026-07-19: kv=5 (zeta=0.312) gave RMSE 2.4/2.3cm — NEW BEST, tight agreement
+      # between both flights. roll err 4.9/5.4, pitch 4.3/3.8.
+      # KV FLOOR FOUND: kv=4 (zeta=0.250) CRASHED 2 out of 2 flights. Hard stability wall, not
+      # gradual — do not go below kv=5. LOCKED at kv=5 (this row) — the final position config.
+      # To revert to fully original tuned config: kp_xy=40/kv_xy=8/kp_z=30/kv_z=10.
+      kp_xy: 64.0
+      kp_z:  48.0
+      # ⚠️ SIMULATION ONLY. Hardware uses kv_xy: 5.0 (crazyflies.yaml) and must keep it.
+      #
+      # kv_xy=5 (zeta 0.31) is flight-proven -- the notes above record it as the best
+      # measured result, 2.4 cm RMSE. In simulation the identical config oscillates at
+      # 1.33 Hz, which is the position loop's own frequency (sqrt(64) = 8 rad/s), and
+      # diverges on any curved trajectory. The sim's stability wall sits near zeta
+      # 0.5-0.6 where hardware's sits near 0.25-0.31: the same phenomenon, about twice
+      # as close. Note the hardware wall is razor-thin too -- kv=4 crashed 2 of 2.
+      #
+      # zeta 0.625 (kv_xy=10) is not arbitrary: the notes above say the whole tuning
+      # campaign held that ratio until the 2026-07-19 decoupling test lowered it. So
+      # this restores the long-standing configuration rather than inventing one.
+      #
+      # This is a workaround for an unresolved simulator-fidelity gap, NOT a tuning
+      # recommendation. Do not copy it to hardware. See docs/09_Simulation.md for what
+      # has already been ruled out (KI_P, rotor drag, inertia, airframe -- all refuted).
+      #
+      # Lowered 10.0 -> 8.0 on 2026-08-22 after first-order motor lag was added to the
+      # plant, which moved the simulator's wall from kv_xy 10 to 8. Still not hardware's
+      # 5.0, but closer, and the plant is more faithful for it.
+      kv_xy: 8.0
+      kv_z:  7.0
+    locSrv:
+      extPosStdDev: 1e-3
+      extQuatStdDev: 0.5e-1
+    # kalman:
+    #   resetEstimation: 1
+  # reference frame for on-board state-estimate of all drones (use robot_types/type_name to set per type, or
+  # robots/drone_name to set per drone)
+  reference_frame: "world"
+  broadcasts:
+    num_repeats: 15 # number of times broadcast commands are repeated
+    delay_between_repeats_ms: 1 # delay in milliseconds between individual repeats
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SIMULATION (launch with backend:=sim)
+# ══════════════════════════════════════════════════════════════════════════════
+# Only read when the sim backend is launched; ignored for real flights.
+#
+#   backend  — physics:
+#     np           rigid body + motor lag. No aerodynamics. Fast.
+#     neuralswarm  np PLUS the Neural-Swarm2 learned interaction force between
+#                  drones (pretrained weights ship in backend/data/neuralswarm2).
+#                  This is the only backend that models DOWNWASH, i.e. the thing
+#                  the thesis is about. Needs torch.
+#     none         no physics; state = setpoint. Useful for checking plumbing.
+#
+#   controller — which firmware controller runs in the loop (software-in-the-loop,
+#     the REAL firmware C code via cffirmware bindings): none | pid | mellinger |
+#     brescianini. NOTE our OOT geometric/INDI controller is NOT available here —
+#     crazyflie_sil.py would need a 'lee' branch adding (controllerLeeInit IS in
+#     the bindings) to get the closest equivalent.
+#
+#   visualizations — a LIST, each independently enabled, and they are pure
+#     consumers of state: the server calls vis.step(t, states, ...) after the
+#     physics step, and a visualizer can never affect physics. That is why a
+#     renderer can be swapped or added (e.g. Isaac Sim) with the downwash model
+#     untouched, and why several can run at once on the same simulation.
+sim:
+  max_dt: 0.1
+  backend: np
+  controller: mellinger
+  visualizations:
+    rviz:
+      enabled: true
+    pdf:
+      enabled: false
+      output_file: result.pdf
+    record_states:
+      enabled: false
+      output_dir: state_info
+      logging_time: 0
+      file_formats:
+        - csv
+    blender:
+      enabled: false
+      fps: 1
+      cycle_bg: false
+      cf_cameras:
+        cf231_active:
+          calibration:
+            tvec: [0, 0, 0]
+            rvec: [1.24, -1.2, 1.2]

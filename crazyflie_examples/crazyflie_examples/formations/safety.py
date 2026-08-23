@@ -14,12 +14,15 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# ⚠️ PLACEHOLDER. The real flight volume was never recorded anywhere in the repo, and
-# guessing a number that gates whether a vehicle is allowed to fly somewhere is exactly
-# the kind of guess that should not be made quietly. This box is deliberately smaller
-# than any plausible lab, so the failure mode is "scenario refused", not "vehicle in the
-# net". Override with --geofence, and set the real numbers here once measured.
-FLIGHT_SPACE = dict(x=(-1.75, 1.75), y=(-1.75, 1.75), z=(0.15, 2.20))
+# Flight volume. ⚠️ OPERATOR ESTIMATE, 2026-08-23 -- given as "I believe / I guess",
+# NOT a measurement. Confirm with a tape measure before the first flight and update
+# here; several scenarios sit within ~10 cm of these walls, so an error of that size
+# changes which ones are allowed to fly.
+#
+# No margin is subtracted here: this is the box the vehicles must stay inside, and the
+# check runs on COMMANDED positions. Real tracking error and overshoot sit on top of it,
+# so leave headroom when setting these numbers rather than quoting the wall position.
+FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.30, 1.70))
 
 # Below this the vehicles are close enough that a tracking error of a few centimetres
 # closes the gap. The literature scenarios deliberately go lower; those are gated behind

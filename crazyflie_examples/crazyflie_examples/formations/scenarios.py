@@ -434,7 +434,26 @@ N_ROBOTS = {'A1': 2, 'A2': 2, 'A3': 2, 'A4': 2, 'A5': 2, 'A6': 2, 'A7': 2, 'A8':
             'C1': 3, 'C2': 3, 'C3': 3, 'C4': 2, 'C5': 1}
 
 
-def build(sid: str, **params) -> Scenario:
+def rotate_scenario(sc: Scenario, deg: float) -> Scenario:
+    """Turn a whole scenario about the vertical axis, slots and curves together.
+
+    A rigid rotation preserves every inter-robot distance, so the scenario still means
+    what it meant -- it just points a different way. The reason to want that is purely
+    practical: a room is rarely square, and a translating scenario laid out across the
+    short axis may not fit when the same scenario along the long axis would.
+    """
+    if not deg:
+        return sc
+    th = np.radians(float(deg))
+    c, s_ = np.cos(th), np.sin(th)
+    for r in sc.robots:
+        x, y, z = r.slot
+        r.slot = np.array([c * x - s_ * y, s_ * x + c * y, z])
+        r.curve = C.Rotated(r.curve, deg)
+    return sc
+
+
+def build(sid: str, rotate_deg: float = 0.0, **params) -> Scenario:
     sid = sid.upper()
     if sid not in BUILDERS:
         raise KeyError(f'unknown scenario {sid!r}; known: {", ".join(sorted(BUILDERS))}')
@@ -452,7 +471,10 @@ def build(sid: str, **params) -> Scenario:
     sc.params = {name: params.get(name, prm.default)
                  for name, prm in sig.parameters.items()
                  if prm.kind is not prm.VAR_KEYWORD and prm.default is not prm.empty}
-    return sc
+    # Recorded so verification rebuilds the same orientation. Rotation does not change
+    # any distance, but it does change which axis a displacement appears on.
+    sc.params['rotate_deg'] = float(rotate_deg)
+    return rotate_scenario(sc, rotate_deg)
 
 
 # ── Specification check ─────────────────────────────────────────────────────
@@ -468,8 +490,19 @@ def check_spec(scenario: Scenario, tol: float = 2e-3) -> list[str]:
     T = scenario.duration
     ts = np.linspace(0.0, T, 400)
 
+    # Checks are written in the scenario's own frame ("the lower vehicle stays in the
+    # x-z plane"), so undo any layout rotation before testing. The rotation is rigid and
+    # changes no distance; it only moves which axis a displacement lands on.
+    rot = float(p.get('rotate_deg', 0.0))
+    th = np.radians(-rot)
+    cs, sn = np.cos(th), np.sin(th)
+
     def rel(i, j):
-        return np.array([scenario.relative(i, j, t) for t in ts])
+        d = np.array([scenario.relative(i, j, t) for t in ts])
+        if not rot:
+            return d
+        return np.stack([cs * d[:, 0] - sn * d[:, 1],
+                         sn * d[:, 0] + cs * d[:, 1], d[:, 2]], axis=1)
 
     sid = scenario.sid
     if sid in ('A1', 'A2'):
