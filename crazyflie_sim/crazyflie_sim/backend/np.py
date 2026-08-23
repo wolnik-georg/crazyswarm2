@@ -207,6 +207,7 @@ class Quadrotor:
         self.state.quat = q_next
         self.state.omega = omega_next
         self.state.acc = acc_body
+        self.state.rpm = np.asarray(rpm, dtype=float)   # post-lag, i.e. measured
 
         # if we fall below the ground, set velocities to 0
         if self.state.pos[2] < 0:

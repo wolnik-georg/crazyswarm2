@@ -79,6 +79,7 @@ class CrazyflieSIL:
 
         self.motors_rpm = [0.0, 0.0, 0.0, 0.0]
         self.kt = None  # set only by the 'oot' controller
+        self.motors_rpm_meas = None   # actual rotor speed reported by the plant
         self.thrust_max = None
         self._last_ctrl_tick = -1
         self._last_action = None
@@ -358,6 +359,12 @@ class CrazyflieSIL:
         self.sensors.gyro.y = np.degrees(state.omega[1])
         self.sensors.gyro.z = np.degrees(state.omega[2])
 
+        # Actual rotor speeds, if this backend reports them. Backends that do not still
+        # fall back to the commanded value below, so nothing changes for them.
+        rpm = getattr(state, 'rpm', None)
+        if rpm is not None and np.any(rpm):
+            self.motors_rpm_meas = list(rpm)
+
         # Accelerometer. INDI inverts the measured acceleration, so without this it
         # reads a permanent free-fall and the controller is not the one that flies.
         self.sensors.acc.x = state.acc[0]
@@ -397,7 +404,13 @@ class CrazyflieSIL:
             # comes from the RPM deck / DShot telemetry; here the simulator knows the
             # true motor speeds, so hand them over. Without this the controller silently
             # falls back to tau_prev and the INDI being tested is the degraded variant.
-            r = self.motors_rpm if hasattr(self, 'motors_rpm') else [0, 0, 0, 0]
+            # Prefer the MEASURED rotor speed over the commanded one. With actuator lag
+            # in the plant the two differ, and attitude INDI reconstructs its applied
+            # torque from this number: feeding it the command makes the reconstruction
+            # wrong by exactly the lag, the increment is computed against a torque that
+            # was never applied, and the vehicle does not lift off at all. Geometric
+            # control never touches RPM, which is why it is unaffected.
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
             firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         elif self.controller_name != 'mellinger':

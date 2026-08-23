@@ -6,7 +6,7 @@ class State:
 
     def __init__(self, pos=np.zeros(3), vel=np.zeros(3),
                  quat=np.array([1, 0, 0, 0]), omega=np.zeros(3),
-                 acc=np.array([0, 0, 1.0])):
+                 acc=np.array([0, 0, 1.0]), rpm=np.zeros(4)):
         # internally use one numpy array
         self._state = np.empty(13)
         self.pos = pos
@@ -19,6 +19,11 @@ class State:
         # Accelerometer-based controllers (INDI) are driven entirely by this; a
         # backend that leaves it at the default is telling them the vehicle is at rest.
         self.acc = acc
+        # Actual rotor speeds after any actuator lag -- what an RPM deck measures, as
+        # opposed to what was commanded. A model-inverting controller reconstructs its
+        # applied torque from this, so handing it the command instead of the measurement
+        # makes the reconstruction wrong by exactly the lag.
+        self.rpm = np.asarray(rpm, dtype=float)
 
     @property
     def pos(self):
