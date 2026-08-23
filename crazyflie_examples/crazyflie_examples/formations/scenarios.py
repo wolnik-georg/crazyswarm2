@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass, field
+import inspect
 
 import numpy as np
 
@@ -438,7 +439,20 @@ def build(sid: str, **params) -> Scenario:
     if sid not in BUILDERS:
         raise KeyError(f'unknown scenario {sid!r}; known: {", ".join(sorted(BUILDERS))}')
     params = {k: v for k, v in params.items() if v is not None}
-    return BUILDERS[sid](**params)
+    sc = BUILDERS[sid](**params)
+
+    # Record the FULL effective parameter set, defaults included, rather than trusting
+    # each builder to list what it used. A scenario has to be exactly reconstructable
+    # from what was recorded, because that is what post-flight verification rebuilds to
+    # compare against. Several builders quietly omitted a parameter -- A4 left out
+    # `laps`, so a one-lap flight was scored against a two-lap reference and reported
+    # 208 mm of horizontal error that did not exist. Deriving this from the signature
+    # means a new parameter cannot be forgotten.
+    sig = inspect.signature(BUILDERS[sid])
+    sc.params = {name: params.get(name, prm.default)
+                 for name, prm in sig.parameters.items()
+                 if prm.kind is not prm.VAR_KEYWORD and prm.default is not prm.empty}
+    return sc
 
 
 # ── Specification check ─────────────────────────────────────────────────────
