@@ -88,6 +88,16 @@ class CrazyflieSIL:
         # drone, where there is one vehicle per MCU, but every simulated drone runs
         # through that same static here. See oot_select_drone in oot_host.c.
         self._oot_index = CrazyflieSIL._oot_count
+        # Positions of the other vehicles, refreshed by the server each tick. On the drone these
+        # arrive through peer_localization from Crazyswarm2's pose broadcast; the simulator has
+        # no such module, so they are injected instead. Empty means the residual network sees no
+        # neighbours and predicts exactly zero -- which is correct for a single drone and wrong
+        # for every formation, so the server must actually set this.
+        self.peers = []
+        # Captured immediately after the controller runs, while the shared out-of-tree statics
+        # still belong to THIS vehicle. Reading them later would return the last drone stepped.
+        self.a_res = [0.0, 0.0, 0.0]
+        self.rnn_pred = [0.0, 0.0, 0.0]
         CrazyflieSIL._oot_count += 1
 
         # current controller output
@@ -412,7 +422,18 @@ class CrazyflieSIL:
             # control never touches RPM, which is why it is unaffected.
             r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
             firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            # Peer positions for the residual network, timestamped with the same tick the
+            # controller sees. The firmware differences relative velocity from consecutive
+            # timestamps, so the stamp has to advance exactly as it does in flight.
+            if hasattr(firm, 'oot_set_peer'):
+                for k, p in enumerate(self.peers[:3]):
+                    firm.oot_set_peer(k, float(p[0]), float(p[1]), float(p[2]), int(tick))
+                firm.oot_set_peer_count(min(len(self.peers), 3))
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
+            if hasattr(firm, 'oot_get_a_res'):
+                self.a_res = [firm.oot_get_a_res(i) for i in range(3)]
+                self.rnn_pred = [firm.cvar.g_rnn_pred_x, firm.cvar.g_rnn_pred_y,
+                                 firm.cvar.g_rnn_pred_z]
         elif self.controller_name != 'mellinger':
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         else:

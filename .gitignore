@@ -12,4 +12,7 @@ state_np/
 state_dw/
 state_info/
 state_geo/
+state_collect/
+state_predict/
+state_compensate/
 state_indi/
