@@ -190,6 +190,18 @@ all:
       indi_a_res:
         frequency: 100 # Hz
         vars: ["indi.a_res_x", "indi.a_res_y", "indi.a_res_z"]
+      # /cfXXX/rnn_pred — learned residual prediction a_res_hat [m/s^2], world frame, plus the
+      # clamp flag. Comparing this against indi_a_res above IS the evaluation of every learned
+      # method in the thesis, so it must be recorded on flights where the network is NOT being
+      # used (rnn.en=0) as well as where it is.
+      #
+      # COMMENTED BY DEFAULT: radio saturates around 2 drones already (~811 pkt/s per drone
+      # against ~1000 pkt/s total per dongle), and the multi-drone dataset comes off the uSD
+      # deck, where these four variables are already in tools/usd_thesis_config.txt. Enable
+      # this only for single-drone tuning, where the headroom exists.
+      # rnn_pred:
+      #   frequency: 100 # Hz
+      #   vars: ["rnn.pred_x", "rnn.pred_y", "rnn.pred_z", "rnn.clamped"]
       # /cf231/indi_alp_notch — stage-2 notch-filtered angular accel (3 floats = 12 bytes,
       # separate packet, same 6-float/packet limit as indi_alp_raw above). Added 2026-07-28
       # (shake investigation): always computed/logged regardless of indi_gains.notch_en so
