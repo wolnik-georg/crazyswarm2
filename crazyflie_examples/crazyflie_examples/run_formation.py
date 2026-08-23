@@ -81,6 +81,10 @@ def build_parser():
     s.add_argument('--v-max', type=float, default=None, help='override commanded speed limit')
     s.add_argument('--a-max', type=float, default=None, help='override commanded accel limit')
     s.add_argument('--dz-min', type=float, default=None, help='override minimum dz')
+    s.add_argument('--z-floor', type=float, default=None,
+                   help='lowest altitude any vehicle may be commanded to [m]. Default 0.30 keeps '
+                        'formations clear of ground effect; pass 0.10 only when ground effect is '
+                        'the thing being measured (C5)')
     s.add_argument('--geofence', type=str, default=None,
                    help='xmin,xmax,ymin,ymax,zmin,zmax [m] -- overrides the placeholder box')
     s.add_argument('--check', action='store_true',
@@ -115,6 +119,8 @@ def make_limits(args) -> safety.Limits:
         lim.a_max = args.a_max
     if args.dz_min is not None:
         lim.dz_min = args.dz_min
+    if args.z_floor is not None:
+        lim.z_floor = args.z_floor
     if args.geofence:
         v = [float(x) for x in args.geofence.split(',')]
         if len(v) != 6:
@@ -139,19 +145,22 @@ def compile_scenario(sc, base_height: float):
     return paths, tables
 
 
-def centred_anchor(sc, lim) -> np.ndarray:
-    """Anchor that puts the scenario's commanded bounding box in the middle of the volume.
+def centred_anchor(sc, lim, height: float) -> np.ndarray:
+    """Centre the scenario HORIZONTALLY in the volume, at the requested altitude.
 
-    Only moves WHERE the formation flies. Every relative distance -- what the scenario
-    specifies and what verification checks -- is unchanged.
+    Horizontal placement is arbitrary -- the room has no preferred spot, so putting the
+    scenario in the middle simply buys the most clearance. Altitude is not arbitrary: it is
+    an experimental parameter. C5 flies low because ground effect is the thing it measures,
+    and centring it vertically silently lifted it from 0.15 m to 0.85 m, which is a different
+    experiment. So z comes from --height and only x and y are centred; if the result does not
+    fit, the check refuses and says so rather than quietly moving it.
     """
     _, box = safety.sample_positions(sc, base=np.zeros(3))
     lo, hi = box.reshape(-1, 3).min(axis=0), box.reshape(-1, 3).max(axis=0)
     gf = lim.geofence
-    mid = np.array([(gf['x'][0] + gf['x'][1]) / 2,
-                    (gf['y'][0] + gf['y'][1]) / 2,
-                    (gf['z'][0] + gf['z'][1]) / 2])
-    return mid - (lo + hi) / 2
+    mid_xy = np.array([(gf['x'][0] + gf['x'][1]) / 2, (gf['y'][0] + gf['y'][1]) / 2])
+    xy = mid_xy - (lo[:2] + hi[:2]) / 2
+    return np.array([xy[0], xy[1], height])
 
 
 def geometry_table(sc, n: int = 400) -> str:
@@ -241,7 +250,7 @@ def main():
     # re-checks against the real anchor once ROS reports it.
     base = np.array([0.0, 0.0, args.height])
     if args.auto_center:
-        base = centred_anchor(sc, lim)
+        base = centred_anchor(sc, lim, args.height)
     problems = safety.check(sc, lim, base=base)
     paths, tables = compile_scenario(sc, args.height)
 
@@ -291,7 +300,7 @@ def main():
         # scenario's own commanded bounding box inside the geofence changes only WHERE it
         # flies -- every relative distance, which is what the scenario specifies and what
         # verification checks, is untouched.
-        anchor = centred_anchor(sc, lim)
+        anchor = centred_anchor(sc, lim, args.height)
         print(f'[formation] --auto-center: anchor moved to {anchor.round(2)} '
               f'(was {(np.array(cfs[0].initialPosition) + [0, 0, args.height]).round(2)})')
 

@@ -14,15 +14,32 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-# Flight volume. ⚠️ OPERATOR ESTIMATE, 2026-08-23 -- given as "I believe / I guess",
-# NOT a measurement. Confirm with a tape measure before the first flight and update
-# here; several scenarios sit within ~10 cm of these walls, so an error of that size
-# changes which ones are allowed to fly.
+# Flight volume — TWO separate limits, deliberately.
 #
-# No margin is subtracted here: this is the box the vehicles must stay inside, and the
-# check runs on COMMANDED positions. Real tracking error and overshoot sit on top of it,
-# so leave headroom when setting these numbers rather than quoting the wall position.
-FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.30, 1.70))
+# FLIGHT_SPACE is the PHYSICAL mocap-tracked volume: where the cameras can see the drones at
+# all. Confirmed by the operator 2026-08-23 and consistent with an independent statement from
+# 2026-07-27 (x and z identical, y then quoted as +-2.1). Still not tape-measured.
+FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.0, 1.70))
+
+# The floor we CHOOSE to fly above is a different question from where tracking works.
+#
+# Near the ground a rotor's own downwash reflects back and pushes the vehicle up -- ground
+# effect. It is real, it is roughly the same magnitude as the inter-vehicle downwash this
+# thesis measures, and it is NOT the quantity under study. Flying a formation at 0.15 m would
+# contaminate every residual with a second unmodelled force that has nothing to do with the
+# other drone.
+#
+# So the default operational floor sits clear of it. Ground effect on a Crazyflie is
+# significant below roughly one rotor diameter and largely gone by two to three; 0.30 m is a
+# few diameters up and comfortably clear.
+Z_FLOOR_DEFAULT = 0.30
+
+# But ground effect is itself a residual force, and this project measures residual forces. C5
+# exists precisely to characterise it in isolation, and that scenario has to go low to see
+# anything. Treating it as a second disturbance -- one the same machinery can measure and, in
+# principle, the same learned models can compensate -- is a legitimate extension rather than a
+# safety exception, so it gets its own floor rather than --allow-extreme.
+Z_FLOOR_GROUND_EFFECT = 0.10
 
 # Below this the vehicles are close enough that a tracking error of a few centimetres
 # closes the gap. The literature scenarios deliberately go lower; those are gated behind
@@ -43,6 +60,9 @@ D_MIN_EXTREME = 0.06
 
 @dataclass
 class Limits:
+    # Operational floor, separate from the geofence. Raise to Z_FLOOR_GROUND_EFFECT only when
+    # ground effect is the thing being measured.
+    z_floor: float = Z_FLOOR_DEFAULT
     v_max: float = 1.20            # m/s, commanded
     a_max: float = 2.50            # m/s^2, commanded
     dz_min: float = DZ_MIN_DEFAULT
@@ -97,7 +117,10 @@ def check(scenario, limits: Limits, base=None) -> list[str]:
                             f'exceeds a_max {limits.a_max:.2f}')
 
     ts, pos = sample_positions(scenario, base=base)
-    gf = limits.geofence
+    gf = dict(limits.geofence)
+    # The operational floor overrides the physical one, never the reverse: the mocap may see
+    # down to the ground, but we choose not to fly a formation into ground effect.
+    gf['z'] = (max(gf['z'][0], limits.z_floor), gf['z'][1])
     for i in range(len(scenario.robots)):
         for ax, key in enumerate('xyz'):
             lo, hi = gf[key]
