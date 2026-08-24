@@ -87,6 +87,25 @@ the variable under study.
 
 ⚠ = refused unless `--allow-extreme`.
 
+## Separation and speed grids
+
+Discrete by design — regime coverage, not a continuum.
+
+| Factor | Grid | Flag |
+|---|---|---|
+| Speed | 0.20, 0.30, 0.40, 0.50 m/s (hover = 0) | `--speed` |
+| Vertical separation | 0.50, 0.40, 0.30, 0.20 m (below 0.20 ⚠) | `--dz`, `--dz1`, `--dz2` |
+| Lateral separation | 0.00, 0.10, 0.20 m | `--offset`, `--r`, `--sep`, `--gap` |
+
+`--speed` sets the peak directly on `line`/`shuttle` paths. On `circle`/`lemniscate`, which
+are paced by a period, it is converted (peak speed goes as `1/period`); `--period` overrides
+it. A flag a scenario cannot use is an error, not a silent default.
+
+**Before 2026-08-24 `--speed` was silently ignored on circle/lemniscate paths** while still
+being recorded: A2/B1/B2 logged 0.4 m/s and flew 0.63, A4 logged 0.4 and flew 0.50. Sidecars
+now carry a `realised` block with the speed the curves actually produce. Geometry results
+from before the fix are unaffected; defaults are unchanged.
+
 ## Running
 
 ```bash

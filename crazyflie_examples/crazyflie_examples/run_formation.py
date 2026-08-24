@@ -242,7 +242,12 @@ def main():
     if not args.scenario:
         sys.exit('[formation] --scenario is required (use --list to see them)')
 
-    sc = scenarios.build(args.scenario, **scenario_params(args))
+    # A parameter that does not apply is a mistake worth stopping for, not a traceback:
+    # it means the flight about to run is not the flight that was asked for.
+    try:
+        sc = scenarios.build(args.scenario, **scenario_params(args))
+    except (ValueError, KeyError) as e:
+        sys.exit(f'[formation] {str(e).strip(chr(39))}')
     lim = make_limits(args)
     spec_problems = scenarios.check_spec(sc)
     # Offline the anchor XY is unknown (it comes from drone 0's start position), so the
@@ -355,6 +360,10 @@ def main():
             'timescale': args.timescale, 'controller': controller,
             'ctrl_mode': traj_ctrl_mode, 'tags': '|'.join(sc.tags)}
     meta.update({f'param_{k}': v for k, v in sc.params.items()})
+    # What the curves actually do, next to what was asked for. `param_speed` is the
+    # request and can differ from the flight: circular paths are paced by period, so
+    # before this was recorded a scenario could log speed=0.4 and fly 0.63 m/s.
+    meta.update({f'realised_{k}': v for k, v in sc.realised.items()})
     meta.update({f'indi_{k}': v for k, v in indi_gains.items()})
     meta.update({f'pos_{k}': v for k, v in pos_gains.items()})
 
@@ -417,6 +426,7 @@ def main():
         sidecar.parent.mkdir(parents=True, exist_ok=True)
         with open(sidecar, 'w') as fh:
             json.dump({'scenario': sc.sid, 'params': sc.params,
+                       'realised': sc.realised,
                        'roles': [r.role for r in sc.robots],
                        'names': [c.prefix.lstrip('/') for c in cfs],
                        'height': args.height, 'anchor': list(map(float, anchor)),

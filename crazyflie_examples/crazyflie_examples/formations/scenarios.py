@@ -56,6 +56,12 @@ class Scenario:
     notes: str = ''
     extreme: bool = False
     params: dict = field(default_factory=dict)
+    # What the commanded curves actually DO, as opposed to what was asked for.
+    # `params` records the request; this records the outcome. They differ whenever a
+    # parameter cannot reach the curve it names -- see `build`. Kept separate from
+    # `params` because verification rebuilds the scenario from `params`, and that
+    # rebuild must take exactly the builder's own arguments and nothing else.
+    realised: dict = field(default_factory=dict)
 
     @property
     def n_robots(self):
@@ -72,6 +78,27 @@ class Scenario:
 
 def _v(x, y, z):
     return np.array([float(x), float(y), float(z)])
+
+
+# ── Speed handling ──────────────────────────────────────────────────────────
+
+# Paths whose pace is set by a period, not by a speed. `speed` never reaches these
+# curves; `build` converts it to a period instead.
+_PERIOD_PATHS = ('circle', 'lemniscate')
+
+# How close the realised peak speed must come to the requested one before `build`
+# accepts that the request was honoured. Absolute floor, or 5% of the request.
+_SPEED_TOL = 0.02
+
+
+def _path_kind(params: dict) -> str:
+    """The name of the curve a scenario's horizontal motion follows."""
+    return params.get('path') or params.get('motion') or 'fixed'
+
+
+def _peak_speed(sc: 'Scenario') -> float:
+    """Fastest any vehicle actually moves, over the whole scenario."""
+    return max(r.curve.peaks()[0] for r in sc.robots)
 
 
 # ── Shared horizontal paths ─────────────────────────────────────────────────
@@ -458,7 +485,7 @@ def build(sid: str, rotate_deg: float = 0.0, **params) -> Scenario:
     if sid not in BUILDERS:
         raise KeyError(f'unknown scenario {sid!r}; known: {", ".join(sorted(BUILDERS))}')
     params = {k: v for k, v in params.items() if v is not None}
-    sc = BUILDERS[sid](**params)
+    sig = inspect.signature(BUILDERS[sid])
 
     # Record the FULL effective parameter set, defaults included, rather than trusting
     # each builder to list what it used. A scenario has to be exactly reconstructable
@@ -467,10 +494,101 @@ def build(sid: str, rotate_deg: float = 0.0, **params) -> Scenario:
     # `laps`, so a one-lap flight was scored against a two-lap reference and reported
     # 208 mm of horizontal error that did not exist. Deriving this from the signature
     # means a new parameter cannot be forgotten.
-    sig = inspect.signature(BUILDERS[sid])
-    sc.params = {name: params.get(name, prm.default)
-                 for name, prm in sig.parameters.items()
-                 if prm.kind is not prm.VAR_KEYWORD and prm.default is not prm.empty}
+    def effective(p):
+        return {name: p.get(name, prm.default)
+                for name, prm in sig.parameters.items()
+                if prm.kind is not prm.VAR_KEYWORD and prm.default is not prm.empty}
+
+    # Every builder ends in `**_`, so an argument it does not take is absorbed in
+    # silence and the scenario runs at its default. A mistyped flag then produces a
+    # run that looks requested and is not -- and in a parameter sweep, several cells
+    # collapse onto the same flight with nothing to show for it. Reject by name here,
+    # where the signature is already in hand.
+    accepted = [n for n, prm in sig.parameters.items()
+                if prm.kind is not prm.VAR_KEYWORD and prm.default is not prm.empty]
+    unknown = sorted(set(params) - set(accepted))
+    if unknown:
+        raise ValueError(
+            f'{sid} does not take {", ".join(unknown)}. '
+            f'It accepts: {", ".join(accepted)}.')
+
+    want_speed = params.get('speed')
+    # Note this also makes replay exact. `effective()` records every signature
+    # parameter, so a sidecar always carries an explicit `period` -- which pins it here,
+    # so rebuilding a past run from its own metadata can never re-run the speed
+    # conversion and shift the time base underneath the recorded states. Verification of
+    # runs made before the conversion existed is therefore unaffected by it. If
+    # `effective()` ever stops recording defaults, that guarantee goes with it.
+    period_pinned = 'period' in params
+
+    sc = BUILDERS[sid](**params)
+    sc.params = effective(params)
+
+    # A circle and a lemniscate are paced by `period`; `speed` is not an argument they
+    # have, so it was silently dropped and the vehicle flew whatever the default period
+    # implied -- 0.63 m/s for every circular scenario, above the 0.2-0.5 m/s band this
+    # work targets. Convert the request into the period that delivers it.
+    #
+    # Peak speed scales exactly as 1/period for a fixed geometry, so one reference
+    # build gives the conversion without any curve-specific algebra. For a circle this
+    # reduces to the textbook T = 2*pi*r/v; for a lemniscate it does NOT -- that
+    # formula is 42% low at the default radius, because the fastest point of a
+    # figure-of-eight is not on a circle of radius `a`. Scaling from the measurement
+    # is right for both.
+    converted = False
+    if want_speed is not None and not period_pinned \
+            and _path_kind(sc.params) in _PERIOD_PATHS:
+        v_ref = _peak_speed(sc)
+        if v_ref > 1e-6 and want_speed > 1e-6:
+            params = {**params, 'period': float(sc.params['period']) * v_ref / want_speed}
+            sc = BUILDERS[sid](**params)
+            sc.params = effective(params)
+            converted = True
+
+    # Whatever route the request took, confirm it arrived. The test is whether `speed`
+    # has any effect at all, not whether the peak equals it: in a scenario where one
+    # vehicle traverses while another descends, the fastest vehicle is not the one the
+    # traverse speed governs -- A7 asks for 0.30 m/s and legitimately peaks at 0.39.
+    # Comparing against the request would reject that. Perturbing the request and
+    # seeing whether the curves move is what actually distinguishes "honoured" from
+    # "silently dropped", which is the failure being guarded against.
+    # Skipped when `period` is given explicitly, because then the period is the
+    # request and `speed` is only along for the ride.
+    if want_speed is not None and not period_pinned:
+        if converted:
+            # The conversion sets the pace directly, so the realised speed must now
+            # equal the request. Anything else means the scaling assumption broke.
+            got = _peak_speed(sc)
+            if abs(got - want_speed) > max(_SPEED_TOL, 0.05 * want_speed):
+                raise ValueError(
+                    f'{sid}: speed={want_speed} m/s converted to period '
+                    f'{sc.params["period"]:.2f}s but the curves peak at {got:.2f} m/s. '
+                    f'Peak speed is no longer inversely proportional to period for '
+                    f'this path -- the conversion in build() needs revisiting.')
+        else:
+            # Probe against the ORIGINAL request: rebuild faster and see whether the
+            # curves move at all.
+            probe = BUILDERS[sid](**{**params, 'speed': want_speed * 1.25})
+            if abs(_peak_speed(probe) - _peak_speed(sc)) < 1e-9:
+                raise ValueError(
+                    f'{sid}: speed={want_speed} m/s has no effect on path '
+                    f'{_path_kind(sc.params)!r} -- the curves peak at '
+                    f'{_peak_speed(sc):.2f} m/s either way. Choose a path paced by '
+                    f'speed (line, shuttle), one paced by period (circle, lemniscate, '
+                    f'which converts), or set --period directly.')
+
+    # What the curves actually do. Recorded alongside the request so that a mismatch
+    # is visible in the log rather than inferred later from the trajectory.
+    v_pk, a_pk = max((r.curve.peaks() for r in sc.robots), key=lambda p: p[0])
+    sc.realised = {
+        'peak_speed': round(v_pk, 4),
+        'peak_accel': round(a_pk, 4),
+        'speed_requested': want_speed,
+        'period_effective': sc.params.get('period'),
+        'period_pinned': period_pinned,
+        'path_kind': _path_kind(sc.params),
+    }
+
     # Recorded so verification rebuilds the same orientation. Rotation does not change
     # any distance, but it does change which axis a displacement appears on.
     sc.params['rotate_deg'] = float(rotate_deg)
