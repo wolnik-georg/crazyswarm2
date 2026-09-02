@@ -17,8 +17,9 @@ import numpy as np
 # Flight volume — TWO separate limits, deliberately.
 #
 # FLIGHT_SPACE is the PHYSICAL mocap-tracked volume: where the cameras can see the drones at
-# all. Confirmed by the operator 2026-08-23 and consistent with an independent statement from
-# 2026-07-27 (x and z identical, y then quoted as +-2.1). Still not tape-measured.
+# all. Tape-measured by the operator 2026-09-02 (4m x by 2m y, 1.7m z) -- matches the operator's
+# earlier 2026-08-23 statement and the independent 2026-07-27 one (x and z identical, y then
+# quoted as +-2.1) to within rounding. No longer a placeholder.
 FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.0, 1.70))
 
 # The floor we CHOOSE to fly above is a different question from where tracking works.
@@ -31,7 +32,10 @@ FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.0, 1.70))
 #
 # So the default operational floor sits clear of it. Ground effect on a Crazyflie is
 # significant below roughly one rotor diameter and largely gone by two to three; 0.30 m is a
-# few diameters up and comfortably clear.
+# few diameters up and comfortably clear. Consistent with the operator's field observation
+# 2026-09-02 that actual flights want more like 0.3-0.4 m to stay clear of ground effect in
+# this particular lab -- 0.30 is the low end of that, kept as the default with headroom to
+# raise it per-scenario if a specific trajectory still shows floor contamination.
 Z_FLOOR_DEFAULT = 0.30
 
 # But ground effect is itself a residual force, and this project measures residual forces. C5
