@@ -19,6 +19,7 @@
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//run_formation
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//set_param
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//sim_downwash_test
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//simple_flight
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//swap
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/crazyflie_examples//upload_residual_weights
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/__init__.py
@@ -311,6 +312,14 @@
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.3_onboard.csv
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.4_onboard.csv
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/figure8_mode3_kt0.5_onboard.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.3_speed0.3_length1.2_radius0.75_period15.707820217470417_laps2.0_hold12.0_rotate_deg0.0_r0_bottom.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.3_speed0.3_length1.2_radius0.75_period15.707820217470417_laps2.0_hold12.0_rotate_deg0.0_r1_top.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.3_speed0.4_length1.2_radius0.75_period7.5_laps2.0_hold12.0_rotate_deg0.0_r0_bottom.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.3_speed0.4_length1.2_radius0.75_period7.5_laps2.0_hold12.0_rotate_deg0.0_r1_top.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.4_speed0.5_length1.2_radius0.75_period9.42469213048225_laps2.0_hold12.0_rotate_deg0.0_r0_bottom.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A2_dz0.4_speed0.5_length1.2_radius0.75_period9.42469213048225_laps2.0_hold12.0_rotate_deg0.0_r1_top.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A4_dz0.6_offset0.2_speed0.3_length1.2_radius0.45_period13.328345361810495_laps2.0_rotate_deg0.0_r0_bottom.csv
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/formations/A4_dz0.6_offset0.2_speed0.3_length1.2_radius0.45_period13.328345361810495_laps2.0_rotate_deg0.0_r1_top.csv
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/helix_mode1_kt0.05.csv
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/helix_mode1_kt0.05_onboard.csv
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/data/helix_mode1_kt0.05_onboard.meta.json
@@ -819,6 +828,7 @@
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/run_formation.py
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/set_param.py
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/sim_downwash_test.py
+/home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/simple_flight.py
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/swap.py
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/upload_residual_weights.py
 /home/flyingrobots/georg/ros2_ws/src/crazyswarm2/install/crazyflie_examples/share/crazyflie_examples//config/nav2_params.yaml

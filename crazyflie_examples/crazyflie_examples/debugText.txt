@@ -1,0 +1,41 @@
+(venv) flyingrobots@flightcontrol1:~/georg/ros2_ws$ ros2 run crazyflie_examples simple_flight -- --trajectory hover --duration 15
+Traceback (most recent call last):
+  File "/home/flyingrobots/georg/ros2_ws/install/crazyflie_examples/lib/crazyflie_examples/simple_flight", line 33, in <module>
+    sys.exit(load_entry_point('crazyflie-examples==1.0.3', 'console_scripts', 'simple_flight')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/simple_flight.py", line 95, in main
+    swarm = Crazyswarm()
+            ^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyswarm_py.py", line 12, in __init__
+    self.allcfs = CrazyflieServer()
+                  ^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyflie.py", line 908, in __init__
+    cf = Crazyflie(self, cfname, allParamTypeDicts[cfname])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyflie.py", line 164, in __init__
+    if response.values[0].type == ParameterType.PARAMETER_INTEGER_ARRAY:
+       ~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+[ros2run]: Process exited with failure 1
+(venv) flyingrobots@flightcontrol1:~/georg/ros2_ws$ ros2 run crazyflie_examples flight -- --trajectory hover --duration 15
+[flight] hover mode — 15s at 0.70m
+Traceback (most recent call last):
+  File "/home/flyingrobots/georg/ros2_ws/install/crazyflie_examples/lib/crazyflie_examples/flight", line 33, in <module>
+    sys.exit(load_entry_point('crazyflie-examples==1.0.3', 'console_scripts', 'flight')())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/install/crazyflie_examples/lib/python3.12/site-packages/crazyflie_examples/flight.py", line 926, in main
+    swarm = Crazyswarm()
+            ^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyswarm_py.py", line 12, in __init__
+    self.allcfs = CrazyflieServer()
+                  ^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyflie.py", line 908, in __init__
+    cf = Crazyflie(self, cfname, allParamTypeDicts[cfname])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/flyingrobots/georg/ros2_ws/build/crazyflie_py/crazyflie_py/crazyflie.py", line 164, in __init__
+    if response.values[0].type == ParameterType.PARAMETER_INTEGER_ARRAY:
+       ~~~~~~~~~~~~~~~^^^
+IndexError: list index out of range
+[ros2run]: Process exited with failure 1
+(venv) flyingrobots@flightcontrol1:~/georg/ros2_ws$ 
+
