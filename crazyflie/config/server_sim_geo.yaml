@@ -19,6 +19,11 @@
       visualizations:             # see visualization folder for a list
         rviz:
           enabled: true
+          mesh: true              # draw the CF model instead of bare axes
+          cone: true              # translucent wash indicator under each rotor plane
+          cone_length: 0.45       # m below the rotor plane
+          cone_half_angle: 22.0   # deg, chosen for legibility, NOT measured
+          cone_thrust_full: 0.8   # N, display scale for the cone opacity only
         pdf:
           enabled: false
           output_file: "result.pdf"
