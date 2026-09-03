@@ -6,14 +6,15 @@ Stock uploadTrajectory/startTrajectory only (Mode E) -- no Mode D onboard eval, 
 relative to its own initialPosition -- this is not a formation with per-drone offsets,
 use run_formation for that.
 
-WARNING -- confirmed in sim 2026-09-03, real not theoretical: with more than one drone,
-takeoff is ONE BROADCAST call (`allcfs.takeoff(targetHeight=args.height)`) -- every drone
-climbs to the SAME height first, regardless of its own configured initialPosition offset.
-Only the separate, later per-drone `goTo` sends each drone to its real distinct target.
-Two drones sharing similar (x,y) in the roster came within ~0-1mm of each other for
-several seconds during takeoff before ever separating. `formation_flight.py` stages its
-climb specifically to avoid this; this script does not. Single-drone use is validated and
-safe. Do NOT use this script with more than one drone until a staged takeoff is added.
+Multi-drone takeoff history: confirmed in sim 2026-09-03 that a broadcast
+`allcfs.takeoff(targetHeight=args.height)` sends every drone to the SAME height first,
+regardless of its own configured initialPosition offset -- two drones sharing similar
+(x,y) came within ~0-1mm of each other for several seconds before the later per-drone
+`goTo` ever separated them. Fixed same day: takeoff is now per-drone, straight to each
+drone's own target height (`initialPosition.z + args.height`), same pattern
+`formation_flight.py` already uses for exactly this reason. NOT YET RE-VALIDATED IN SIM --
+re-run `experiments/analysis/run_simple_flight_matrix.sh`'s multi-drone separation check
+before trusting this with more than one drone again.
 
 Controller-mode/gain switching (from crazyflies.yaml, same convention as always: yaml
 sets the trajectory controller, the ramp/landing controller is the fixed OOT-geometric
@@ -178,8 +179,16 @@ def main():
     _f._logging_active = True
     _f._log_t0 = time.monotonic()
 
-    print('[simple_flight] Taking off...')
-    allcfs.takeoff(targetHeight=args.height, duration=3.0)
+    # Staged takeoff (2026-09-03 fix): per-drone takeoff straight to each drone's own
+    # target height, not one broadcast to a shared height first. The broadcast form sends
+    # every drone to the SAME z regardless of its own initialPosition offset -- confirmed
+    # in sim to bring two drones sharing similar (x,y) within 0-1mm of each other for
+    # several seconds before the later goTo ever separated them. Same fix formation_flight.py
+    # already uses for exactly this reason (its "stage 1: climb to individual heights").
+    print('[simple_flight] Taking off (per-drone target heights)...')
+    for c in allcfs.crazyflies:
+        target_z = float(c.initialPosition[2]) + args.height
+        c.takeoff(targetHeight=target_z, duration=3.0)
     th.sleep(3.5)
     for c in allcfs.crazyflies:
         pos = np.array(c.initialPosition) + np.array([0.0, 0.0, args.height])
