@@ -41,6 +41,7 @@ dynamic formation changes mid-flight, and collision checking of the stage-2 XY t
 
 import argparse
 from collections import defaultdict
+import json
 from pathlib import Path
 import sys
 import time
@@ -252,7 +253,10 @@ def main():
     p.add_argument("--brushless", action="store_true", help="arm ESCs (required for CF21BL)")
     p.add_argument("--dry-run", action="store_true", help="print the plan and exit")
     p.add_argument("--yes", action="store_true", help="skip the pre-flight confirmation")
-    args = p.parse_args()
+    # parse_known_args, not parse_args: ROS options (--ros-args -p use_sim_time:=true) are
+    # appended by `ros2 run` and must be tolerated, not rejected as unknown arguments --
+    # same reasoning as run_formation.py.
+    args, _ = p.parse_known_args()
 
     if args.trajectory not in _MODE_E_SAFE:
         print(f"[formation] ERROR: '{args.trajectory}' is not verified for Mode E.\n"
@@ -390,6 +394,24 @@ def main():
         th.sleep(0.5)
 
         apply("trajectory", controller, traj_ctrl_mode, indi_gains, pos_gains)
+
+        # Record the exact simulation-clock instant the trajectory starts, and the
+        # commanded RIGID formation geometry (constant for the whole flight, unlike the
+        # scenario library's time-varying curves) -- verify_formation_flight_sim.py
+        # needs both: the window to check, and what "correct" means for each pair.
+        t_start_sim = float(th.time())
+        sidecar = LOG_DIR / f"{args.formation}_{stamp}.meta.json"
+        sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with open(sidecar, "w") as fh:
+            json.dump({
+                "formation": args.formation, "separation": args.separation,
+                "height": args.height, "anchor": list(map(float, anchor)),
+                "names": [c.prefix.lstrip("/") for c in cfs],
+                "targets": [list(map(float, t)) for t in targets],
+                "t_start_sim": t_start_sim, "duration": traj.duration,
+                "timescale": args.speed, "reps": args.reps,
+            }, fh, indent=2)
+        print(f"[formation] t_start(sim) = {t_start_sim:.3f}s -> {sidecar.name}")
 
         # uSD logging start — ONE BROADCAST, not a per-drone loop. This is what makes the
         # per-drone SD logs mergeable: each drone stamps samples with its own usecTimestamp()
