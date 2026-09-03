@@ -12,9 +12,10 @@ regardless of its own configured initialPosition offset -- two drones sharing si
 (x,y) came within ~0-1mm of each other for several seconds before the later per-drone
 `goTo` ever separated them. Fixed same day: takeoff is now per-drone, straight to each
 drone's own target height (`initialPosition.z + args.height`), same pattern
-`formation_flight.py` already uses for exactly this reason. NOT YET RE-VALIDATED IN SIM --
-re-run `experiments/analysis/run_simple_flight_matrix.sh`'s multi-drone separation check
-before trusting this with more than one drone again.
+`formation_flight.py` already uses for exactly this reason. Re-validated same day, 8/8
+matrix cases pass (`run_simple_flight_matrix.sh`): min in-flight inter-drone separation
+0.197-0.494 m across figure8/circle/oval/hover, all real positive numbers, no more
+near-zero climb-together window.
 
 Controller-mode/gain switching (from crazyflies.yaml, same convention as always: yaml
 sets the trajectory controller, the ramp/landing controller is the fixed OOT-geometric
