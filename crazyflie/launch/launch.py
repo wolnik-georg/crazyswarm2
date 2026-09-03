@@ -19,10 +19,15 @@ def parse_yaml(context):
         fileversion = crazyflies["fileversion"]
 
     # server params
-    server_yaml = os.path.join(
-        get_package_share_directory('crazyflie'),
-        'config',
-        'server.yaml')
+    # server.yaml carries its own `sim:` block and is applied AFTER the crazyflies
+    # yaml, so it overrides any sim settings there. Making it overridable is the only
+    # way to switch simulation backend/visualizations from the command line.
+    server_yaml = LaunchConfiguration('server_yaml_file').perform(context)
+    if not server_yaml:
+        server_yaml = os.path.join(
+            get_package_share_directory('crazyflie'),
+            'config',
+            'server.yaml')
 
     with open(server_yaml, 'r') as ymlfile:
         server_yaml_content = yaml.safe_load(ymlfile)
@@ -120,6 +125,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument('crazyflies_yaml_file', 
                               default_value=default_crazyflies_yaml_path),
+        DeclareLaunchArgument('server_yaml_file', default_value=''),
         DeclareLaunchArgument('motion_capture_yaml_file', 
                               default_value=default_motion_capture_yaml_path),
         DeclareLaunchArgument('rviz_config_file', 
