@@ -6,6 +6,15 @@ Stock uploadTrajectory/startTrajectory only (Mode E) -- no Mode D onboard eval, 
 relative to its own initialPosition -- this is not a formation with per-drone offsets,
 use run_formation for that.
 
+WARNING -- confirmed in sim 2026-09-03, real not theoretical: with more than one drone,
+takeoff is ONE BROADCAST call (`allcfs.takeoff(targetHeight=args.height)`) -- every drone
+climbs to the SAME height first, regardless of its own configured initialPosition offset.
+Only the separate, later per-drone `goTo` sends each drone to its real distinct target.
+Two drones sharing similar (x,y) in the roster came within ~0-1mm of each other for
+several seconds during takeoff before ever separating. `formation_flight.py` stages its
+climb specifically to avoid this; this script does not. Single-drone use is validated and
+safe. Do NOT use this script with more than one drone until a staged takeoff is added.
+
 Controller-mode/gain switching (from crazyflies.yaml, same convention as always: yaml
 sets the trajectory controller, the ramp/landing controller is the fixed OOT-geometric
 baseline), radio logging, and the takeoff/landing state machine are the SAME functions
