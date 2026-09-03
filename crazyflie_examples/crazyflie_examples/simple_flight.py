@@ -121,7 +121,14 @@ def main():
     )
 
     print('[simple_flight] Preflight: idle reset + Kalman pulse (place drone on pad)...')
-    _f._firmware_idle_reset(cf, th)
+    try:
+        _f._firmware_idle_reset(cf, th)
+    except Exception as exc:
+        # Mode-D-only params (traj.mode etc.) -- this script never uses Mode D, and the sim
+        # backend doesn't declare them at all, so there's nothing to actually reset here.
+        # On hardware this clears residual state from a PREVIOUS Mode D flight; skip cleanly
+        # when it's not there rather than crash before ever reaching a Mode-E-only script.
+        print(f'[simple_flight] WARN: idle reset skipped ({exc}) -- Mode-D params not present')
     _f._kalman_reset_pulse(cf, th)
     print('[simple_flight] Waiting for EKF to converge on mocap poses...')
     th.sleep(3.0)
