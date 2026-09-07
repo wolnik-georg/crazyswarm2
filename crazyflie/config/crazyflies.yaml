@@ -417,12 +417,14 @@ all:
       # points away from pure saturation and toward an EKF-attitude-estimate-lag
       # explanation instead (open question, see project memory) -- raising this
       # further would not help in that case.
-      # ⚠ clamp_en 11 = TILT CLAMP OFF (tau clamps stay on). It was set for the Phase-4
-      # inverted/loop work, NOT for level formation flight. It is left as-is because it is
-      # the state this brushless block was validated and parked in -- but for thesis
-      # formation flights consider re-enabling the tilt clamp, since nothing in
-      # hover/figure8/circle needs tilt beyond the limit. Decide before the first 2-drone flight.
-      clamp_en: 11
+      # clamp_en 11 (TILT CLAMP OFF) was set for the Phase-4 inverted/loop work, NOT for
+      # level formation flight -- it was left over from that test when this block was
+      # parked. RESTORED to 15 (all four clamps on) 2026-09-07 lab session: a delayed,
+      # growing-amplitude roll oscillation appeared on both geometric and INDI hover
+      # (accumulating over a few seconds), consistent with the missing tilt clamp letting
+      # a borderline disturbance build unchecked. Nothing in hover/figure8/circle needs
+      # tilt beyond 30 deg. Only go back to 11 immediately before flying the inverted loop.
+      clamp_en: 15
       tau_xy_max: 0.045
       tau_z_max: 0.0025
       tilt_max_deg: 30.0
