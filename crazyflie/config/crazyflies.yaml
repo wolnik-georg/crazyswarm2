@@ -353,6 +353,24 @@ all:
       kw: 170.0
       kr_z: 2400.0
       kw_z: 170.0
+      # kr_geo/kw_geo — SEPARATE attitude gains used only when ctrl_mode=0 (geometric),
+      # added 2026-09-07 (requires the firmware reflash from this same lab session).
+      # kr/kw above were tuned and locked via INDI (ctrl_mode=3) figure-8 tracking;
+      # geometric has no real-time RPM-based correction to compensate model error the way
+      # INDI's incremental term does, so those gains are not guaranteed stable for geometric
+      # too -- confirmed 2026-09-07: kr=2400/kw=170 under geometric hover showed a real,
+      # growing 0.56 Hz roll oscillation (9->20 deg std over ~23s) that did NOT appear on
+      # INDI at the same values in the same session (INDI's own issue there was a
+      # different, higher-frequency ~3.9 Hz mode -- see docs/07 lab-session history).
+      # STARTING POINT ONLY, NOT YET VALIDATED -- half of kr/kw at the same zeta
+      # (kw/kr ratio 170/2400=0.0708 preserved). Retune live: if this still oscillates,
+      # try progressively lower (e.g. 600/42) rather than jumping around; log each
+      # attempt's roll std / oscillation frequency here the same way the kr/kw ladder
+      # above was logged, so the next person does not repeat the same rungs.
+      kr_geo: 1200.0
+      kw_geo: 85.0
+      kr_z_geo: 1200.0
+      kw_z_geo: 85.0
       fc_bw: 60.0
       # mass/kt REVERTED 2026-07-27 to the guards-on identification (guards physically
       # reinstalled). The no-guards values from 2026-07-25 (mass=0.0367, kt=4.06/4.08/3.97/4.22e-10)
