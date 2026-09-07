@@ -317,7 +317,10 @@ all:
     # To switch back to brushless: comment out the UPGRADED block above, uncomment this block.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 3              # full INDI
+      ctrl_mode: 0              # geometric -- was 3 (full INDI), switched 2026-09-07 lab
+                                 # session: known brushless INDI fragility, get geometric
+                                 # working first (hover/circle/figure8, tracking error),
+                                 # switch back to 3 for INDI checks once that's confirmed
       # 2026-07-19 PUSHING FURTHER — operator priority is figure-8 tracking error (position AND
       # attitude flatness), not hover cleanliness. Ladder (ratios zeta_att=2.324, kp_ratio=0.0267/
       # cascade=6.12x, zeta_pos=0.632), figure-8 metrics only:
