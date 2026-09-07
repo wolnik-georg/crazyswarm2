@@ -443,14 +443,24 @@ all:
       # points away from pure saturation and toward an EKF-attitude-estimate-lag
       # explanation instead (open question, see project memory) -- raising this
       # further would not help in that case.
-      # clamp_en 11 (TILT CLAMP OFF) was set for the Phase-4 inverted/loop work, NOT for
-      # level formation flight -- it was left over from that test when this block was
-      # parked. RESTORED to 15 (all four clamps on) 2026-09-07 lab session: a delayed,
-      # growing-amplitude roll oscillation appeared on both geometric and INDI hover
-      # (accumulating over a few seconds), consistent with the missing tilt clamp letting
-      # a borderline disturbance build unchecked. Nothing in hover/figure8/circle needs
-      # tilt beyond 30 deg. Only go back to 11 immediately before flying the inverted loop.
-      clamp_en: 15
+      # clamp_en history, 2026-09-07 lab session:
+      #   11 (tilt clamp OFF) -- the state this block was validated and parked in. Operator
+      #     confirms hover/figure8/oval/circle AND the inverted loop all flew fine at 11,
+      #     with a known, BOUNDED, tolerated attitude oscillation (not growing).
+      #   -> 15 (all four clamps on) -- tried as a fix for a growing-amplitude oscillation
+      #     seen this session, reasoning that nothing in level flight needs tilt beyond
+      #     30 deg. WRONG DIRECTION: a complete parameter diff against the frozen/parked
+      #     block found clamp_en was the ONLY thing that differed (every gain, filter
+      #     toggle, mass/kt value is identical) -- so engaging the tilt clamp is the most
+      #     likely actual cause of the new growing behaviour, not a fix for it. Plausible
+      #     mechanism: the clamp is a saturation nonlinearity; if commanded tilt sits near
+      #     the 30 deg boundary, repeated engage/disengage injects a discontinuous
+      #     correction into Rd that a loop tuned (and only ever flown) with the clamp off
+      #     was never subjected to.
+      #   -> back to 11 -- reverted to match the frozen/parked, actually-flight-proven
+      #     state for INDI. Geometric is being independently retuned via kr_geo/kw_geo
+      #     regardless (see that block above), so this does not block that work.
+      clamp_en: 11
       tau_xy_max: 0.045
       tau_z_max: 0.0025
       tilt_max_deg: 30.0
