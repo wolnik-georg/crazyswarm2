@@ -77,6 +77,41 @@ def _csv_path(trajectory: str, kt: float) -> Path:
     return path
 
 
+def _write_gain_sidecar():
+    """Write a `<log>.gains.json` sidecar next to the CSV flight.py just saved.
+
+    flight.py's own meta block records a fixed key list that predates kr_geo/kw_geo and
+    the clamp settings, so a geometric flight log states only `indi_kr=2400` -- the INDI
+    gain, which ctrl_mode=0 never uses. On 2026-09-09 that gap meant two crashed hover
+    flights could not be told apart from their logs at all: nothing recorded which
+    attitude gains actually flew.
+
+    This lives here rather than in flight.py deliberately -- flight.py is frozen legacy
+    (Mode D) and is only borrowed for its logging internals, so it does not get edited.
+    A sidecar is additive: it cannot change the CSV schema anything else already parses.
+
+    Records the yaml's INTENT, not the drone's actual parameter values -- the same
+    limitation flight.py's meta block has. A param that failed to apply still shows here
+    as whatever the yaml asked for. Confirm on the vehicle when it matters.
+    """
+    import json
+    try:
+        csvs = sorted(_f.LOGS_DIR.glob('*.csv'), key=lambda p: p.stat().st_mtime)
+        if not csvs:
+            return
+        path = csvs[-1].with_suffix('.gains.json')
+        path.write_text(json.dumps({
+            'source': 'crazyflies.yaml at connect (intent, not read back from drone)',
+            'indi_gains': dict(_f._yaml_indi_gains),
+            'pos_gains': dict(_f._yaml_pos_gains),
+            'diag_gains': dict(_f._yaml_diag_gains),
+            'controller_meta': {k: list(v) for k, v in _f._controller_meta.items()},
+        }, indent=2, sort_keys=True))
+        print(f'[log] gains sidecar → {path}')
+    except Exception as exc:
+        print(f'[log] WARN: gain sidecar not written: {exc}')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Simple multi-drone CS2 flight script')
     parser.add_argument(
@@ -261,6 +296,7 @@ def main():
             print(f'[simple_flight] WARN: cleanup failed: {exc}')
         if _f._log_rows:
             _f._save_log(args.trajectory, 1, args.kt, args.speed, args.reps, traj_dur)
+            _write_gain_sidecar()
         else:
             print('[log] No rows collected — log not saved.')
 
