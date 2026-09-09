@@ -78,7 +78,14 @@ robots:
   cf_second:
     enabled: true
     uri: radio://0/80/2M/E7E7E7E7E8   # TODO(1) placeholder -- set the real address
-    initial_position: [0.3, 0.0, 0.5]   # SIM: directly ABOVE cf231_active
+    initial_position: [0.3, 0.5, 0.0]   # SIM: offset in Y, on the floor -- NOT stacked above
+                                         # cf231_active. A shared launch-pad XY forced every
+                                         # scenario's takeoff-climb through the same column of
+                                         # air as the other robot; the scenario's own stage-2
+                                         # goTo() already converges both robots to whatever
+                                         # commanded geometry (including a true vertical stack
+                                         # like A1) once they're at full altitude, so takeoff
+                                         # never needed a shared start point.
     type: cf21  # TODO(3) match cf231_active's platform
 
   cf5:

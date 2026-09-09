@@ -183,6 +183,14 @@ all:
       indi_alp_raw:
         frequency: 100 # Hz
         vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
+      # /cfXXX/indi_e_r — geometric attitude error e_R (Lee et al. 2010), the same vector used
+      # in the torque law. Present under every ctrl_mode (0-3), not only INDI. Mandatory copy
+      # lives in tools/usd_thesis_config.txt (added 2026-09-08); this radio topic is optional,
+      # same reasoning as rnn_pred below -- commented by default, enable only for single-drone
+      # tuning where the radio headroom exists.
+      # indi_e_r:
+      #   frequency: 100 # Hz
+      #   vars: ["indi.e_r_x", "indi.e_r_y", "indi.e_r_z", "indi.e_r_norm"]
       # /cfXXX/indi_a_res — residual acceleration a_res = a_meas - a_model [m/s^2], world frame.
       # Equals f_res/m: the unmodelled force, dominated by other drones' downwash in close
       # formation. THE core measurement for the thesis. Logged in ALL controller modes (needs an

@@ -14,7 +14,7 @@ import os
 from crazyflie_interfaces.msg import FullState, Hover
 from crazyflie_interfaces.srv import GoTo, Land, Takeoff
 from crazyflie_interfaces.srv import NotifySetpointsStop, StartTrajectory, UploadTrajectory
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import PoseStamped, Twist
 import rclpy
 from rclpy.node import Node
 import rowan
@@ -137,6 +137,11 @@ class CrazyflieServer(Node):
 
         self._init_residual_log()
 
+        # Real hardware publishes {name}/pose from a radio log block (see the C++ server's
+        # "pose" log config); nothing in this sim server published the sim equivalent, so
+        # any client-side code that reads it (formation scripts' collision/landing checks
+        # included) silently saw [0, 0, 0] forever instead of a missing-topic error.
+        self.pose_publishers = {}
         for name, _ in self.cfs.items():
             pub = self.create_publisher(
                     String,
@@ -148,6 +153,9 @@ class CrazyflieServer(Node):
             msg = String()
             msg.data = self._ros_parameters['robot_description'].replace('$NAME', name)
             pub.publish(msg)
+
+            self.pose_publishers[name] = self.create_publisher(
+                    PoseStamped, name + '/pose', 10)
 
             self.create_service(
                 Empty,
@@ -456,6 +464,20 @@ class CrazyflieServer(Node):
         # update the resulting state
         for state, (_, cf) in zip(states_next, self.cfs.items()):
             cf.setState(state)
+
+        stamp = self.get_clock().now().to_msg()
+        for name, cf in self.cfs.items():
+            msg = PoseStamped()
+            msg.header.stamp = stamp
+            msg.header.frame_id = 'world'
+            msg.pose.position.x = float(cf.state.position.x)
+            msg.pose.position.y = float(cf.state.position.y)
+            msg.pose.position.z = float(cf.state.position.z)
+            msg.pose.orientation.w = float(cf.state.attitudeQuaternion.w)
+            msg.pose.orientation.x = float(cf.state.attitudeQuaternion.x)
+            msg.pose.orientation.y = float(cf.state.attitudeQuaternion.y)
+            msg.pose.orientation.z = float(cf.state.attitudeQuaternion.z)
+            self.pose_publishers[name].publish(msg)
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)

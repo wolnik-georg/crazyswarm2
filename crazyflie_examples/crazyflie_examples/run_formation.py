@@ -379,6 +379,7 @@ def main():
         print(f'[formation] {phase}: controller={ctrl} ctrl_mode={mode_}')
 
     usd_start = None
+    end_of_flight_poses = latest
     try:
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
         if args.brushless:
@@ -438,14 +439,65 @@ def main():
         allcfs.startTrajectory(0, timescale=args.timescale)
         th.sleep(sc.duration * args.timescale + 1.0)
 
+        # Snapshot poses HERE, at the end of the commanded trajectory -- not after landing.
+        # `sc.relative(i, j, sc.duration)` is the separation the scenario promises at the END
+        # OF THE HOVER, and every vertical stack (A1/A2/A5/A7/B1/C4) is designed to converge
+        # to near-zero separation once both robots are on the ground. Comparing a post-landing
+        # pose against a pre-landing target would report a large "error" on every single
+        # flight regardless of whether it actually tracked the formation correctly.
+        end_of_flight_poses = [p.copy() for p in latest]
+
         print('[formation] done, landing...')
         apply('landing', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
         try:
             allcfs.setParam('usd.logging', 0)
         except Exception:
             pass
-        allcfs.land(targetHeight=0.06, duration=3.0)
-        th.sleep(4.0)
+        # A pure vertical stack (A1/A2/A5/A7/B1/C4) has two or more robots sharing the same
+        # (x, y) for the whole flight, differing only in z. Matching their descent RATE
+        # (below) keeps their SEPARATION constant only until the lowest robot reaches the
+        # ground and stops -- every robot still above it then continues straight down
+        # through that EXACT SAME (x, y), i.e. through the parked robot's position. Rate
+        # alone cannot fix this; only giving them distinct (x, y) can. So: while they are
+        # still at their very different flight heights (safe -- far apart in z), spread any
+        # XY-overlapping robots onto a small circle around their shared point, then begin
+        # the vertical descent once everyone has their own column of air.
+        LAND_XY_MARGIN = 0.30  # m -- robots closer than this in XY are treated as "stacked"
+        LAND_XY_RADIUS = 0.35  # m -- how far each is moved from the shared centre
+        cur = [np.array(c.get_position()) for c in cfs]
+        overlap = any(
+            np.linalg.norm(cur[i][:2] - cur[j][:2]) < LAND_XY_MARGIN
+            for i in range(len(cfs)) for j in range(i + 1, len(cfs))
+        )
+        if overlap:
+            print('[formation] landing XY overlap detected -- spreading robots sideways first')
+            center = np.mean([p[:2] for p in cur], axis=0)
+            n = len(cfs)
+            for k, c in enumerate(cfs):
+                ang = 2 * np.pi * k / n
+                xy = center + LAND_XY_RADIUS * np.array([np.cos(ang), np.sin(ang)])
+                c.goTo(np.array([xy[0], xy[1], cur[k][2]]), 0, 3.0)
+            # Extra margin past the goTo's own duration: starting the vertical descent
+            # while lateral velocity from this move hasn't fully damped out couples a
+            # sideways disturbance into the landing, which showed up as an attitude
+            # wiggle that got worse across back-to-back runs (no disarm between them
+            # to reset the position-integral term via the controller's thrust<0.05 gate).
+            th.sleep(4.0)
+
+        # Per-robot, not a single broadcast: a broadcast land() gives every robot the SAME
+        # duration regardless of its own height, so a higher robot descends FASTER than a
+        # lower one, closing their separation LINEARLY TO ZERO by construction. Scaling
+        # duration by each robot's own live height instead keeps their descent RATE equal,
+        # so commanded separation is preserved all the way to the ground.
+        target_h = 0.06
+        descent_rate = 0.25  # m/s -- same for every robot, so relative dz stays constant
+        land_durations = []
+        for c in cfs:
+            h = c.get_position()[2]
+            dur = max(3.0, (h - target_h) / descent_rate)
+            land_durations.append(dur)
+            c.land(targetHeight=target_h, duration=dur)
+        th.sleep(max(land_durations) + 1.0)
         if args.brushless:
             for c in cfs:
                 c.arm(False)
@@ -456,7 +508,7 @@ def main():
             meta['usd_start_s'] = f'{usd_start - log_t0:.6f}'
         for lg in loggers:
             lg.save(LOG_DIR / f'{sc.sid}_{lg.name}_{stamp}.csv', meta)
-        relative_report(loggers, sc, poses=latest)
+        relative_report(loggers, sc, poses=end_of_flight_poses)
 
 
 if __name__ == '__main__':
