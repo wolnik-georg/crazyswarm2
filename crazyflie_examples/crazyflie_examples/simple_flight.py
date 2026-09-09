@@ -77,18 +77,30 @@ def _csv_path(trajectory: str, kt: float) -> Path:
     return path
 
 
-def _write_gain_sidecar():
-    """Write a `<log>.gains.json` sidecar next to the CSV flight.py just saved.
+def _append_full_gains_meta():
+    """Append the full firmware_params block to the CSV flight.py just saved, as more
+    `# meta:` lines -- same prefix its own meta block uses, just appended after the data
+    rows instead of before the header.
 
     flight.py's own meta block records a fixed key list that predates kr_geo/kw_geo and
     the clamp settings, so a geometric flight log states only `indi_kr=2400` -- the INDI
     gain, which ctrl_mode=0 never uses. On 2026-09-09 that gap meant two crashed hover
     flights could not be told apart from their logs at all: nothing recorded which
-    attitude gains actually flew.
+    attitude gains actually flew, and a THIRD blind spot -- clamp_en reading 0 instead of
+    11 from a stale installed crazyflies.yaml -- took a direct torque-telemetry read to
+    find, specifically because it wasn't in any log.
+
+    Appending directly into the CSV (not a separate sidecar, which is what this used to be
+    -- see git history) means one file always has everything: every consumer here already
+    treats '#' as a comment marker independent of position (np.loadtxt's default
+    comments='#' skips it anywhere; analyze_flight.py's load_csv_with_meta scans the whole
+    file for "# meta:" regardless of where it falls; compute_kt_motor.py/indi_tune.py
+    guard on column-count mismatch). Verified before writing this way -- see
+    experiments/analysis/README.md's log-format notes.
 
     This lives here rather than in flight.py deliberately -- flight.py is frozen legacy
     (Mode D) and is only borrowed for its logging internals, so it does not get edited.
-    A sidecar is additive: it cannot change the CSV schema anything else already parses.
+    Appending is additive: it cannot change the CSV schema anything else already parses.
 
     Reads crazyflies.yaml DIRECTLY rather than reusing _f._yaml_indi_gains: that dict is
     already filtered down to a hardcoded 14-key subset in flight.py's
@@ -97,12 +109,12 @@ def _write_gain_sidecar():
     all.firmware_params block instead means a gain added to the yaml in future is recorded
     without anyone remembering to extend a list here.
 
-    Records the yaml's INTENT, not the drone's actual parameter values -- the same
-    limitation flight.py's meta block has. A param that failed to apply still shows here
-    as whatever the yaml asked for. Confirm on the vehicle when it matters.
+    Reads the INSTALLED copy via get_package_share_directory, the same path flight.py
+    itself reads -- not the source tree file, which can silently disagree with it (that
+    mismatch was the actual root cause found tonight). Still the yaml's stated INTENT at
+    connect, not a value read back from the drone -- a param that failed to apply still
+    shows here as whatever the yaml asked for. Confirm on the vehicle when it matters.
     """
-    import json
-
     import yaml as _yaml
     from ament_index_python.packages import get_package_share_directory
     try:
@@ -114,15 +126,21 @@ def _write_gain_sidecar():
         )
         with open(cfg_path) as fh:
             cfg = _yaml.safe_load(fh)
-        path = csvs[-1].with_suffix('.gains.json')
-        path.write_text(json.dumps({
-            'source': f'{cfg_path} at connect (intent, NOT read back from the drone)',
-            'firmware_params': (cfg.get('all') or {}).get('firmware_params', {}),
-            'controller_meta': {k: list(v) for k, v in _f._controller_meta.items()},
-        }, indent=2, sort_keys=True))
-        print(f'[log] gains sidecar → {path}')
+        fp = (cfg.get('all') or {}).get('firmware_params', {})
+        path = csvs[-1]
+        with open(path, 'a') as out:
+            out.write(f'# meta:full_gains_source={cfg_path} (installed copy, intent not readback)\n')
+            for group, values in fp.items():
+                if not isinstance(values, dict):
+                    continue
+                for k, v in values.items():
+                    out.write(f'# meta:full_{group}_{k}={v}\n')
+            for phase, (controller, mode) in _f._controller_meta.items():
+                out.write(f'# meta:full_{phase}_stabilizer_controller={controller}\n')
+                out.write(f'# meta:full_{phase}_ctrl_mode={mode}\n')
+        print(f'[log] full gains appended to {path}')
     except Exception as exc:
-        print(f'[log] WARN: gain sidecar not written: {exc}')
+        print(f'[log] WARN: full gains not appended: {exc}')
 
 
 def main():
@@ -309,7 +327,7 @@ def main():
             print(f'[simple_flight] WARN: cleanup failed: {exc}')
         if _f._log_rows:
             _f._save_log(args.trajectory, 1, args.kt, args.speed, args.reps, traj_dur)
-            _write_gain_sidecar()
+            _append_full_gains_meta()
         else:
             print('[log] No rows collected — log not saved.')
 
