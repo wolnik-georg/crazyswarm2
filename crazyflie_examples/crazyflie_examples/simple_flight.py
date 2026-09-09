@@ -77,6 +77,80 @@ def _csv_path(trajectory: str, kt: float) -> Path:
     return path
 
 
+# Position gains that belong to the GEOMETRIC law (ctrl_mode==0). crazyflies.yaml's
+# pos_gains block is INDI's: kp_xy=64/kv_xy=5, locked 2026-07-19 against kr=2400/kw=170
+# ("KV FLOOR FOUND: kv=4 CRASHED 2 out of 2 flights ... LOCKED at kv=5"). Geometric's
+# attitude loop is far slower (kr_geo=0.010, the 27 g platform's value on a 41 g airframe),
+# so it does not satisfy the cascade separation those gains assume -- at kp_xy=64/kv_xy=5
+# (zeta=0.31) it rang up exponentially on 2026-09-09, ~1.45x/s. These are the values the
+# yaml itself names as the alternative ("To revert to fully original tuned config:
+# kp_xy=40/kv_xy=8/kp_z=30/kv_z=10", zeta=0.63) and are the same gains that flew the ramp
+# phase of all five flights that day at |roll| 0.3-1.8 deg. Not a guess -- a previously
+# tuned config, re-selected for the controller it was tuned for.
+GEOMETRIC_POS_GAINS = {'kp_xy': 40.0, 'kp_z': 30.0, 'kv_xy': 8.0, 'kv_z': 10.0}
+
+
+def _select_pos_gains(controller, ctrl_mode, yaml_pos_gains):
+    """Pick the position gains tuned for the attitude law actually being flown.
+
+    pos_gains.* are OUR params (traj_iface.c) and are read only by the out-of-tree
+    controller, stabilizer.controller==6. Every stock controller (1 PID, 2 Mellinger,
+    3 INDI, 4 Brescianini, 5 Lee) runs its own internal position loop and ignores them
+    entirely, so for those the yaml values pass through untouched -- substituting there
+    would be a no-op dressed up as a decision.
+
+    Within the OOT controller, ctrl_mode 0 is geometric; 1/2/3 run INDI in at least one
+    loop and keep the yaml's INDI-tuned block. Returns (gains, source_label) so the caller
+    can say out loud which set it used -- a silent gain substitution is exactly the class
+    of bug that cost the 2026-09-09 session.
+    """
+    if controller != 6:
+        return dict(yaml_pos_gains), f'crazyflies.yaml (inert: stock controller {controller})'
+    if ctrl_mode == 0:
+        return dict(GEOMETRIC_POS_GAINS), 'GEOMETRIC_POS_GAINS (simple_flight.py)'
+    return dict(yaml_pos_gains), 'crazyflies.yaml pos_gains (INDI-tuned)'
+
+
+def _pin_ramp_to_target(controller, ctrl_mode, pos_gains, indi_gains):
+    """Take off, fly and land in ONE controller configuration -- no mid-air switch.
+
+    Root cause of the 2026-09-09 crash session. flight.py ramps takeoff/landing on a fixed
+    OOT-geometric baseline (_RAMP_CONTROLLER=6, _RAMP_CTRL_MODE=0, _RAMP_POS_GAINS
+    kp_xy=40/kv_xy=8) and switches to the yaml controller once at altitude. Every flight
+    that day diverged at that switch, ~6.06 s in, and nowhere else:
+
+      * INDI -- OURS (ctrl_mode=3) AND STOCK (stabilizer.controller=3, pure bitcraze code
+        that never touches this firmware): |roll| 0.6-0.7 deg at t=5 s, 22-32 deg one second
+        later, full tumble ~1.4 s after the switch. INDI is incremental
+        (tau = tau_current + J*(alpha_ref - alpha_meas)); handed control at altitude its
+        tau_prev/filter state is cold while the motors are already producing hover thrust,
+        so the first increment is computed off a baseline that does not match reality. On
+        the ground that same cold state is CONSISTENT (tau_prev = 0, actual torque = 0),
+        which is why taking off in INDI is the fix rather than a bigger risk. Matches the
+        previously logged "INSTANT CRASH within 1.4s of switch" exactly.
+      * GEOMETRIC (ctrl_mode=0): the pos-gain swap alone destabilises it --
+        kp_xy 40->64 (+60%) with kv_xy 8->5 (-37%) halves the damping ratio (0.63 -> 0.31).
+        Rings up exponentially, ~1.45x/s: 2.2 -> 3.1 -> 4.9 -> 7.2 -> 13.3 -> 20.1 -> 29.4 deg.
+        Those gains were tuned against INDI at kr=2400; geometric runs kr_geo=0.010 (the 27 g
+        platform's value on a 41 g airframe), a much slower attitude loop, so the cascade
+        separation the gains assume does not hold.
+
+    Stock Lee (stabilizer.controller=5), switched at the same instant, hovered 25 s at roll
+    std 0.74 deg -- the vehicle, motors, mocap, EKF and RPM deck are all healthy, and the OOT
+    geometric controller itself flew the first 6 s of all five flights at |roll| 0.3-1.8 deg.
+    Nothing was broken except the transition.
+
+    Pinning the ramp constants to the trajectory values makes flight.py's own
+    "did anything change?" guard compare equal, so it logs the phase and never re-pushes
+    params in flight. Done by assigning flight.py's module globals rather than editing it --
+    flight.py is frozen legacy (Mode D) and only borrowed here for its internals.
+    """
+    _f._RAMP_CONTROLLER = controller
+    _f._RAMP_CTRL_MODE = ctrl_mode
+    _f._RAMP_POS_GAINS = dict(pos_gains)
+    _f._RAMP_INDI_GAINS = dict(indi_gains)
+
+
 def _append_full_gains_meta():
     """Append the full firmware_params block to the CSV flight.py just saved, as more
     `# meta:` lines -- same prefix its own meta block uses, just appended after the data
@@ -153,6 +227,12 @@ def main():
     parser.add_argument('--height', type=float, default=1.0)
     parser.add_argument('--duration', type=float, default=15.0)
     parser.add_argument('--reps', type=int, default=1)
+    parser.add_argument(
+        '--ramp-handover', action='store_true',
+        help='Restore the pre-2026-09-09 behaviour: take off on the OOT-geometric ramp '
+             'controller/gains, then switch to the yaml controller mid-air. MEASURED TO '
+             'CRASH -- see _pin_ramp_to_target(). Diagnostic/comparison use only.',
+    )
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
@@ -225,17 +305,37 @@ def main():
         f'[simple_flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller} '
         f'indi_gains.ctrl_mode={traj_ctrl_mode}'
     )
+    if args.ramp_handover:
+        print(
+            '[simple_flight] WARNING: --ramp-handover -- takeoff on the geometric ramp, then '
+            'a mid-air switch to the yaml controller. This transition is the MEASURED cause '
+            'of the 2026-09-09 crashes (see _pin_ramp_to_target). Diagnostic use only.'
+        )
+    else:
+        pos_gains_from_yaml, pg_source = _select_pos_gains(
+            yaml_controller, traj_ctrl_mode, pos_gains_from_yaml
+        )
+        print(f'[simple_flight] position gains: {pos_gains_from_yaml}  <- {pg_source}')
+        _f._yaml_pos_gains.clear()
+        _f._yaml_pos_gains.update(pos_gains_from_yaml)
+        _pin_ramp_to_target(
+            yaml_controller, traj_ctrl_mode, pos_gains_from_yaml, indi_gains_from_yaml
+        )
     print(
         f'[simple_flight] ramp (takeoff/landing): stabilizer.controller={_f._RAMP_CONTROLLER} '
-        f'indi_gains.ctrl_mode={_f._RAMP_CTRL_MODE}'
+        f'indi_gains.ctrl_mode={_f._RAMP_CTRL_MODE} pos_gains={_f._RAMP_POS_GAINS}'
     )
 
     if not hover_mode:
         for c in allcfs.crazyflies:
             c.uploadTrajectory(0, 0, traj)
 
+    # Push indi_gains at takeoff too, not just pos_gains: with the ramp pinned to the
+    # trajectory config the vehicle must already be in its FINAL configuration before it
+    # leaves the ground, or the mid-air param push this fix exists to remove comes back.
     _f._apply_flight_settings(
         allcfs, th, 'takeoff', _f._RAMP_CONTROLLER, _f._RAMP_CTRL_MODE,
+        indi_gains=getattr(_f, '_RAMP_INDI_GAINS', None),
         pos_gains=_f._RAMP_POS_GAINS,
     )
 
@@ -307,14 +407,36 @@ def main():
         th.sleep(0.2)
         _f._notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
-        _f._logging_active = False
+        # Logging deliberately stays ON through the descent. It used to be stopped here,
+        # before land() was even called, so every log ended mid-air (2026-09-09: the one
+        # clean flight's log ends at z=0.743 m) and the descent -- the phase the operator
+        # reported as "does not land, just shuts the motors off" -- was never recorded at
+        # all. It cannot be diagnosed from a log that stops before it starts.
         _f._apply_flight_settings(
             allcfs, th, 'landing', _f._RAMP_CONTROLLER, _f._RAMP_CTRL_MODE,
+            indi_gains=getattr(_f, '_RAMP_INDI_GAINS', None),
             pos_gains=_f._RAMP_POS_GAINS,
         )
         print('[simple_flight] Landing...')
         allcfs.land(targetHeight=0.06, duration=2.0)
         th.sleep(3.0)
+        z_end = float(_f._latest_state.get('stateEstimate.z', float('nan')))
+        # Disarming at altitude drops the vehicle. If land() did not take (the HLC/low-level
+        # handover after notify_setpoints_stop is the usual reason), say so instead of
+        # silently cutting the motors and calling it a landing.
+        if z_end == z_end and z_end > 0.20:
+            print(
+                f'[simple_flight] WARN: still at z={z_end:.2f} m after land() + 3.0 s -- '
+                'landing did not complete. Holding 2 s more before disarm.'
+            )
+            th.sleep(2.0)
+            z_end = float(_f._latest_state.get('stateEstimate.z', float('nan')))
+            if z_end == z_end and z_end > 0.20:
+                print(
+                    f'[simple_flight] WARN: z={z_end:.2f} m -- disarming anyway, the vehicle '
+                    'WILL drop. Check the land()/notify_setpoints_stop handover.'
+                )
+        _f._logging_active = False
         for c in allcfs.crazyflies:
             c.arm(False)
 
