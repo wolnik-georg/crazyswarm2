@@ -90,21 +90,34 @@ def _write_gain_sidecar():
     (Mode D) and is only borrowed for its logging internals, so it does not get edited.
     A sidecar is additive: it cannot change the CSV schema anything else already parses.
 
+    Reads crazyflies.yaml DIRECTLY rather than reusing _f._yaml_indi_gains: that dict is
+    already filtered down to a hardcoded 14-key subset in flight.py's
+    _load_firmware_controller_config, which predates kr_geo/kw_geo/clamp_en/tau_xy_max and
+    so drops exactly the values this exists to capture. Dumping the whole
+    all.firmware_params block instead means a gain added to the yaml in future is recorded
+    without anyone remembering to extend a list here.
+
     Records the yaml's INTENT, not the drone's actual parameter values -- the same
     limitation flight.py's meta block has. A param that failed to apply still shows here
     as whatever the yaml asked for. Confirm on the vehicle when it matters.
     """
     import json
+
+    import yaml as _yaml
+    from ament_index_python.packages import get_package_share_directory
     try:
         csvs = sorted(_f.LOGS_DIR.glob('*.csv'), key=lambda p: p.stat().st_mtime)
         if not csvs:
             return
+        cfg_path = (
+            Path(get_package_share_directory('crazyflie')) / 'config' / 'crazyflies.yaml'
+        )
+        with open(cfg_path) as fh:
+            cfg = _yaml.safe_load(fh)
         path = csvs[-1].with_suffix('.gains.json')
         path.write_text(json.dumps({
-            'source': 'crazyflies.yaml at connect (intent, not read back from drone)',
-            'indi_gains': dict(_f._yaml_indi_gains),
-            'pos_gains': dict(_f._yaml_pos_gains),
-            'diag_gains': dict(_f._yaml_diag_gains),
+            'source': f'{cfg_path} at connect (intent, NOT read back from the drone)',
+            'firmware_params': (cfg.get('all') or {}).get('firmware_params', {}),
             'controller_meta': {k: list(v) for k, v in _f._controller_meta.items()},
         }, indent=2, sort_keys=True))
         print(f'[log] gains sidecar → {path}')
