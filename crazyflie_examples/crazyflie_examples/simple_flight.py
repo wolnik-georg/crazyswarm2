@@ -228,10 +228,12 @@ def main():
     parser.add_argument('--duration', type=float, default=15.0)
     parser.add_argument('--reps', type=int, default=1)
     parser.add_argument(
-        '--ramp-handover', action='store_true',
-        help='Restore the pre-2026-09-09 behaviour: take off on the OOT-geometric ramp '
-             'controller/gains, then switch to the yaml controller mid-air. MEASURED TO '
-             'CRASH -- see _pin_ramp_to_target(). Diagnostic/comparison use only.',
+        '--pin-controller', action='store_true',
+        help='Take off, fly and land in ONE controller config -- no mid-air switch. NOT the '
+             'frozen behaviour: finalized-version-for-INDI-project ramped on OOT-geometric '
+             'and switched at altitude, and that handover flew the whole July campaign, so '
+             'it is not the fault. Opt-in experiment only -- taking off directly in INDI has '
+             'never been flown. See _pin_ramp_to_target().',
     )
     args, _ = parser.parse_known_args()
 
@@ -305,19 +307,23 @@ def main():
         f'[simple_flight] crazyflies.yaml (trajectory): stabilizer.controller={yaml_controller} '
         f'indi_gains.ctrl_mode={traj_ctrl_mode}'
     )
-    if args.ramp_handover:
+    # Position gains are selected for the law actually being flown REGARDLESS of --pin-controller:
+    # this is not part of the handover question. crazyflies.yaml's pos_gains are INDI's
+    # (kp_xy=64/kv_xy=5, locked 2026-07-19 against kr=2400/kw=170) and geometric was never
+    # flown on them until 2026-09-07, when it oscillated -- with a_indi identically zero in
+    # geometric, the residual sign cannot explain that, the gains can. See _select_pos_gains.
+    pos_gains_from_yaml, pg_source = _select_pos_gains(
+        yaml_controller, traj_ctrl_mode, pos_gains_from_yaml
+    )
+    print(f'[simple_flight] position gains: {pos_gains_from_yaml}  <- {pg_source}')
+    _f._yaml_pos_gains.clear()
+    _f._yaml_pos_gains.update(pos_gains_from_yaml)
+
+    if args.pin_controller:
         print(
-            '[simple_flight] WARNING: --ramp-handover -- takeoff on the geometric ramp, then '
-            'a mid-air switch to the yaml controller. This transition is the MEASURED cause '
-            'of the 2026-09-09 crashes (see _pin_ramp_to_target). Diagnostic use only.'
+            '[simple_flight] --pin-controller: one config from takeoff to landing, no mid-air '
+            'switch. NOT the frozen behaviour -- taking off directly in INDI has never flown.'
         )
-    else:
-        pos_gains_from_yaml, pg_source = _select_pos_gains(
-            yaml_controller, traj_ctrl_mode, pos_gains_from_yaml
-        )
-        print(f'[simple_flight] position gains: {pos_gains_from_yaml}  <- {pg_source}')
-        _f._yaml_pos_gains.clear()
-        _f._yaml_pos_gains.update(pos_gains_from_yaml)
         _pin_ramp_to_target(
             yaml_controller, traj_ctrl_mode, pos_gains_from_yaml, indi_gains_from_yaml
         )
