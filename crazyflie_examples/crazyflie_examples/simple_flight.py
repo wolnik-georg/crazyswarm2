@@ -209,6 +209,15 @@ def _append_full_gains_meta():
                     continue
                 for k, v in values.items():
                     out.write(f'# meta:full_{group}_{k}={v}\n')
+            # The pos gains ACTUALLY PUSHED can differ from the yaml block above:
+            # _select_pos_gains substitutes GEOMETRIC_POS_GAINS when ctrl_mode==0
+            # (audit finding N2, 2026-09-09 -- without these lines a geometric flight's
+            # CSV said kv_xy=8.0 in meta:pos_* and kv_xy=5.0 in meta:full_pos_gains_*,
+            # two contradictory statements in one file). full_pos_gains_* above stays the
+            # yaml's content; these are the values the script pushed. When they disagree,
+            # THESE win for interpreting the flight.
+            for k, v in _f._yaml_pos_gains.items():
+                out.write(f'# meta:full_selected_pos_{k}={v}\n')
             for phase, (controller, mode) in _f._controller_meta.items():
                 out.write(f'# meta:full_{phase}_stabilizer_controller={controller}\n')
                 out.write(f'# meta:full_{phase}_ctrl_mode={mode}\n')
