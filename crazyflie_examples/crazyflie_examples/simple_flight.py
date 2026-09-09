@@ -399,19 +399,21 @@ def main():
 
         print('[simple_flight] Done. Landing...')
         th.sleep(0.5)
-        hold_pos = np.array(
-            [
-                float(_f._latest_state.get('stateEstimate.x', 0.0)),
-                float(_f._latest_state.get('stateEstimate.y', 0.0)),
-                float(_f._latest_state.get('stateEstimate.z', args.height)),
-            ]
-        )
-        _f._stream_hover_hold(cf, th, hold_pos, 2.5)
-        for c in allcfs.crazyflies:
-            c.setParam('stabilizer.controller', _f._RAMP_CONTROLLER)
-            c.setParam('indi_gains.ctrl_mode', _f._RAMP_CTRL_MODE)
-        th.sleep(0.2)
-        _f._notify_setpoints_stop_sync(cf, th, remain_ms=200)
+
+        # Pure high-level landing, exactly as figure8.py does it: startTrajectory ... land().
+        #
+        # This used to call _stream_hover_hold() (2.5 s of cmdFullState) and then
+        # _notify_setpoints_stop_sync() before land(). That is Mode B / Mode D machinery and
+        # it BREAKS the landing, per flight.py's own docstring on _onboard_stream_land:
+        # "cmdFullState forces low-level mode; HLC land()/goTo() do not work afterward."
+        # So land() was being issued into a firmware still in low-level mode, the vehicle
+        # never descended, and arm(False) three seconds later cut the motors from ~0.7 m --
+        # the "does not land, just shuts the motors off" seen on 2026-09-09.
+        #
+        # simple_flight is Mode E only (stock uploadTrajectory/startTrajectory, never Mode D),
+        # so nothing here ever put the firmware into low-level mode in the first place and
+        # there is no low-level state to hand back. Dropping both calls makes takeoff, upload,
+        # trajectory and landing the same high-level sequence figure8.py uses.
 
         # Logging deliberately stays ON through the descent. It used to be stopped here,
         # before land() was even called, so every log ended mid-air (2026-09-09: the one
