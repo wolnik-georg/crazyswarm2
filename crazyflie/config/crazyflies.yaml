@@ -367,13 +367,16 @@ all:
       # boundary; stock firmware defaults (kr=100/kw=30, omega_n=1.59Hz) are known stable, so
       # the boundary is somewhere between 5.0 and 1.59Hz, not ruled out at 5.0Hz alone.
       #
-      # Attempt 3 RESULT: omega_n=3.5Hz (this kr/kw) with the matching extrapolated pos_gains
-      # (kp_xy/kv_xy=13/2.2) reduced the shake's peak (roll 11.4 vs 17.6-17.7deg the last two
-      # attempts) -- real progress on THIS axis -- but z overshot/drifted, too weak to hold
-      # position (see pos_gains comment below). Still FAIL/GROWING. kr/kw=483/76 kept for
-      # attempt 4; only pos_gains changes (decoupled from the kr/kw scaling formula this time).
-      kr: 483.0
-      kw: 76.0
+      # Attempt 4 RESULT (2026-09-11, session close): kr/kw=483/76 + geometric's pos_gains
+      # (40/8) fixed position holding completely (z tight, no overshoot) and dropped the
+      # attitude peak further (6.7 vs 11.4deg), but hover itself picked up a new, small growing
+      # trend it didn't have at any higher-gain config (std 1.80->2.75) -- still FAIL. Neither
+      # attempt 3 nor 4 is a clean pass; each improves a different axis (peak amplitude vs
+      # position holding) without crossing the line. REVERTED to the confirmed-clean locked
+      # point below to end the session in a known-good state. Full arc, all 4 attempts, and
+      # next-session plan: [[project_controller_validation_2026-09-09]].
+      kr: 2400.0
+      kw: 170.0
       kr_z: 2400.0
       kw_z: 170.0
       # kr_geo/kw_geo — SEPARATE attitude gains used only when ctrl_mode=0 (geometric),
@@ -562,17 +565,16 @@ all:
       # overshot to 1.195m against a ~1.0m target and drifted (mean 1.091) -- too weak to hold
       # position, operator's own read of the log. Still FAIL/GROWING either way.
       #
-      # Attempt 4 (2026-09-11): decouple the two questions instead of one more formula guess.
-      # kr/kw stays at 483/76 (the attitude point that just showed real improvement) but
-      # pos_gains switches to GEOMETRIC's own already flight-validated point (zeta_pos=0.632,
-      # meaningfully more damped than the ~0.31 the INDI-locked series has used all day) rather
-      # than another extrapolation of the INDI-locked ratio. INDI's outer position loop is the
-      # same code path as geometric's (src/controller/indi.rs: "same as GeometricController"),
-      # so this is a second real anchor point, not a foreign borrowed config.
-      kp_xy: 40.0
-      kp_z:  30.0
-      kv_xy: 8.0
-      kv_z:  10.0
+      # Attempt 4 RESULT (2026-09-11, session close): geometric's pos_gains (40/8/30/10) fixed
+      # position holding completely (z tight, no overshoot/drift) alongside kr/kw=483/76, and
+      # the attitude peak dropped further too (6.7 vs 11.4deg) -- but hover picked up a small
+      # new growing trend at this lower attitude bandwidth, still FAIL overall. REVERTED to the
+      # locked 64/5 point below to end the session in the confirmed-clean state. Full arc and
+      # next-session plan: [[project_controller_validation_2026-09-09]].
+      kp_xy: 64.0
+      kp_z:  48.0
+      kv_xy: 5.0
+      kv_z:  7.0
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
