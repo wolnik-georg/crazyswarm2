@@ -394,7 +394,9 @@ all:
       # legacy-timing config stage 1/2a flew, just expressed correctly. Should behave
       # identically to 2a; only stage 2c (tuning fc_bw down from here) is a real change.
       # See docs/FLIGHT_CARD_VALIDATION.md.
-      fc_bw: 206.0
+      # Stage 2c: fc_bw is now a real, meaningful knob (2b fixed the sample-rate bug that made
+      # it a no-op before). First rung down from the 206.0 no-op point, roughly half.
+      fc_bw: 100.0
       filt_dt_us: 1000
       filt_prewarp: 1
       # Stage 2a: condition the residual before it feeds the position loop -- res_fc = LPF
