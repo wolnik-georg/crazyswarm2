@@ -357,24 +357,25 @@ all:
       # kw=170 (zeta=1.74), the confirmed best point on both RMSE and attitude flatness err
       # (2.8-3.0cm, ~4.0deg roll, ~3.8deg pitch, consistent across 3 flights). THIS IS THE LOCKED
       # CONFIG — do not go below kw=170 at kr=2400 (marginal/unsafe below this point).
-      # Stage 2e, coordinated retune attempt 2 (2026-09-11): the FIRST rung (kr/kw=987/109
-      # alone, pos_gains left at 64/5) was flown and aborted early -- suspected cause: pos_gains
-      # were tuned assuming the ORIGINAL 7.8Hz attitude bandwidth, so slowing kr/kw alone shrinks
-      # the cascade's inner/outer timescale separation (position error grows faster than the
-      # now-slower attitude loop can correct it). Sim couldn't validate this (idealized
-      # actuators/estimator don't reproduce the shake at all, see
-      # [[project_controller_validation_2026-09-09]]) so this is a reasoned interpolation
-      # between two real flight-verified points instead: stock firmware defaults (kr=100/kw=30,
-      # omega_n=1.59Hz, known stable/soft) and the current locked point (2400/170, omega_n=
-      # 7.80Hz, oscillates). Target omega_n=5.0Hz, scale factor 5.0/7.80=0.641, BOTH loops
-      # scaled together this time -- kp by 0.641^2 (position omega_n ~ sqrt(kp)), kv by 0.641
-      # (holds the SAME zeta_pos=0.3125 the locked 64/5 point uses). kv_xy=3.2 here is
-      # numerically below the historical "kv=4 crashed 2/2" floor, but that floor was measured
-      # at kp_xy=64 -- this is zeta-matched at a different, proportionally lower kp_xy=26, not
-      # the same point, so the floor does not directly transfer either way. Fly hover only,
-      # abort at first sign of divergence, same protocol as every stage-2 rung today.
-      kr: 987.0
-      kw: 109.0
+      # Stage 2e, coordinated retune attempt 2 RESULT (2026-09-11): kr/kw=987/109 (omega_n
+      # 5.0Hz) WITH matched pos_gains (kp_xy=26/kv_xy=3.2) -- hover PASSED clean (best of the
+      # day, roll std 0.99deg), but figure8's shake was essentially UNCHANGED from the stiff
+      # 2400/170 baseline (peak roll 17.6 vs 17.7deg). Not evidence against the gain-magnitude
+      # hypothesis -- this project has repeated precedent for a SHARP stability boundary, not
+      # smooth degradation (see the kw=130 note above: "flight 1 fine, flight 2 blew up, a real
+      # floor not noise-band scatter"). 5.0Hz likely still sits on the unstable side of that
+      # boundary; stock firmware defaults (kr=100/kw=30, omega_n=1.59Hz) are known stable, so
+      # the boundary is somewhere between 5.0 and 1.59Hz, not ruled out at 5.0Hz alone.
+      #
+      # Attempt 3, bisecting further down: omega_n=3.5Hz, scale factor 3.5/7.80=0.449 (BOTH
+      # loops again, same derivation as attempt 2 -- kp by 0.449^2, kv by 0.449, holding the
+      # same zeta_pos=0.3125). kv_xy=2.2 here is a bigger step into uncharted territory than
+      # attempt 2 -- the kp~sqrt(bandwidth) scaling assumption used to derive it is built for
+      # interpolating near the locked point and is less trustworthy extrapolated this far down
+      # (stock firmware's own position loop is not necessarily built on the same scaling). Fly
+      # hover only, abort at first sign of divergence.
+      kr: 483.0
+      kw: 76.0
       kr_z: 2400.0
       kw_z: 170.0
       # kr_geo/kw_geo — SEPARATE attitude gains used only when ctrl_mode=0 (geometric),
@@ -558,14 +559,14 @@ all:
       # where rotor drag, inertia and airframe have already been ruled out. Do not copy the
       # simulator value here, and do not treat a sim-validated result as validated at these
       # gains. Comment-only note; no value on this row has been changed.
-      # Stage 2e coordinated retune (2026-09-11): scaled together with kr/kw above -- kp by
-      # 0.641^2=0.411 (position omega_n ~ sqrt(kp)), kv by 0.641 (holds zeta_pos=0.3125, same
-      # ratio the 64/5 point above uses). See the kr/kw comment for the full derivation. Not a
-      # general position-gain retune -- revert to 64/5 if this rung is abandoned.
-      kp_xy: 26.0
-      kp_z:  20.0
-      kv_xy: 3.2
-      kv_z:  4.5
+      # Stage 2e attempt 3 (2026-09-11): scaled together with kr/kw above -- kp by 0.449^2=
+      # 0.202, kv by 0.449 (holds zeta_pos=0.3125, same ratio the 64/5 point uses). Bigger
+      # extrapolation than attempt 2 (26/3.2) -- see the kr/kw comment for the full caveat.
+      # Not a general position-gain retune -- revert to 64/5 if this rung is abandoned.
+      kp_xy: 13.0
+      kp_z:  9.7
+      kv_xy: 2.2
+      kv_z:  3.1
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
