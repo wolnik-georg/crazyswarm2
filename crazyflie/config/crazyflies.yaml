@@ -511,11 +511,14 @@ all:
       # controller_step comments. notch_en=0 here first to sanity-check the
       # reflashed firmware (with that fix) reproduces normal INDI hover before
       # re-enabling the notch.
-      # Stage 2d (2026-09-11 controller-validation card): enabling for the first real test.
-      # The 2026-07-29 cold-start-transient bug (notch gated behind `mode & 2`, silent during
-      # the geometric ramp phase) was fixed the same session -- this is the actual sanity-check
-      # flight that note called for, never done until now. Fly hover first before circle/figure8.
-      notch_en: 1
+      # Stage 2d result (2026-09-11): notch_en=1 CRASHED on hover -- stable to t=6.4s, then
+      # roll/pitch diverged to 88.7/66.6deg and altitude collapsed within 0.7s (z 1.07 -> 0.64m,
+      # log ends at z=-0.426, real impact). Far worse and faster than the fc_bw=100 result.
+      # The 2026-07-29 note's suspected cold-start-transient fix did NOT resolve this -- the
+      # notch is unsafe on this config, reverted to 0. Root cause not yet understood; needs
+      # offline analysis (bode/phase response against res_fc/fc_bw=206 interaction) before ANY
+      # further notch_en=1 flight. Do not re-enable without that review.
+      notch_en: 0
       notch_f0: 6.9
       notch_bw: 3.0
     pos_gains:
