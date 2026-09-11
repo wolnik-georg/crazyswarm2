@@ -394,9 +394,10 @@ all:
       # legacy-timing config stage 1/2a flew, just expressed correctly. Should behave
       # identically to 2a; only stage 2c (tuning fc_bw down from here) is a real change.
       # See docs/FLIGHT_CARD_VALIDATION.md.
-      # Stage 2c: fc_bw is now a real, meaningful knob (2b fixed the sample-rate bug that made
-      # it a no-op before). First rung down from the 206.0 no-op point, roughly half.
-      fc_bw: 100.0
+      # Stage 2c result (2026-09-11): fc_bw=100 made everything worse (hover regressed from
+      # PASS to FAIL, circle roll peak 27.5deg -> 69.2deg) -- reverted to the confirmed-good
+      # 206 no-op point. Not pursuing lower fc_bw further; stage 2d (notch) is next.
+      fc_bw: 206.0
       filt_dt_us: 1000
       filt_prewarp: 1
       # Stage 2a: condition the residual before it feeds the position loop -- res_fc = LPF
@@ -510,7 +511,11 @@ all:
       # controller_step comments. notch_en=0 here first to sanity-check the
       # reflashed firmware (with that fix) reproduces normal INDI hover before
       # re-enabling the notch.
-      notch_en: 0
+      # Stage 2d (2026-09-11 controller-validation card): enabling for the first real test.
+      # The 2026-07-29 cold-start-transient bug (notch gated behind `mode & 2`, silent during
+      # the geometric ramp phase) was fixed the same session -- this is the actual sanity-check
+      # flight that note called for, never done until now. Fly hover first before circle/figure8.
+      notch_en: 1
       notch_f0: 6.9
       notch_bw: 3.0
     pos_gains:
