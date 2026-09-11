@@ -387,11 +387,18 @@ all:
       kw_geo: 0.00110
       kr_z_geo: 0.010
       kw_z_geo: 0.00138
-      fc_bw: 60.0
-      # Stage 2a (2026-09-11 controller-validation card): condition the residual before it
-      # feeds the position loop -- res_fc = LPF cutoff, res_clamp = magnitude clamp [m/s^2].
-      # Were 0/0 (off) through stage 1; this is the first variable in the card's one-at-a-
-      # time stage 2 ladder. See docs/FLIGHT_CARD_VALIDATION.md.
+      # Stage 2b (2026-09-11 controller-validation card): filt_prewarp=1 + filt_dt_us=1000
+      # makes fc_bw mean what it says (the controller runs at 1000 Hz, filters were designed
+      # assuming 500 Hz -- filt_dt_us/filt_prewarp fix that). fc_bw raised 60 -> 206 to be the
+      # DELIBERATE NO-OP at the corrected sample rate -- same actual filtering as the 60 Hz/
+      # legacy-timing config stage 1/2a flew, just expressed correctly. Should behave
+      # identically to 2a; only stage 2c (tuning fc_bw down from here) is a real change.
+      # See docs/FLIGHT_CARD_VALIDATION.md.
+      fc_bw: 206.0
+      filt_dt_us: 1000
+      filt_prewarp: 1
+      # Stage 2a: condition the residual before it feeds the position loop -- res_fc = LPF
+      # cutoff, res_clamp = magnitude clamp [m/s^2]. Were 0/0 (off) through stage 1.
       res_fc: 80.0
       res_clamp: 10.0
       # mass/kt REVERTED 2026-07-27 to the guards-on identification (guards physically
