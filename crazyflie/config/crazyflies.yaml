@@ -357,16 +357,17 @@ all:
       # kw=170 (zeta=1.74), the confirmed best point on both RMSE and attitude flatness err
       # (2.8-3.0cm, ~4.0deg roll, ~3.8deg pitch, consistent across 3 flights). THIS IS THE LOCKED
       # CONFIG — do not go below kw=170 at kr=2400 (marginal/unsafe below this point).
-      # Stage 2e (2026-09-11 controller-validation card): the shake-band test. Our omega_n is
-      # 7.80Hz, the shake is 6.3-7.9Hz. First rung moves omega_n to 5.0Hz at the same zeta=1.74
-      # (987/109). Note this is a coordinated kr+kw move preserving damping, NOT the same as the
-      # "kw<170 at kr=2400 is unsafe" lock a few lines up -- that warning is about damping ratio
-      # dropping at fixed bandwidth, which this isn't, but it's the same marginal-stability
-      # region so treat the first flight at each rung as a genuine unknown. Next rung 632/87
-      # (4.0Hz) only after this one is checked. kr_z/kw_z (z-axis, untouched -- not part of the
-      # card's shake-band test) stay at 2400/170.
-      kr: 987.0
-      kw: 109.0
+      # Stage 2e result (2026-09-11): kr/kw=987/109 (omega_n 5.0Hz) flown, aborted early
+      # (manual kill, ~2s in, never reached hover height) -- operator reported it starting to
+      # diverge before that. Reverted to the confirmed-safe 2400/170. Suspected mechanism: NOT
+      # tried alone -- pos_gains (kp_xy=64/kv_xy=5) were tuned assuming the ORIGINAL 7.8Hz
+      # attitude bandwidth underneath them. Slowing kr/kw without also revisiting pos_gains
+      # shrinks the inner/outer loop timescale separation a cascade controller needs, which is a
+      # real divergence mechanism (position error grows faster than the now-slower attitude loop
+      # can correct it, which grows the demanded correction further). Needs offline/sim analysis
+      # of this coupling before any further live kr/kw rung -- see [[project_controller_validation_2026-09-09]].
+      kr: 2400.0
+      kw: 170.0
       kr_z: 2400.0
       kw_z: 170.0
       # kr_geo/kw_geo — SEPARATE attitude gains used only when ctrl_mode=0 (geometric),
