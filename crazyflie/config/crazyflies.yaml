@@ -325,7 +325,12 @@ all:
     # To switch back to brushless: comment out the UPGRADED block above, uncomment this block.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      ctrl_mode: 0              # geometric -- was 3 (full INDI), switched 2026-09-07 lab
+      ctrl_mode: 2              # H0 partition (2026-09-12): attitude INDI only, position loop
+                                 # is geometric. Testing whether the trajectory-tracking shake
+                                 # (unresolved after 4 gain attempts on ctrl_mode=3, 2026-09-11)
+                                 # lives in the attitude sub-loop. Next: ctrl_mode=1 (position
+                                 # INDI only) for the other half of the partition. Was 0
+                                 # (geometric) -- was 3 (full INDI), switched 2026-09-07 lab
                                  # session: known brushless INDI fragility, get geometric
                                  # working first (hover/circle/figure8, tracking error),
                                  # switch back to 3 for INDI checks once that's confirmed
