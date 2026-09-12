@@ -81,6 +81,33 @@ _MODE_E_SAFE = {"hover", "figure8", "circle", "oval", "tilted_oval"}
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
+def load_per_robot_overrides(cfg):
+    """Per-robot firmware_params overrides from crazyflies.yaml's robots: block.
+
+    2026-09-12: apply() broadcasts one shared controller/ctrl_mode/indi_gains/pos_gains set
+    to every drone, unconditionally -- so ANY per-robot override (not just
+    stabilizer.controller, which is how this was first found, but also indi_gains.mass/
+    kt1-4, e.g. cf_second's own correct platform identification) only ever took effect at
+    initial connect and was silently wiped the moment the first apply() call ran, before
+    takeoff. Returns {robot_name: {"stabilizer.controller": v, "indi_gains.mass": v, ...}}
+    for every per-robot key actually set, flattened so apply() can re-push them by name.
+    """
+    out = {}
+    for name, robot in cfg.get("robots", {}).items():
+        fp = robot.get("firmware_params", {})
+        flat = {}
+        ctrl = fp.get("stabilizer", {}).get("controller")
+        if ctrl is not None:
+            flat["stabilizer.controller"] = ctrl
+        for k, v in fp.get("indi_gains", {}).items():
+            flat[f"indi_gains.{k}"] = v
+        for k, v in fp.get("pos_gains", {}).items():
+            flat[f"pos_gains.{k}"] = v
+        if flat:
+            out[name] = flat
+    return out
+
+
 def load_controller_config():
     """Read stabilizer.controller + indi_gains/pos_gains from crazyflies.yaml (all: block)."""
     path = Path(get_package_share_directory("crazyflie")) / "config" / "crazyflies.yaml"
@@ -92,12 +119,13 @@ def load_controller_config():
         print("[formation] ERROR: crazyflies.yaml is missing all.firmware_params."
               "stabilizer.controller or .indi_gains.ctrl_mode")
         sys.exit(1)
+    per_robot = load_per_robot_overrides(cfg)
     gains = {k: indi[k] for k in
              ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass",
               "kt1", "kt2", "kt3", "kt4", "j_scale", "notch_f0", "notch_bw") if k in indi}
     pos = fp.get("pos_gains", {})
     pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
-    return int(stab["controller"]), int(indi["ctrl_mode"]), gains, pos_gains
+    return int(stab["controller"]), int(indi["ctrl_mode"]), gains, pos_gains, per_robot
 
 
 def csv_label(trajectory, mode, kt, speed, laps=1):
@@ -290,7 +318,10 @@ def main():
         traj = Trajectory()
         traj.loadcsv(csv_path)
         traj_dur = traj.duration
-    controller, traj_ctrl_mode, indi_gains, pos_gains = load_controller_config()
+    controller, traj_ctrl_mode, indi_gains, pos_gains, per_robot = load_controller_config()
+    if per_robot:
+        print(f"[formation] per-robot firmware_params overrides (re-applied after every "
+              f"broadcast, so they always win last): {per_robot}")
     if controller == 6 and traj_ctrl_mode == 0:
         pos_gains = dict(GEOMETRIC_POS_GAINS)
         print(f"[formation] ctrl_mode=0: using GEOMETRIC_POS_GAINS {pos_gains}, "
@@ -394,6 +425,16 @@ def main():
                 c.setParam(f"indi_gains.{k}", float(v))
             for k, v in (pgains or {}).items():
                 c.setParam(f"pos_gains.{k}", float(v))
+        # 2026-09-12 fix: the broadcast above is uniform across the whole swarm, so any
+        # per-robot firmware_params override (e.g. cf_second's own correct mass/kt1-4 for a
+        # different physical platform) gets silently wiped by this same call, before takeoff
+        # even happens -- confirmed as a real, undetected bug in today's mixed-platform
+        # flight. Re-push each robot's own overrides last so they always win.
+        for c in cfs:
+            name = c.prefix.lstrip("/")
+            for key, v in per_robot.get(name, {}).items():
+                is_int_param = key in ("stabilizer.controller", "indi_gains.ctrl_mode")
+                c.setParam(key, int(v) if is_int_param else float(v))
         th.sleep(_CTRL_SETTLE_S)
         print(f"[formation] {phase}: controller={ctrl} ctrl_mode={mode_}")
 
