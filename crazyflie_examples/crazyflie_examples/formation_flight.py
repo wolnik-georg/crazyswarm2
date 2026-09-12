@@ -55,8 +55,14 @@ import yaml
 
 DATA_DIR = Path(__file__).parent / "data"
 # Thesis experiment logs live in experiments/, separate from the archived course-phase
-# Controls/logs that flight.py still writes to.
-LOG_DIR = Path("/home/georg/Desktop/flying_robot_course/experiments/logs")
+# Controls/logs that flight.py still writes to. This assumes flying_robot_course is checked
+# out next to crazyswarm2 on THIS machine -- true on the dev workstation, not on other lab
+# machines (2026-09-12: crashed on flightcontrol1, a separate machine with no such checkout,
+# PermissionError trying to mkdir /home/georg which doesn't exist there). Fall back to
+# somewhere always writable rather than assume this layout.
+_LOG_DIR_PRIMARY = Path("/home/georg/Desktop/flying_robot_course/experiments/logs")
+LOG_DIR = (_LOG_DIR_PRIMARY if _LOG_DIR_PRIMARY.parents[1].exists()
+           else Path.home() / "flying_robot_course_logs")
 
 # Takeoff/landing always run on the geometric controller, matching flight.py: the INDI
 # gains are tuned for trajectory tracking and the ramp is a different operating point.
@@ -365,6 +371,10 @@ def main():
     print(f"[log] subscribed to {n} drone(s)")
     th.sleep(2.0)  # let the EKF settle on mocap and the log streams start
 
+    if LOG_DIR != _LOG_DIR_PRIMARY:
+        print(f"[formation] NOTE: flying_robot_course not found at the usual path on this "
+              f"machine -- logs will save to {LOG_DIR} instead of {_LOG_DIR_PRIMARY}")
+
     stamp = time.strftime("%Y-%m-%d_%H-%M-%S")
     meta = {
         "run_eval_mode": "hlc_e",
@@ -443,18 +453,25 @@ def main():
         # scenario library's time-varying curves) -- verify_formation_flight_sim.py
         # needs both: the window to check, and what "correct" means for each pair.
         t_start_sim = float(th.time())
-        sidecar = LOG_DIR / f"{args.formation}_{stamp}.meta.json"
-        sidecar.parent.mkdir(parents=True, exist_ok=True)
-        with open(sidecar, "w") as fh:
-            json.dump({
-                "formation": args.formation, "separation": args.separation,
-                "height": args.height, "anchor": list(map(float, anchor)),
-                "names": [c.prefix.lstrip("/") for c in cfs],
-                "targets": [list(map(float, t)) for t in targets],
-                "t_start_sim": t_start_sim, "duration": traj_dur,
-                "timescale": args.speed, "reps": args.reps,
-            }, fh, indent=2)
-        print(f"[formation] t_start(sim) = {t_start_sim:.3f}s -> {sidecar.name}")
+        # 2026-09-12: a filesystem problem here (wrong path on a different machine) previously
+        # propagated all the way up and aborted the flight BEFORE landing -- both drones were
+        # left hovering with no autonomous recovery. Writing a sidecar file is not flight-
+        # critical; it must never be able to prevent landing/disarming below.
+        try:
+            sidecar = LOG_DIR / f"{args.formation}_{stamp}.meta.json"
+            sidecar.parent.mkdir(parents=True, exist_ok=True)
+            with open(sidecar, "w") as fh:
+                json.dump({
+                    "formation": args.formation, "separation": args.separation,
+                    "height": args.height, "anchor": list(map(float, anchor)),
+                    "names": [c.prefix.lstrip("/") for c in cfs],
+                    "targets": [list(map(float, t)) for t in targets],
+                    "t_start_sim": t_start_sim, "duration": traj_dur,
+                    "timescale": args.speed, "reps": args.reps,
+                }, fh, indent=2)
+            print(f"[formation] t_start(sim) = {t_start_sim:.3f}s -> {sidecar.name}")
+        except Exception as e:
+            print(f"[formation] WARN: sidecar meta.json not written ({e}) -- continuing flight")
 
         # uSD logging start — ONE BROADCAST, not a per-drone loop. This is what makes the
         # per-drone SD logs mergeable: each drone stamps samples with its own usecTimestamp()
@@ -500,7 +517,11 @@ def main():
             meta["usd_start_s"] = f"{usd_start - log_t0:.6f}"
         label = f"{args.trajectory}_{args.formation}{args.separation:.2f}"
         for lg in loggers:
-            lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta)
+            try:
+                lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta)
+            except Exception as e:
+                print(f"[formation] WARN: {lg.name} log not saved ({e}) -- "
+                      f"{len(lg.rows)} rows lost")
         separation_report(loggers)
         residual_report(loggers, float(indi_gains.get("mass", 0.041)))
 
