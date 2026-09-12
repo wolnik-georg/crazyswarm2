@@ -34,17 +34,11 @@ robots:
     # reference_frame: "odom_cf231" # use a custom reference frame if no global coordinate system is available
 
   # ── Second drone for thesis formation flight (2026-08-19) ──────────────────
-  # Used by `ros2 run crazyflie_examples formation_flight`. Left DISABLED until the
-  # three TODOs below are filled in with the real hardware values -- enabling it with
-  # a placeholder URI will fail to connect (or, worse, address the wrong drone).
-  #
-  # TODO(1) uri: set the second drone's actual radio address. It MUST differ from
-  #         cf231_active's E7E7E7E7E7. Two drones sharing one address is undefined.
-  # TODO(2) initial_position: where this drone physically sits on the floor [x, y, z].
-  #         formation_flight anchors the formation on the FIRST enabled drone, so this
-  #         only sets the takeoff spot -- but it must be accurate or the stage-2 XY
-  #         transit distance (and the collision warning) will be wrong.
-  # TODO(3) confirm the platform matches cf231_active -- see the WARNING below.
+  # Used by `ros2 run crazyflie_examples formation_flight`. Was left DISABLED with
+  # three unfilled TODOs (uri, initial_position, platform confirmation) -- all three
+  # resolved 2026-09-12, see `enabled`/`uri`/`initial_position` below and the
+  # per-robot firmware_params block, which is where platform confirmation lives now
+  # (a real, non-placeholder standard-CF2.1 override, not just a matching label).
   #
   # WARNING -- shared gains: all.firmware_params (stabilizer.controller, indi_gains.*,
   # pos_gains.*) is pushed to EVERY enabled robot, and that block is currently tuned
@@ -52,6 +46,15 @@ robots:
   # fine. A mixed pair is NOT: mass / kt1..kt4 / J and the INDI gains would be wrong on
   # one of them. For a mixed pair, move firmware_params out of `all:` into the per-robot
   # or per-robot_type blocks first. The thesis protocol calls for 2x identical brushless.
+  #
+  # UPDATE 2026-09-12: this per-robot override existed for cf_second below (added the
+  # same day) but `formation_flight.py`'s `apply()` was silently re-broadcasting the
+  # shared `all:` mass/kt over it on every call, including before takeoff -- so the
+  # override never actually took effect and cf_second likely flew on the wrong thrust
+  # model during the crashed mixed-platform test. Fixed generally in `formation_flight.py`
+  # (`crazyswarm2` `fdfc640`): per-robot overrides are now re-pushed after every
+  # broadcast, so this warning's advice ("move firmware_params to per-robot") now
+  # actually works as written.
   #
   # WARNING -- radio bandwidth: all: currently streams 6 custom topics at 100 Hz per
   # drone (~600 packets/s). One Crazyradio cannot carry two drones at that rate. Either
@@ -590,9 +593,14 @@ all:
       # roll/pitch diverged to 88.7/66.6deg and altitude collapsed within 0.7s (z 1.07 -> 0.64m,
       # log ends at z=-0.426, real impact). Far worse and faster than the fc_bw=100 result.
       # The 2026-07-29 note's suspected cold-start-transient fix did NOT resolve this -- the
-      # notch is unsafe on this config, reverted to 0. Root cause not yet understood; needs
-      # offline analysis (bode/phase response against res_fc/fc_bw=206 interaction) before ANY
-      # further notch_en=1 flight. Do not re-enable without that review.
+      # notch was unsafe on this config, reverted to 0.
+      # ROOT-CAUSED 2026-09-12 (desk time): the 2026-07-29 fix hoisted alpha_meas/alpha_ref
+      # notch warm-up out of the mode-gated branch but missed a third chain -- tau_current's
+      # own Butterworth pre-filter (bw_tau_x/y/z) still only started updating once notch_en/
+      # filt_tau went true, landing on the same tick as the ctrl_mode handover. Same fix
+      # pattern applied in firmware_app/src/lib.rs (commit bc7190c); builds clean on both
+      # platforms. NOT YET REFLASHED OR FLOWN -- still do not re-enable without a real
+      # notch_en=1 hover test first, the build check alone doesn't count as validated.
       notch_en: 0
       notch_f0: 6.9
       notch_bw: 3.0
