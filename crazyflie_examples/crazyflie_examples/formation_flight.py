@@ -47,6 +47,7 @@ import sys
 import time
 
 from ament_index_python.packages import get_package_share_directory
+from crazyflie_examples import flight as _f
 from crazyflie_interfaces.msg import LogDataGeneric
 from crazyflie_py import Crazyswarm
 from crazyflie_py.uav_trajectory import Trajectory
@@ -54,15 +55,13 @@ import numpy as np
 import yaml
 
 DATA_DIR = Path(__file__).parent / "data"
-# Thesis experiment logs live in experiments/, separate from the archived course-phase
-# Controls/logs that flight.py still writes to. This assumes flying_robot_course is checked
-# out next to crazyswarm2 on THIS machine -- true on the dev workstation, not on other lab
-# machines (2026-09-12: crashed on flightcontrol1, a separate machine with no such checkout,
-# PermissionError trying to mkdir /home/georg which doesn't exist there). Fall back to
-# somewhere always writable rather than assume this layout.
-_LOG_DIR_PRIMARY = Path("/home/georg/Desktop/flying_robot_course/experiments/logs")
-LOG_DIR = (_LOG_DIR_PRIMARY if _LOG_DIR_PRIMARY.parents[1].exists()
-           else Path.home() / "flying_robot_course_logs")
+# 2026-09-12: was a separate hardcoded path (experiments/logs under an absolute dev-machine
+# path), which broke on flightcontrol1 (no such checkout there) and, once patched with a
+# fallback, saved logs somewhere real but disconnected from the repo. Simplest fix: reuse
+# flight.py's LOGS_DIR directly -- it already resolves correctly per-machine (flight.py and
+# simple_flight.py both fly cleanly from flightcontrol1 today), so there is only one place
+# that knows where logs go, not two that can disagree.
+LOG_DIR = _f.LOGS_DIR
 
 # Takeoff/landing always run on the geometric controller, matching flight.py: the INDI
 # gains are tuned for trajectory tracking and the ramp is a different operating point.
@@ -371,9 +370,7 @@ def main():
     print(f"[log] subscribed to {n} drone(s)")
     th.sleep(2.0)  # let the EKF settle on mocap and the log streams start
 
-    if LOG_DIR != _LOG_DIR_PRIMARY:
-        print(f"[formation] NOTE: flying_robot_course not found at the usual path on this "
-              f"machine -- logs will save to {LOG_DIR} instead of {_LOG_DIR_PRIMARY}")
+    print(f"[formation] logs -> {LOG_DIR}")
 
     stamp = time.strftime("%Y-%m-%d_%H-%M-%S")
     meta = {
