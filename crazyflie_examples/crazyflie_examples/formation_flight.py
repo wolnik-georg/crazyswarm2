@@ -256,6 +256,8 @@ def main():
                    choices=["vertical", "horizontal", "side_by_side"])
     p.add_argument("--separation", type=float, default=0.4,
                    help="spacing between neighbouring drones [m]")
+    p.add_argument("--duration", type=float, default=15.0,
+                   help="hover duration [s], --trajectory hover only")
     p.add_argument("--brushless", action="store_true", help="arm ESCs (required for CF21BL)")
     p.add_argument("--dry-run", action="store_true", help="print the plan and exit")
     p.add_argument("--yes", action="store_true", help="skip the pre-flight confirmation")
@@ -271,9 +273,19 @@ def main():
               f"  fly them with flight.py --onboard instead. See TRAJECTORY_UPLOAD_PATHS.md.")
         sys.exit(1)
 
-    csv_path = find_csv(args.trajectory, args.mode, args.kt, args.speed, args.laps)
-    traj = Trajectory()
-    traj.loadcsv(csv_path)
+    # hover, like simple_flight.py: no CSV, no upload -- just take off, converge to the
+    # formation slots, and hold. formation_flight.py always required a CSV before this, so
+    # "hover" (already Mode-E-safe per _MODE_E_SAFE) errored looking for a file that was
+    # never exported -- simple_flight.py's hover mode never uploads a trajectory at all.
+    hover_mode = args.trajectory == "hover"
+    csv_path = None
+    traj = None
+    traj_dur = args.duration
+    if not hover_mode:
+        csv_path = find_csv(args.trajectory, args.mode, args.kt, args.speed, args.laps)
+        traj = Trajectory()
+        traj.loadcsv(csv_path)
+        traj_dur = traj.duration
     controller, traj_ctrl_mode, indi_gains, pos_gains = load_controller_config()
     if controller == 6 and traj_ctrl_mode == 0:
         pos_gains = dict(GEOMETRIC_POS_GAINS)
@@ -314,7 +326,7 @@ def main():
     starts = [np.array(c.initialPosition) for c in cfs]
     transits = [float(np.linalg.norm(t[:2] - s[:2])) for s, t in zip(starts, targets)]
 
-    print(f"\n[formation] {csv_path.name}  dur={traj.duration:.2f}s  "
+    print(f"\n[formation] {'hover' if hover_mode else csv_path.name}  dur={traj_dur:.2f}s  "
           f"laps={args.laps} (continuous)  reps={args.reps} (separate runs)")
     print(f"[formation] {args.formation} formation, {args.separation:.2f} m separation, "
           f"{n} drone(s)")
@@ -362,7 +374,7 @@ def main():
         "formation": args.formation, "separation": args.separation,
         "height": args.height, "n_drones": n,
         "controller": controller, "ctrl_mode": traj_ctrl_mode,
-        "csv": csv_path.name,
+        "csv": csv_path.name if csv_path is not None else "hover (no csv)",
         "usd_start_s": "",   # filled in below once the broadcast has happened
     }
     meta.update({f"indi_{k}": v for k, v in indi_gains.items()})
@@ -413,10 +425,12 @@ def main():
 
         # Each drone gets the same trajectory; relative=True anchors it to that drone's
         # own current setpoint, so the formation offsets carry through unchanged.
-        print("[formation] uploading trajectory to all drones...")
-        for c in cfs:
-            c.uploadTrajectory(0, 0, traj)
-        th.sleep(0.5)
+        # hover: nothing to upload -- the goTo above already holds the formation slots.
+        if not hover_mode:
+            print("[formation] uploading trajectory to all drones...")
+            for c in cfs:
+                c.uploadTrajectory(0, 0, traj)
+            th.sleep(0.5)
 
         apply("trajectory", controller, traj_ctrl_mode, indi_gains, pos_gains)
 
@@ -433,7 +447,7 @@ def main():
                 "height": args.height, "anchor": list(map(float, anchor)),
                 "names": [c.prefix.lstrip("/") for c in cfs],
                 "targets": [list(map(float, t)) for t in targets],
-                "t_start_sim": t_start_sim, "duration": traj.duration,
+                "t_start_sim": t_start_sim, "duration": traj_dur,
                 "timescale": args.speed, "reps": args.reps,
             }, fh, indent=2)
         print(f"[formation] t_start(sim) = {t_start_sim:.3f}s -> {sidecar.name}")
@@ -453,12 +467,16 @@ def main():
             usd_start = None
             print(f"[formation] uSD logging not started ({e}) — no deck? radio logs only")
 
-        for rep in range(args.reps):
-            if rep > 0:
-                th.sleep(1.0)
-            print(f"[formation] starting trajectory (rep {rep + 1}/{args.reps})...")
-            allcfs.startTrajectory(0, timescale=args.speed)
-            th.sleep(traj.duration * args.speed + 0.5)
+        if hover_mode:
+            print(f"[formation] holding formation (hover) for {traj_dur:.1f}s...")
+            th.sleep(traj_dur)
+        else:
+            for rep in range(args.reps):
+                if rep > 0:
+                    th.sleep(1.0)
+                print(f"[formation] starting trajectory (rep {rep + 1}/{args.reps})...")
+                allcfs.startTrajectory(0, timescale=args.speed)
+                th.sleep(traj_dur * args.speed + 0.5)
 
         print("[formation] done, landing...")
         apply("landing", ramp_controller, ramp_ctrl_mode)
