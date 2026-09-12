@@ -61,23 +61,22 @@ robots:
     enabled: true                        # 2026-09-12: real values set, first 2-drone flight
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
-    type: cf21                           # different PHYSICAL platform from cf231_active for this
-                                          # validation flight -- STANDARD CF2.1 (RPM deck + mocap
-                                          # marker + uSD deck), not brushless. Per-robot override
-                                          # below is required: see the mixed-pair WARNING a few
-                                          # lines up. all.firmware_params carries the BRUSHLESS
-                                          # mass/kt (0.041 / ~4.1e-10); standard CF2.1 is ~2.8x
-                                          # different on kt -- flying it with the wrong values
-                                          # means a real thrust-model mismatch, not cosmetic.
+    # 2026-09-12: TEMPORARY -- cf_second is a STANDARD CF2.1 for the first infra-only 2-drone
+    # validation, per-robot overridden below to its own real mass/kt (see the commented
+    # "CF2.1 STANDARD MOTORS" block above, ~line 273). PLANNED NEXT SESSION: reflash and swap
+    # this physical drone for a second brushless CF21BL (matches the project's own "2x
+    # identical brushless" protocol). When that happens: DELETE the whole firmware_params
+    # block below (brushless matches all.firmware_params already, no override needed) and
+    # change type if a brushless-specific robot_type is ever added.
+    type: cf21
     firmware_params:
       stabilizer:
-        # Intended as a PERMANENT pin (cf_second is the UPPER/downwash-source drone, doesn't
-        # need to be the controller under study) but currently INERT once a real flight
-        # runs: formation_flight.py's apply() broadcasts one shared controller/ctrl_mode to
-        # every drone (no per-robot resolution yet -- see that file's comments). So today's
-        # test (both drones on controller=6 above) overrides this. Revisit if/when
-        # formation_flight.py gets real per-robot controller support.
-        controller: 5   # stock Lee -- only takes effect at initial connect, not during a flight
+        # Was found to be INERT during a real flight until 2026-09-12 (crazyswarm2 fdfc640):
+        # formation_flight.py's apply() now re-applies every per-robot override after each
+        # broadcast, so this DOES take effect for real. Kept for when cf_second is brushless
+        # too and this becomes a real pin again (upper/downwash-source drone doesn't need to
+        # be the controller under study) -- not exercised by today's plan either way.
+        controller: 5   # stock Lee
       indi_gains:
         mass: 0.0364           # AUW 36.4g (CF2.1 + uSD + RPM decks) -- see the commented
                                 # "CF2.1 STANDARD MOTORS" block above (~line 273) for source
@@ -265,20 +264,24 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      # Stock-Lee validation RESULT (2026-09-12): both drones flew end to end, landing fixed
-      # (see formation_flight.py). Real signal in the data: cf231_active (lower, receiving
-      # downwash) showed roll std 17.9deg/peak 38.2deg vs cf_second (upper) std 0.75deg/peak
-      # 5.8deg -- stock Lee has no interaction-force awareness, so it just fights the
-      # disturbance reactively. a_res was exactly 0 for both (expected: that computation
-      # lives in OUR controller, which never ran).
+      # Stock-Lee validation (2026-09-12): PASSED, both drones flew end to end, landing fixed.
+      # Real signal: cf231_active (lower, receiving downwash) roll std 17.9deg/peak 38.2deg vs
+      # cf_second (upper) std 0.75deg/peak 5.8deg -- stock Lee has no interaction-force
+      # awareness. a_res was 0 for both (expected, that computation only runs under OOT).
       #
-      # Next test: OUR OOT geometric controller on BOTH drones, to get real a_res data and
-      # see if it flies on this new mixed-platform pair (cf_second's own mass/kt override,
-      # see below, already applies here). NOTE: cf_second's own firmware_params.stabilizer
-      # pin (below) is functionally INERT once a flight actually runs -- apply() in
-      # formation_flight.py broadcasts one shared controller/ctrl_mode to every drone in the
-      # swarm, no per-robot resolution (a known gap, not fixed). So this value is what BOTH
-      # drones actually fly, regardless of any per-robot pin.
+      # OOT geometric on BOTH drones: CRASHED both. cf_second (standard) oscillated almost
+      # the whole flight (peak 179.5deg); cf231_active (brushless, below it) crashed within
+      # ~2s, coinciding with a real a_res_z spike of 8.1 m/s^2. Root-caused to TWO compounding
+      # issues, not the attitude gain (kr_geo/kw_geo verified bit-identical to a proven
+      # 2026-07-02 value): (1) the rest of the shared firmware config drifted brushless-only
+      # since July, and (2) a real bug -- apply()'s broadcast was silently wiping cf_second's
+      # per-robot mass/kt override before every takeoff, so it likely flew on BRUSHLESS's
+      # mass/kt the whole time despite the override below. (2) is now fixed
+      # (crazyswarm2 fdfc640) -- per-robot overrides actually take effect now.
+      #
+      # This value (6) is left over from that crashed test, not a considered choice for next
+      # session -- decide fresh rather than assume it's safe to just re-fly. Plan is to
+      # reflash cf_second to brushless before any further 2-drone geometric attempt anyway.
       controller: 6 # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
