@@ -62,6 +62,12 @@ LOG_DIR = Path("/home/georg/Desktop/flying_robot_course/experiments/logs")
 # gains are tuned for trajectory tracking and the ramp is a different operating point.
 _RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0
+
+# 2026-09-09 root cause #1 (crazyflies.yaml ctrl_mode=0 flown with INDI's kp_xy=64/kv_xy=5,
+# zeta=0.31 instead of 0.63): simple_flight.py was fixed with _select_pos_gains, this script
+# was not -- crazyflies.yaml's pos_gains block is the INDI-tuned one, and load_controller_config()
+# read it straight through regardless of ctrl_mode. Same fix here.
+GEOMETRIC_POS_GAINS = {'kp_xy': 40.0, 'kp_z': 30.0, 'kv_xy': 8.0, 'kv_z': 10.0}
 _CTRL_SETTLE_S = 0.3
 
 # Trajectories verified equivalent between Mode D and Mode E (offline reference diff).
@@ -269,6 +275,10 @@ def main():
     traj = Trajectory()
     traj.loadcsv(csv_path)
     controller, traj_ctrl_mode, indi_gains, pos_gains = load_controller_config()
+    if controller == 6 and traj_ctrl_mode == 0:
+        pos_gains = dict(GEOMETRIC_POS_GAINS)
+        print(f"[formation] ctrl_mode=0: using GEOMETRIC_POS_GAINS {pos_gains}, "
+              f"not crazyflies.yaml's INDI-tuned pos_gains")
 
     swarm = Crazyswarm()
     th = swarm.timeHelper

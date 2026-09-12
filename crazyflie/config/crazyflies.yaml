@@ -61,7 +61,23 @@ robots:
     enabled: true                        # 2026-09-12: real values set, first 2-drone flight
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [-0.3, 0.0, 0.0]   # real takeoff spot, mirrors cf231_active on the other side
-    type: cf21                           # matches cf231_active's platform (both brushless CF21)
+    type: cf21                           # different PHYSICAL platform from cf231_active for this
+                                          # one validation flight -- thrust-upgraded CF2.1, not
+                                          # brushless. Per-robot override below is required: see
+                                          # the mixed-pair WARNING a few lines up. all.firmware_params
+                                          # carries the BRUSHLESS mass/kt (0.041 / ~4.1e-10); the
+                                          # upgraded platform's own locked identification
+                                          # (2026-07-15, 3.7cm mean RMSE, n=11) is ~45% different on
+                                          # kt -- flying it with the wrong values means a real
+                                          # thrust-model mismatch, not a cosmetic one.
+    firmware_params:
+      indi_gains:
+        mass: 0.0386          # AUW 38.6g, measured 2026-07-09 -- see the commented UPGRADED
+                               # block above (~line 301) for the source of these five numbers
+        kt1: 2.2959e-10
+        kt2: 2.4668e-10
+        kt3: 2.0250e-10
+        kt4: 2.5288e-10
 
   cf5:
     enabled: false
@@ -336,7 +352,13 @@ all:
       # partition does not cleanly localize the fault this way. Drone inspected twice, no
       # damage either time. Back to ctrl_mode=3 (full INDI) as a sanity check: hover then
       # figure8, same locked gains that flew clean stage 1.
-      ctrl_mode: 3              # full INDI sanity check after the H0 partition
+      # Full INDI sanity check (2026-09-12) PASSED: hover clean (std 0.89deg), figure8 shake
+      # unchanged from baseline (15.4/23.9deg peak, known/reproducible) -- confirms nothing
+      # broke from the H0 partition crashes. Switching to geometric for the first 2-drone
+      # validation flight (formation_flight.py --formation vertical), safest known-good
+      # controller, with cf_second now enabled (thrust-upgraded CF2.1, own mass/kt override
+      # a few lines up).
+      ctrl_mode: 0              # geometric, first 2-drone flight
                                  # session: known brushless INDI fragility, get geometric
                                  # working first (hover/circle/figure8, tracking error),
                                  # switch back to 3 for INDI checks once that's confirmed
