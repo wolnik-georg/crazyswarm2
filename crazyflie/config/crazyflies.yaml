@@ -70,6 +70,13 @@ robots:
                                           # different on kt -- flying it with the wrong values
                                           # means a real thrust-model mismatch, not cosmetic.
     firmware_params:
+      stabilizer:
+        # PERMANENT pin (2026-09-12), not just for today: cf_second is the UPPER drone in the
+        # "vertical" formation (formation_offsets: drone 0 is always lowest/receives the
+        # downwash), so it only needs to be a reliable, known-safe downwash SOURCE -- not the
+        # controller under study. Stays on stock Lee even after all.stabilizer.controller
+        # above is switched back to 6 (OOT) for cf231_active.
+        controller: 5   # stock Lee, overrides all.firmware_params.stabilizer.controller
       indi_gains:
         mass: 0.0364           # AUW 36.4g (CF2.1 + uSD + RPM decks) -- see the commented
                                 # "CF2.1 STANDARD MOTORS" block above (~line 273) for source
@@ -257,7 +264,15 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      controller: 6 # 1: PID, 2: mellinger, 6: geometric SE(3) (OOT — requires CONFIG_CONTROLLER_OOT=y)
+      # 2026-09-12: BOTH drones on stock Lee (5) for the first 2-drone validation flight --
+      # confirm the formation infra itself (radio, takeoff, formation geometry, landing)
+      # works and doesn't crash before bringing our OOT controller into the mix at all.
+      # cf_second additionally PINS controller=5 permanently below (its own firmware_params
+      # override) -- once this validates, switch this shared value back to 6 for
+      # cf231_active (the lower drone, the one actually being studied) and cf_second's pin
+      # keeps it on stock Lee regardless, since it only needs to be a reliable downwash
+      # source, not the controller under test.
+      controller: 5 # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color

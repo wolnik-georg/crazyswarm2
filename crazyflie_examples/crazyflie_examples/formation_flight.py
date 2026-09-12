@@ -280,6 +280,21 @@ def main():
         print(f"[formation] ctrl_mode=0: using GEOMETRIC_POS_GAINS {pos_gains}, "
               f"not crazyflies.yaml's INDI-tuned pos_gains")
 
+    # Safety fix (2026-09-12): _RAMP_CONTROLLER/_RAMP_CTRL_MODE (6/0) assume the target is
+    # always our own OOT controller, so takeoff/landing ramp on OOT-geometric and switch to
+    # the target only at altitude -- fine for switching between OUR OWN ctrl_modes (0-3), but
+    # switching the *stabilizer.controller* identity itself (e.g. 6 -> stock Lee's 5) mid-air
+    # is the exact mechanism that caused the worst crashes in this project's history (both
+    # "ours" and a stock controller handed control at altitude diverged within ~1.4s). If the
+    # target controller isn't our OOT one at all, ramp AND fly the whole thing on that same
+    # target config -- no mid-air controller-identity switch, ever.
+    if controller != 6:
+        ramp_controller, ramp_ctrl_mode = controller, traj_ctrl_mode
+        print(f"[formation] target controller={controller} is not our OOT controller (6) -- "
+              f"ramping on the SAME config throughout, no mid-air controller switch")
+    else:
+        ramp_controller, ramp_ctrl_mode = _RAMP_CONTROLLER, _RAMP_CTRL_MODE
+
     swarm = Crazyswarm()
     th = swarm.timeHelper
     allcfs = swarm.allcfs
@@ -305,7 +320,7 @@ def main():
           f"{n} drone(s)")
     print(f"[formation] anchored on {cfs[0].prefix.lstrip('/')} at {anchor.round(2)}")
     print(f"[formation] controller={controller} ctrl_mode={traj_ctrl_mode} "
-          f"(ramp: {_RAMP_CONTROLLER}/{_RAMP_CTRL_MODE})")
+          f"(ramp: {ramp_controller}/{ramp_ctrl_mode})")
     for c, s, t, tr in zip(cfs, starts, targets, transits):
         print(f"    {c.prefix.lstrip('/'):12s} start {s.round(2)}  ->  formation {t.round(2)}"
               f"   (XY transit {tr:.2f} m)")
@@ -365,7 +380,7 @@ def main():
         print(f"[formation] {phase}: controller={ctrl} ctrl_mode={mode_}")
 
     try:
-        apply("takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+        apply("takeoff", ramp_controller, ramp_ctrl_mode)
         if args.brushless:
             for c in cfs:
                 c.arm(True)
@@ -446,7 +461,7 @@ def main():
             th.sleep(traj.duration * args.speed + 0.5)
 
         print("[formation] done, landing...")
-        apply("landing", _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+        apply("landing", ramp_controller, ramp_ctrl_mode)
         try:
             allcfs.setParam("usd.logging", 0)   # broadcast stop, mirrors the start
         except Exception:
