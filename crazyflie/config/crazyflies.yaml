@@ -325,15 +325,18 @@ all:
     # To switch back to brushless: comment out the UPGRADED block above, uncomment this block.
     # ════════════════════════════════════════════════════════════════════════════
     indi_gains:
-      # H0 partition (2026-09-12) result: ctrl_mode=2 (attitude INDI only) was FAR worse than
-      # full INDI -- roll peak 119.7deg, pitch 74.9deg, z dipped to -0.017m on hover alone.
-      # Divergence onset at t=6.58s, exactly the mid-air ramp->target handoff (takeoff+goTo
-      # sleeps sum to 6.5s) -- operator's read: this is INDI actually engaging at the handoff,
-      # not a separate handoff-transient artifact, and attitude-INDI alone is clearly worse than
-      # full INDI. Drone inspected, no damage. Flying ctrl_mode=1 (position INDI only, attitude
-      # geometric) next for completeness on the partition.
-      ctrl_mode: 1              # H0 partition part 2: position INDI only. Was 0 (geometric) --
-                                 # was 3 (full INDI), switched 2026-09-07 lab
+      # H0 partition RESULT (2026-09-12): BOTH isolated sub-loops crashed on hover alone --
+      # ctrl_mode=2 (attitude INDI only) diverged sharply exactly at the mid-air ramp->target
+      # handoff (t=6.58s, roll peak 119.7deg, z to -0.017m). ctrl_mode=1 (position INDI only)
+      # diverged more gradually a few seconds later (onset ~t=11.2s, roll peak 179.3deg, z to
+      # -1.457m -- likely a real impact; rpm_m1 dropout at t=19.2s was a SYMPTOM of the already-
+      # violent tumble, not the cause). Both far worse than full INDI's hover, which has been
+      # the mildest of the three all session. Conclusion: the two sub-loops are coupled tightly
+      # enough that isolating either one breaks an assumption the other depends on -- the H0
+      # partition does not cleanly localize the fault this way. Drone inspected twice, no
+      # damage either time. Back to ctrl_mode=3 (full INDI) as a sanity check: hover then
+      # figure8, same locked gains that flew clean stage 1.
+      ctrl_mode: 3              # full INDI sanity check after the H0 partition
                                  # session: known brushless INDI fragility, get geometric
                                  # working first (hover/circle/figure8, tracking error),
                                  # switch back to 3 for INDI checks once that's confirmed
