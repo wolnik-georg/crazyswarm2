@@ -20,7 +20,7 @@ robots:
   cf231_active:
     enabled: true
     uri: radio://0/80/2M/E7E7E7E7E7
-    initial_position: [0.3, 0.0, 0.0]
+    initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
     # firmware_params:
     #   kalman:
@@ -60,7 +60,7 @@ robots:
   cf_second:
     enabled: true                        # 2026-09-12: real values set, first 2-drone flight
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
-    initial_position: [-0.3, 0.0, 0.0]   # real takeoff spot, mirrors cf231_active on the other side
+    initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
     type: cf21                           # different PHYSICAL platform from cf231_active for this
                                           # validation flight -- STANDARD CF2.1 (RPM deck + mocap
                                           # marker + uSD deck), not brushless. Per-robot override
