@@ -502,8 +502,41 @@ def main():
             allcfs.setParam("usd.logging", 0)   # broadcast stop, mirrors the start
         except Exception:
             pass
-        allcfs.land(targetHeight=0.06, duration=3.0)
-        th.sleep(4.0)
+
+        # 2026-09-12: a broadcast allcfs.land() gives every drone the SAME duration
+        # regardless of height, so a "vertical" stack (which shares (x,y) for the whole
+        # flight, differing only in z) closes its separation to exactly zero -- the upper
+        # drone descends straight down through the lower drone's own column of air and
+        # collides with it. This actually happened. Same fix already proven in
+        # run_formation.py: while everyone is still safely far apart in z, spread any
+        # XY-overlapping drones onto a small circle around their shared point, THEN
+        # descend each one at a MATCHED RATE (not matched duration) scaled to its own
+        # live height, so relative separation stays constant all the way to the ground.
+        LAND_XY_MARGIN = 0.30  # m -- drones closer than this in XY are treated as "stacked"
+        LAND_XY_RADIUS = 0.35  # m -- how far each is moved from the shared centre
+        cur = [lg.position() for lg in loggers]
+        overlap = any(
+            np.linalg.norm(cur[i][:2] - cur[j][:2]) < LAND_XY_MARGIN
+            for i in range(len(cfs)) for j in range(i + 1, len(cfs))
+        )
+        if overlap:
+            print("[formation] landing XY overlap detected -- spreading drones sideways first")
+            center = np.mean([p[:2] for p in cur], axis=0)
+            for k, c in enumerate(cfs):
+                ang = 2 * np.pi * k / len(cfs)
+                xy = center + LAND_XY_RADIUS * np.array([np.cos(ang), np.sin(ang)])
+                c.goTo(np.array([xy[0], xy[1], cur[k][2]]), 0, 3.0)
+            th.sleep(4.0)
+
+        target_h = 0.06
+        descent_rate = 0.25  # m/s -- same for every drone, so relative dz stays constant
+        land_durations = []
+        for c, lg in zip(cfs, loggers):
+            h = lg.position()[2]
+            dur = max(3.0, (h - target_h) / descent_rate)
+            land_durations.append(dur)
+            c.land(targetHeight=target_h, duration=dur)
+        th.sleep(max(land_durations) + 1.0)
         for c in cfs:
             c.arm(False)
 
