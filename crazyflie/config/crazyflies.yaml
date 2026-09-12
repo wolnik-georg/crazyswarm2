@@ -62,22 +62,21 @@ robots:
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [-0.3, 0.0, 0.0]   # real takeoff spot, mirrors cf231_active on the other side
     type: cf21                           # different PHYSICAL platform from cf231_active for this
-                                          # one validation flight -- thrust-upgraded CF2.1, not
-                                          # brushless. Per-robot override below is required: see
-                                          # the mixed-pair WARNING a few lines up. all.firmware_params
-                                          # carries the BRUSHLESS mass/kt (0.041 / ~4.1e-10); the
-                                          # upgraded platform's own locked identification
-                                          # (2026-07-15, 3.7cm mean RMSE, n=11) is ~45% different on
-                                          # kt -- flying it with the wrong values means a real
-                                          # thrust-model mismatch, not a cosmetic one.
+                                          # validation flight -- STANDARD CF2.1 (RPM deck + mocap
+                                          # marker + uSD deck), not brushless. Per-robot override
+                                          # below is required: see the mixed-pair WARNING a few
+                                          # lines up. all.firmware_params carries the BRUSHLESS
+                                          # mass/kt (0.041 / ~4.1e-10); standard CF2.1 is ~2.8x
+                                          # different on kt -- flying it with the wrong values
+                                          # means a real thrust-model mismatch, not cosmetic.
     firmware_params:
       indi_gains:
-        mass: 0.0386          # AUW 38.6g, measured 2026-07-09 -- see the commented UPGRADED
-                               # block above (~line 301) for the source of these five numbers
-        kt1: 2.2959e-10
-        kt2: 2.4668e-10
-        kt3: 2.0250e-10
-        kt4: 2.5288e-10
+        mass: 0.0364           # AUW 36.4g (CF2.1 + uSD + RPM decks) -- see the commented
+                                # "CF2.1 STANDARD MOTORS" block above (~line 273) for source
+        kt1: 1.4193e-10         # identified 2026-06-30
+        kt2: 1.4534e-10
+        kt3: 1.4997e-10
+        kt4: 1.4655e-10
 
   cf5:
     enabled: false
