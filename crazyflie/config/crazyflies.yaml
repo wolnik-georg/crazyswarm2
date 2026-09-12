@@ -71,12 +71,13 @@ robots:
                                           # means a real thrust-model mismatch, not cosmetic.
     firmware_params:
       stabilizer:
-        # PERMANENT pin (2026-09-12), not just for today: cf_second is the UPPER drone in the
-        # "vertical" formation (formation_offsets: drone 0 is always lowest/receives the
-        # downwash), so it only needs to be a reliable, known-safe downwash SOURCE -- not the
-        # controller under study. Stays on stock Lee even after all.stabilizer.controller
-        # above is switched back to 6 (OOT) for cf231_active.
-        controller: 5   # stock Lee, overrides all.firmware_params.stabilizer.controller
+        # Intended as a PERMANENT pin (cf_second is the UPPER/downwash-source drone, doesn't
+        # need to be the controller under study) but currently INERT once a real flight
+        # runs: formation_flight.py's apply() broadcasts one shared controller/ctrl_mode to
+        # every drone (no per-robot resolution yet -- see that file's comments). So today's
+        # test (both drones on controller=6 above) overrides this. Revisit if/when
+        # formation_flight.py gets real per-robot controller support.
+        controller: 5   # stock Lee -- only takes effect at initial connect, not during a flight
       indi_gains:
         mass: 0.0364           # AUW 36.4g (CF2.1 + uSD + RPM decks) -- see the commented
                                 # "CF2.1 STANDARD MOTORS" block above (~line 273) for source
@@ -264,15 +265,21 @@ all:
       enHighLevel: 1
     stabilizer:
       estimator: 2 # 1: complementary, 2: kalman
-      # 2026-09-12: BOTH drones on stock Lee (5) for the first 2-drone validation flight --
-      # confirm the formation infra itself (radio, takeoff, formation geometry, landing)
-      # works and doesn't crash before bringing our OOT controller into the mix at all.
-      # cf_second additionally PINS controller=5 permanently below (its own firmware_params
-      # override) -- once this validates, switch this shared value back to 6 for
-      # cf231_active (the lower drone, the one actually being studied) and cf_second's pin
-      # keeps it on stock Lee regardless, since it only needs to be a reliable downwash
-      # source, not the controller under test.
-      controller: 5 # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
+      # Stock-Lee validation RESULT (2026-09-12): both drones flew end to end, landing fixed
+      # (see formation_flight.py). Real signal in the data: cf231_active (lower, receiving
+      # downwash) showed roll std 17.9deg/peak 38.2deg vs cf_second (upper) std 0.75deg/peak
+      # 5.8deg -- stock Lee has no interaction-force awareness, so it just fights the
+      # disturbance reactively. a_res was exactly 0 for both (expected: that computation
+      # lives in OUR controller, which never ran).
+      #
+      # Next test: OUR OOT geometric controller on BOTH drones, to get real a_res data and
+      # see if it flies on this new mixed-platform pair (cf_second's own mass/kt override,
+      # see below, already applies here). NOTE: cf_second's own firmware_params.stabilizer
+      # pin (below) is functionally INERT once a flight actually runs -- apply() in
+      # formation_flight.py broadcasts one shared controller/ctrl_mode to every drone in the
+      # swarm, no per-robot resolution (a known gap, not fixed). So this value is what BOTH
+      # drones actually fly, regardless of any per-robot pin.
+      controller: 6 # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
