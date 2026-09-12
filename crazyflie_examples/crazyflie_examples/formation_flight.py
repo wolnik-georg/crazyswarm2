@@ -26,12 +26,12 @@ Usage
 
   # Real flight
   ros2 run crazyflie_examples formation_flight -- --trajectory figure8 --mode 1 --kt 0.05 \
-      --formation vertical --separation 0.4 --brushless
+      --formation vertical --separation 0.4
 
   # Continuous multi-lap (export the laps first, then fly one uninterrupted flight)
   cargo run --release --bin export_poly4d -- --trajectory circle --mode 1 --kt 0.1 --laps 3
   ros2 run crazyflie_examples formation_flight -- --trajectory circle --mode 1 --kt 0.1 \
-      --laps 3 --formation vertical --separation 0.4 --brushless
+      --laps 3 --formation vertical --separation 0.4
 
 CSV per drone -> experiments/logs/{traj}_{formation}{sep}_{cfname}_{timestamp}.csv
 
@@ -258,7 +258,6 @@ def main():
                    help="spacing between neighbouring drones [m]")
     p.add_argument("--duration", type=float, default=15.0,
                    help="hover duration [s], --trajectory hover only")
-    p.add_argument("--brushless", action="store_true", help="arm ESCs (required for CF21BL)")
     p.add_argument("--dry-run", action="store_true", help="print the plan and exit")
     p.add_argument("--yes", action="store_true", help="skip the pre-flight confirmation")
     # parse_known_args, not parse_args: ROS options (--ros-args -p use_sim_time:=true) are
@@ -393,10 +392,15 @@ def main():
 
     try:
         apply("takeoff", ramp_controller, ramp_ctrl_mode)
-        if args.brushless:
-            for c in cfs:
-                c.arm(True)
-            th.sleep(0.5)
+        # Arming is a generic Crazyflie safety gate, not brushless-specific: standard CF2.1
+        # auto-arms by default (supervisor.c: "we do not require an arming action by the
+        # user, auto arm"), so an explicit arm(True) is a harmless no-op there and the one
+        # CF21BL actually needs. Always do it -- 2026-09-12 found a mixed-fleet flight where
+        # the brushless drone never moved because this was gated behind --brushless and that
+        # flag wasn't passed.
+        for c in cfs:
+            c.arm(True)
+        th.sleep(0.5)
 
         for lg in loggers:
             lg.active = True
@@ -486,9 +490,8 @@ def main():
             pass
         allcfs.land(targetHeight=0.06, duration=3.0)
         th.sleep(4.0)
-        if args.brushless:
-            for c in cfs:
-                c.arm(False)
+        for c in cfs:
+            c.arm(False)
 
     finally:
         for lg in loggers:
