@@ -58,10 +58,10 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false
-    uri: radio://0/80/2M/E7E7E7E7E8   # TODO(1) placeholder -- set the real address
-    initial_position: [-0.3, 0.0, 0.0]  # TODO(2) placeholder -- set the real spot
-    type: cf21  # TODO(3) match cf231_active's platform
+    enabled: true                        # 2026-09-12: real values set, first 2-drone flight
+    uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
+    initial_position: [-0.3, 0.0, 0.0]   # real takeoff spot, mirrors cf231_active on the other side
+    type: cf21                           # matches cf231_active's platform (both brushless CF21)
 
   cf5:
     enabled: false
