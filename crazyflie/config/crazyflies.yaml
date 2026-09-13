@@ -366,7 +366,9 @@ all:
       # validation flight (formation_flight.py --formation vertical), safest known-good
       # controller, with cf_second now enabled (thrust-upgraded CF2.1, own mass/kt override
       # a few lines up).
-      ctrl_mode: 0              # geometric, first 2-drone flight
+      ctrl_mode: 3              # 2026-09-13: full INDI -- required to actually exercise the
+                                # notch filter (attitude INDI path, mode&2), matches the config
+                                # the original 2026-09-11 notch crash happened under
                                  # session: known brushless INDI fragility, get geometric
                                  # working first (hover/circle/figure8, tracking error),
                                  # switch back to 3 for INDI checks once that's confirmed
