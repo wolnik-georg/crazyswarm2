@@ -11,9 +11,13 @@ fileversion: 3
 #    note in all.firmware_logging. 8 topics x 100 Hz ~= 600 packets/s per drone and
 #    one Crazyradio carries ~1000 packets/s TOTAL. Detailed data should come from
 #    the uSD deck instead -- flying_drone_stack/tools/README_usd_thesis_logging.md.
-# 3. Gains in all.firmware_params go to EVERY enabled robot, so a mixed pair of
-#    platforms is NOT supported without moving firmware_params per robot/type.
-#    The thesis protocol calls for 2x identical brushless.
+# 3. Gains in all.firmware_params go to EVERY enabled robot -- but as of 2026-09-13,
+#    only cf231_active is ever the "controller under study" (geometric/INDI/future
+#    NA-INDI/IL-NDI). cf_second is permanently pinned to stock Lee (controller: 5,
+#    per-robot override below) regardless of platform, so all.firmware_params'
+#    indi_gains/pos_gains only ever matter for cf231_active in practice. This is what
+#    removes the whole cross-platform gain-sharing risk class found 2026-09-12 --
+#    not by fixing the sharing, but by only ever needing it for one drone.
 # ══════════════════════════════════════════════════════════════════════════════
 
 robots:
@@ -34,27 +38,23 @@ robots:
     # reference_frame: "odom_cf231" # use a custom reference frame if no global coordinate system is available
 
   # ── Second drone for thesis formation flight (2026-08-19) ──────────────────
-  # Used by `ros2 run crazyflie_examples formation_flight`. Was left DISABLED with
-  # three unfilled TODOs (uri, initial_position, platform confirmation) -- all three
-  # resolved 2026-09-12, see `enabled`/`uri`/`initial_position` below and the
-  # per-robot firmware_params block, which is where platform confirmation lives now
-  # (a real, non-placeholder standard-CF2.1 override, not just a matching label).
+  # Used by `ros2 run crazyflie_examples formation_flight`.
   #
-  # WARNING -- shared gains: all.firmware_params (stabilizer.controller, indi_gains.*,
-  # pos_gains.*) is pushed to EVERY enabled robot, and that block is currently tuned
-  # for the UPGRADED CF2.1 (see the comment at indi_gains). Two *identical* drones are
-  # fine. A mixed pair is NOT: mass / kt1..kt4 / J and the INDI gains would be wrong on
-  # one of them. For a mixed pair, move firmware_params out of `all:` into the per-robot
-  # or per-robot_type blocks first. The thesis protocol calls for 2x identical brushless.
+  # ARCHITECTURE DECISION 2026-09-13: cf_second is PERMANENTLY pinned to stock Lee
+  # (controller: 5 below), regardless of platform. Only cf231_active ever runs our
+  # controller (geometric/INDI/future NA-INDI/IL-NDI) -- cf_second exists purely as
+  # the other formation member / downwash source, not as a controller under study.
+  # This removes the whole cross-platform gain-sharing risk found 2026-09-12 (shared
+  # `all.firmware_params` drift + the since-fixed per-robot-override wipe) by
+  # construction: cf_second never reads indi_gains/pos_gains at all, since stock Lee
+  # is a separate firmware controller that doesn't consume them. No brushless swap
+  # is needed for this reason -- cf_second can stay standard CF2.1 indefinitely.
+  # (A swap might still be worth doing later for other reasons -- e.g. if a 3rd
+  # actively-controlled robot is ever needed for the B-scenarios -- but not for this.)
   #
-  # UPDATE 2026-09-12: this per-robot override existed for cf_second below (added the
-  # same day) but `formation_flight.py`'s `apply()` was silently re-broadcasting the
-  # shared `all:` mass/kt over it on every call, including before takeoff -- so the
-  # override never actually took effect and cf_second likely flew on the wrong thrust
-  # model during the crashed mixed-platform test. Fixed generally in `formation_flight.py`
-  # (`crazyswarm2` `fdfc640`): per-robot overrides are now re-pushed after every
-  # broadcast, so this warning's advice ("move firmware_params to per-robot") now
-  # actually works as written.
+  # The per-robot override mechanism this relies on (`apply()` re-pushing per-robot
+  # firmware_params after every broadcast) was found inert until 2026-09-12, then
+  # fixed generally (`crazyswarm2` `fdfc640`) -- see `docs/lab_sessions/2026-09-12.md`.
   #
   # WARNING -- radio bandwidth: all: currently streams 6 custom topics at 100 Hz per
   # drone (~600 packets/s). One Crazyradio cannot carry two drones at that rate. Either
@@ -64,29 +64,10 @@ robots:
     enabled: true                        # 2026-09-12: real values set, first 2-drone flight
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
-    # 2026-09-12: TEMPORARY -- cf_second is a STANDARD CF2.1 for the first infra-only 2-drone
-    # validation, per-robot overridden below to its own real mass/kt (see the commented
-    # "CF2.1 STANDARD MOTORS" block above, ~line 273). PLANNED NEXT SESSION: reflash and swap
-    # this physical drone for a second brushless CF21BL (matches the project's own "2x
-    # identical brushless" protocol). When that happens: DELETE the whole firmware_params
-    # block below (brushless matches all.firmware_params already, no override needed) and
-    # change type if a brushless-specific robot_type is ever added.
-    type: cf21
+    type: cf21                           # standard CF2.1 -- fine indefinitely, see above
     firmware_params:
       stabilizer:
-        # Was found to be INERT during a real flight until 2026-09-12 (crazyswarm2 fdfc640):
-        # formation_flight.py's apply() now re-applies every per-robot override after each
-        # broadcast, so this DOES take effect for real. Kept for when cf_second is brushless
-        # too and this becomes a real pin again (upper/downwash-source drone doesn't need to
-        # be the controller under study) -- not exercised by today's plan either way.
-        controller: 5   # stock Lee
-      indi_gains:
-        mass: 0.0364           # AUW 36.4g (CF2.1 + uSD + RPM decks) -- see the commented
-                                # "CF2.1 STANDARD MOTORS" block above (~line 273) for source
-        kt1: 1.4193e-10         # identified 2026-06-30
-        kt2: 1.4534e-10
-        kt3: 1.4997e-10
-        kt4: 1.4655e-10
+        controller: 5   # stock Lee, permanent -- cf_second is never the controller under study
 
   cf5:
     enabled: false
