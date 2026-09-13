@@ -585,7 +585,11 @@ all:
       # platforms. 2026-09-13: cf231_active reflashed with the fix -- re-enabling notch_en=1
       # here for the first real validation hover. Revert to 0 immediately after that flight
       # regardless of outcome, don't leave it enabled for anything else this session.
-      notch_en: 1
+      # 2026-09-13: notch_en=1 test CRASHED, worse than the original 2026-09-11 crash --
+      # the bc7190c fix does NOT resolve this. No logs saved (crash was violent enough the
+      # radio link/log pipeline never completed). Root cause still unknown. DO NOT re-enable
+      # without offline analysis -- see docs/lab_sessions/2026-09-13.md.
+      notch_en: 0
       notch_f0: 6.9
       notch_bw: 3.0
     pos_gains:
