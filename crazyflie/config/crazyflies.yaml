@@ -580,9 +580,10 @@ all:
       # own Butterworth pre-filter (bw_tau_x/y/z) still only started updating once notch_en/
       # filt_tau went true, landing on the same tick as the ctrl_mode handover. Same fix
       # pattern applied in firmware_app/src/lib.rs (commit bc7190c); builds clean on both
-      # platforms. NOT YET REFLASHED OR FLOWN -- still do not re-enable without a real
-      # notch_en=1 hover test first, the build check alone doesn't count as validated.
-      notch_en: 0
+      # platforms. 2026-09-13: cf231_active reflashed with the fix -- re-enabling notch_en=1
+      # here for the first real validation hover. Revert to 0 immediately after that flight
+      # regardless of outcome, don't leave it enabled for anything else this session.
+      notch_en: 1
       notch_f0: 6.9
       notch_bw: 3.0
     pos_gains:
