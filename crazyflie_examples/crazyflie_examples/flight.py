@@ -263,6 +263,13 @@ _TRAJ_ARM_DELAY_S = 0.05  # Rust: traj.mode=1 then brief pause before traj.start
 # never hits the wrap — position is C0 at the seam but velocity is not, which spirals.
 _TRAJ_STOP_MARGIN_S = 0.50
 _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commit
+# 2026-09-14: TEMPORARY compensation for a ~0.40m height shortfall on cf_second, reproduced
+# in a 4-point sweep (0.6->0.20, 0.9->0.50, 1.25->0.85, 1.5->1.09m -- a constant offset
+# regardless of target, not thrust/PID saturation, which would grow with height). Suspected
+# cause: this vehicle's mocap rigid-body Z origin is miscalibrated by ~0.4m (cf231_active
+# shows no such offset). Real fix is recalibrating the rigid body in the mocap software;
+# this just adds the missing height to the commanded target until then. REMOVE once fixed.
+_Z_OFFSET_COMPENSATION = {"cf_second": 0.40}
 # OOT geometric (controller 6) for takeoff/landing — state preserved on trajectory start.
 _RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
@@ -1070,13 +1077,18 @@ def main():
     _logging_active = True
     _log_t0 = time.monotonic()
 
-    allcfs.takeoff(
-        targetHeight=args.height, duration=3.0
-    )  # 3s (was 2s) — gentler ramp for 1.48× kt upgraded motors
+    for c in allcfs.crazyflies:
+        name = c.prefix.lstrip("/")
+        target_height = args.height + _Z_OFFSET_COMPENSATION.get(name, 0.0)
+        c.takeoff(
+            targetHeight=target_height, duration=3.0
+        )  # 3s (was 2s) — gentler ramp for 1.48× kt upgraded motors
     th.sleep(3.5)
 
     for c in allcfs.crazyflies:
-        pos = np.array(c.initialPosition) + np.array([0, 0, args.height])
+        name = c.prefix.lstrip("/")
+        target_height = args.height + _Z_OFFSET_COMPENSATION.get(name, 0.0)
+        pos = np.array(c.initialPosition) + np.array([0, 0, target_height])
         c.goTo(pos, 0, 2.0)
     th.sleep(2.5)
 

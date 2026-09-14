@@ -367,6 +367,18 @@ def main():
     offsets = formation_offsets(args.formation, n, args.separation)
     anchor = np.array(cfs[0].initialPosition) + np.array([0.0, 0.0, args.height])
     targets = [anchor + o for o in offsets]
+    # 2026-09-14: TEMPORARY compensation for a ~0.40m height shortfall on cf_second,
+    # reproduced in a 4-point sweep (0.6->0.20, 0.9->0.50, 1.25->0.85, 1.5->1.09m -- a
+    # constant offset regardless of target, not thrust/PID saturation) and in run_formation.py's
+    # A8 run (1.25m target -> 0.86m achieved). Suspected cause: this vehicle's mocap
+    # rigid-body Z origin is miscalibrated by ~0.4m (cf231_active shows no such offset). Real
+    # fix is recalibrating the rigid body in the mocap software; this just adds the missing
+    # height to the commanded target until then. REMOVE once fixed.
+    _Z_OFFSET_COMPENSATION = {"cf_second": 0.40}
+    for i, c in enumerate(cfs):
+        name = c.prefix.lstrip("/")
+        if name in _Z_OFFSET_COMPENSATION:
+            targets[i] = targets[i] + np.array([0.0, 0.0, _Z_OFFSET_COMPENSATION[name]])
     starts = [np.array(c.initialPosition) for c in cfs]
     transits = [float(np.linalg.norm(t[:2] - s[:2])) for s, t in zip(starts, targets)]
 

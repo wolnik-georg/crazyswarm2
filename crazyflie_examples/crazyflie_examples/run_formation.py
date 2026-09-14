@@ -323,6 +323,19 @@ def main():
 
     slots = [anchor + r.slot for r in sc.robots]
 
+    # 2026-09-14: TEMPORARY compensation for a ~0.40m height shortfall on cf_second,
+    # reproduced in a 4-point sweep (0.6->0.20, 0.9->0.50, 1.25->0.85, 1.5->1.09m -- a
+    # constant offset regardless of target, not thrust/PID saturation) and confirmed here
+    # too (tonight's A8 run: 1.25m target -> 0.86m achieved, |ez|=244mm). Suspected cause:
+    # this vehicle's mocap rigid-body Z origin is miscalibrated by ~0.4m (cf231_active shows
+    # no such offset). Real fix is recalibrating the rigid body in the mocap software; this
+    # just adds the missing height to the commanded slot until then. REMOVE once fixed.
+    _Z_OFFSET_COMPENSATION = {'cf_second': 0.40}
+    for i, c in enumerate(cfs):
+        name = c.prefix.lstrip('/')
+        if name in _Z_OFFSET_COMPENSATION:
+            slots[i] = slots[i] + np.array([0.0, 0.0, _Z_OFFSET_COMPENSATION[name]])
+
     # Re-check the geofence now that the true anchor is known -- offline it was assumed at
     # the origin, and a formation that fits about the origin can still leave the volume
     # once it is anchored on a drone parked near an edge.
