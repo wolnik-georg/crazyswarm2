@@ -511,13 +511,26 @@ def main():
         except Exception as e:
             print(f"[formation] WARN: sidecar meta.json not written ({e}) -- continuing flight")
 
+        # 2026-09-14: zero every drone's onboard usec timer BEFORE starting uSD logging.
+        # usecTimestamp() free-runs from each drone's own power-on, so without this every
+        # log's absolute timestamp values carry a constant, per-drone offset (not drift --
+        # a fixed offset set at boot). Stock firmware already exposes this exact fix as a
+        # broadcastable param (usec_time.c, PARAM_GROUP usec/reset), documented upstream as
+        # "useful for time synchronization between UAVs, if reset is sent as a broadcast" --
+        # we were never calling it. Must happen as its own broadcast before the uSD-start
+        # broadcast below, so every drone's samples are timestamped from a shared zero.
+        try:
+            allcfs.setParam("usec.reset", 1)
+        except Exception as e:
+            print(f"[formation] WARN: usec.reset broadcast failed ({e}) — uSD timestamps may carry a per-drone offset")
+
         # uSD logging start — ONE BROADCAST, not a per-drone loop. This is what makes the
         # per-drone SD logs mergeable: each drone stamps samples with its own usecTimestamp()
-        # (µs since ITS OWN boot), so the logs share no clock. Starting them on a single
-        # broadcast gives a common origin -- subtract each log's first timestamp and the
-        # drones line up to within the broadcast jitter plus one logging period.
-        # A loop of individual setParam calls would stagger the starts by tens of ms and
-        # destroy that. See tools/merge_usd_logs.py.
+        # (µs since ITS OWN boot, now zeroed together by the usec.reset broadcast above), so
+        # starting them on a single broadcast gives a common origin -- subtract each log's
+        # first timestamp and the drones line up to within the broadcast jitter plus one
+        # logging period. A loop of individual setParam calls would stagger the starts by
+        # tens of ms and destroy that. See tools/merge_usd_logs.py.
         try:
             allcfs.setParam("usd.logging", 1)
             usd_start = time.monotonic()   # ROS-clock instant of the broadcast, for the merge

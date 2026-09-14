@@ -388,6 +388,13 @@ def main():
         else:
             _f._log_phase('trajectory', yaml_controller, traj_ctrl_mode)
 
+        # 2026-09-14: zero the onboard usec timer before logging starts -- see the long
+        # note in formation_flight.py. Harmless for single-drone flights, keeps this script
+        # consistent if more than one drone is ever enabled here.
+        try:
+            allcfs.setParam('usec.reset', 1)
+        except Exception:
+            pass
         for c in allcfs.crazyflies:
             try:
                 c.setParam('usd.logging', 1)
