@@ -33,7 +33,13 @@ import json
 from .formations import poly4d, safety, scenarios
 
 DATA_DIR = Path(__file__).parent / 'data' / 'formations'
-LOG_DIR = Path('/home/georg/Desktop/flying_robot_course/experiments/logs')
+# 2026-09-14: was hardcoded to this dev machine's own home directory
+# (/home/georg/Desktop/...), which does not exist on the actual lab flight-control PC --
+# "folder/directory not found" the moment a live (non-dry-run) flight tried to write its
+# metadata sidecar. Resolved lazily in main() below, from formation_flight.py's own
+# LOG_DIR (itself flight.py's LOGS_DIR, the one absolute path already confirmed correct
+# on the lab PC) rather than guessing a second hardcoded machine-specific path.
+LOG_DIR = None
 
 _RAMP_CONTROLLER = 6      # geometric SE(3) for takeoff/landing, as formation_flight does
 _RAMP_CTRL_MODE = 0
@@ -95,7 +101,6 @@ def build_parser():
                         'drone 0 (recommended in a tight lab; relative geometry is '
                         'unchanged, only where it flies)')
     s.add_argument('--yes', action='store_true', help='skip the confirmation prompt')
-    s.add_argument('--brushless', action='store_true', help='arm ESCs (required for CF21BL)')
     s.add_argument('--timescale', type=float, default=1.0,
                    help='HLC timescale; >1 slows the trajectory down')
     return p
@@ -282,6 +287,13 @@ def main():
     from crazyflie_py.uav_trajectory import Trajectory
 
     from .formation_flight import DroneLogger, load_controller_config
+    from .formation_flight import LOG_DIR as _FF_LOG_DIR
+
+    # Same base directory formation_flight.py/flight.py already use (the one confirmed
+    # correct on the lab PC), just this runner's own "experiments/logs" subfolder instead
+    # of flight.py's "Controls/logs" -- see the LOG_DIR = None comment above.
+    global LOG_DIR
+    LOG_DIR = _FF_LOG_DIR.parent.parent / 'experiments' / 'logs'
 
     controller, traj_ctrl_mode, indi_gains, pos_gains, per_robot = load_controller_config()
 
@@ -393,10 +405,13 @@ def main():
     end_of_flight_poses = latest
     try:
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
-        if args.brushless:
-            for c in cfs:
-                c.arm(True)
-            th.sleep(0.5)
+        # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
+        # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
+        # is a harmless no-op there and the one CF21BL actually needs. Always do it, or a
+        # brushless drone silently never takes off when --brushless wasn't passed.
+        for c in cfs:
+            c.arm(True)
+        th.sleep(0.5)
         for lg in loggers:
             lg.active = True
 
@@ -434,17 +449,25 @@ def main():
         # impossible for a scenario like A1 where nothing moves.
         t_start = float(th.time())
         meta['t_start_sim'] = f'{t_start:.4f}'
-        sidecar = LOG_DIR / f'{sc.sid}_{stamp}.meta.json'
-        sidecar.parent.mkdir(parents=True, exist_ok=True)
-        with open(sidecar, 'w') as fh:
-            json.dump({'scenario': sc.sid, 'params': sc.params,
-                       'realised': sc.realised,
-                       'roles': [r.role for r in sc.robots],
-                       'names': [c.prefix.lstrip('/') for c in cfs],
-                       'height': args.height, 'anchor': list(map(float, anchor)),
-                       't_start_sim': t_start, 'duration': sc.duration,
-                       'timescale': args.timescale}, fh, indent=2)
-        print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
+        # 2026-09-14: this used to be able to raise (bad LOG_DIR, disk full, permissions)
+        # and, being inside the main try block, skip straight to `finally` -- which does
+        # NOT land the drones. A metadata sidecar failing to write is not a reason to leave
+        # a drone flying; isolate it the same way usd.logging's set/reset calls already are.
+        try:
+            sidecar = LOG_DIR / f'{sc.sid}_{stamp}.meta.json'
+            sidecar.parent.mkdir(parents=True, exist_ok=True)
+            with open(sidecar, 'w') as fh:
+                json.dump({'scenario': sc.sid, 'params': sc.params,
+                           'realised': sc.realised,
+                           'roles': [r.role for r in sc.robots],
+                           'names': [c.prefix.lstrip('/') for c in cfs],
+                           'height': args.height, 'anchor': list(map(float, anchor)),
+                           't_start_sim': t_start, 'duration': sc.duration,
+                           'timescale': args.timescale}, fh, indent=2)
+            print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
+        except Exception as e:
+            print(f'[formation] WARNING: metadata sidecar not written ({e}) -- '
+                  f'flight continues, landing is not skipped')
 
         print(f'[formation] running {sc.sid} ({sc.duration:.1f} s)...')
         allcfs.startTrajectory(0, timescale=args.timescale)
@@ -509,16 +532,19 @@ def main():
             land_durations.append(dur)
             c.land(targetHeight=target_h, duration=dur)
         th.sleep(max(land_durations) + 1.0)
-        if args.brushless:
-            for c in cfs:
-                c.arm(False)
+        for c in cfs:
+            c.arm(False)
     finally:
         for lg in loggers:
             lg.active = False
         if usd_start is not None:
             meta['usd_start_s'] = f'{usd_start - log_t0:.6f}'
         for lg in loggers:
-            lg.save(LOG_DIR / f'{sc.sid}_{lg.name}_{stamp}.csv', meta)
+            try:
+                lg.save(LOG_DIR / f'{sc.sid}_{lg.name}_{stamp}.csv', meta)
+            except Exception as e:
+                print(f'[formation] WARN: {lg.name} log not saved ({e}) -- '
+                      f'{len(lg.rows)} rows lost')
         relative_report(loggers, sc, poses=end_of_flight_poses)
 
 
