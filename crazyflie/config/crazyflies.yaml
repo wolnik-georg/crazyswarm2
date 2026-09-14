@@ -22,9 +22,9 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: false  # 2026-09-14: disabled again -- cf_second alone showed a ~0.35-0.4m
-                    # height shortfall (both in isolated hover and in A8), need a 3-point
-                    # height sweep on cf_second alone to characterize it. RE-ENABLE after.
+    enabled: true  # 2026-09-14: re-enabled -- height sweep confirmed cf_second's ~0.40m
+                   # shortfall is constant, compensation added in flight.py/run_formation.py/
+                   # formation_flight.py. Back to 2-drone A8.
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
