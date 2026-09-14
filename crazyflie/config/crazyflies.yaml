@@ -22,7 +22,9 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: true
+    enabled: false  # 2026-09-14: temporarily disabled to test cf_second alone at 1.4m hover
+                    # (isolating whether it's an A8-scenario interaction or a cf_second-only
+                    # limit) -- RE-ENABLE before any further 2-drone flight.
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
