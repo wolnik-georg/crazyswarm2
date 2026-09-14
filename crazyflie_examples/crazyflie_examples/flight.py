@@ -273,7 +273,33 @@ _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
 _RAMP_POS_GAINS = {"kp_xy": 40.0, "kp_z": 30.0, "kv_xy": 8.0, "kv_z": 10.0}
 
 
-def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
+def _load_per_robot_overrides(cfg: dict) -> dict:
+    """Per-robot firmware_params overrides from crazyflies.yaml's robots: block.
+
+    2026-09-14: duplicated from formation_flight.py's load_per_robot_overrides (not
+    imported -- formation_flight.py imports this module at its own top level, so importing
+    back would be circular). Same fix, same reason: a shared broadcast to every connected
+    drone silently wipes any per-robot override (e.g. cf_second's stabilizer.controller=5
+    pin, or its own mass/kt1-4) unless it is re-pushed last. Returns
+    {robot_name: {"stabilizer.controller": v, "indi_gains.mass": v, ...}}.
+    """
+    out = {}
+    for name, robot in cfg.get("robots", {}).items():
+        fp = robot.get("firmware_params", {})
+        flat = {}
+        ctrl = fp.get("stabilizer", {}).get("controller")
+        if ctrl is not None:
+            flat["stabilizer.controller"] = ctrl
+        for k, v in fp.get("indi_gains", {}).items():
+            flat[f"indi_gains.{k}"] = v
+        for k, v in fp.get("pos_gains", {}).items():
+            flat[f"pos_gains.{k}"] = v
+        if flat:
+            out[name] = flat
+    return out
+
+
+def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict, dict]:
     """Read stabilizer.controller, indi_gains.ctrl_mode, and indi gains from crazyflies.yaml."""
     path = Path(get_package_share_directory("crazyflie")) / "config" / "crazyflies.yaml"
     try:
@@ -296,6 +322,10 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
             "[flight] ERROR: missing all.firmware_params.indi_gains.ctrl_mode in crazyflies.yaml"
         )
         sys.exit(1)
+    # 2026-09-14: added kr_geo/kw_geo/kr_z_geo/kw_z_geo -- the SEPARATE gains ctrl_mode=0
+    # (geometric) actually uses, as opposed to kr/kw (INDI). Same gap already found and
+    # fixed in formation_flight.py's load_controller_config(); this is a separate, duplicate
+    # implementation that never got the fix.
     indi_gains = {
         k: indi[k]
         for k in (
@@ -303,6 +333,10 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
             "kw",
             "kr_z",
             "kw_z",
+            "kr_geo",
+            "kw_geo",
+            "kr_z_geo",
+            "kw_z_geo",
             "fc_bw",
             "mass",
             "kt1",
@@ -321,12 +355,19 @@ def _load_firmware_controller_config() -> tuple[int, int, dict, dict, dict]:
     diag_gains = {
         k: indi[k] for k in ("filt_order", "ff_free", "filt_tau", "notch_en") if k in indi
     }
+    # 2026-09-14: this script had NO per-robot-override mechanism at all -- a completely
+    # separate, duplicate config loader from formation_flight.py's, which already has one
+    # (load_per_robot_overrides, fixed 2026-09-12 for exactly this: a shared broadcast
+    # silently wiping e.g. cf_second's stabilizer.controller=5 pin or its own mass/kt
+    # override). Reusing that same function rather than re-implementing it.
+    per_robot = _load_per_robot_overrides(cfg)
     return (
         int(stabilizer["controller"]),
         int(indi["ctrl_mode"]),
         indi_gains,
         pos_gains,
         diag_gains,
+        per_robot,
     )
 
 
@@ -347,6 +388,7 @@ def _apply_flight_settings(
     ctrl_mode: int,
     indi_gains: dict | None = None,
     pos_gains: dict | None = None,
+    per_robot: dict | None = None,
 ):
     """Set stabilizer.controller, indi_gains.*, pos_gains.* on all drones, settle, then log."""
     for c in allcfs.crazyflies:
@@ -358,6 +400,17 @@ def _apply_flight_settings(
         if pos_gains:
             for k, v in pos_gains.items():
                 c.setParam(f"pos_gains.{k}", float(v))
+    # 2026-09-14: the broadcast above is uniform across the whole swarm -- this is the exact
+    # bug already found and fixed elsewhere (formation_flight.py 2026-09-12, run_formation.py
+    # 2026-09-14): any per-robot override (e.g. cf_second's stabilizer.controller=5 pin) gets
+    # silently wiped by this same call, before takeoff even happens. Re-push each robot's own
+    # overrides last so they always win.
+    if per_robot:
+        for c in allcfs.crazyflies:
+            name = c.prefix.lstrip("/")
+            for key, v in per_robot.get(name, {}).items():
+                is_int_param = key in ("stabilizer.controller", "indi_gains.ctrl_mode")
+                c.setParam(key, int(v) if is_int_param else float(v))
     th.sleep(_CTRL_SETTLE_S)
     _log_phase(phase, controller, ctrl_mode)
 
@@ -966,6 +1019,7 @@ def main():
         indi_gains_from_yaml,
         pos_gains_from_yaml,
         diag_gains_from_yaml,
+        per_robot_from_yaml,
     ) = _load_firmware_controller_config()
     _yaml_indi_gains.update(indi_gains_from_yaml)
     _yaml_pos_gains.update(pos_gains_from_yaml)
@@ -992,7 +1046,8 @@ def main():
         _upload_traj_to_oot(cf, th, onboard_segs, onboard_z_segs, args.height, ox, oy)
 
     _apply_flight_settings(
-        allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE, pos_gains=_RAMP_POS_GAINS
+        allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE,
+        pos_gains=_RAMP_POS_GAINS, per_robot=per_robot_from_yaml,
     )
     if args.brushless:
         for c in allcfs.crazyflies:
@@ -1032,6 +1087,7 @@ def main():
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
                     pos_gains_from_yaml,
+                    per_robot=per_robot_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -1061,6 +1117,7 @@ def main():
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
                     pos_gains_from_yaml,
+                    per_robot=per_robot_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -1181,6 +1238,7 @@ def main():
                     traj_ctrl_mode,
                     indi_gains_from_yaml,
                     pos_gains_from_yaml,
+                    per_robot=per_robot_from_yaml,
                 )
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
@@ -1229,6 +1287,13 @@ def main():
             for c in allcfs.crazyflies:
                 c.setParam("stabilizer.controller", _RAMP_CONTROLLER)
                 c.setParam("indi_gains.ctrl_mode", _RAMP_CTRL_MODE)
+            # 2026-09-14: same uniform-broadcast bug as _apply_flight_settings -- re-push
+            # per-robot overrides (e.g. cf_second's stabilizer.controller=5 pin) last.
+            for c in allcfs.crazyflies:
+                name = c.prefix.lstrip("/")
+                for key, v in per_robot_from_yaml.get(name, {}).items():
+                    is_int_param = key in ("stabilizer.controller", "indi_gains.ctrl_mode")
+                    c.setParam(key, int(v) if is_int_param else float(v))
             th.sleep(0.2)
             _notify_setpoints_stop_sync(cf, th, remain_ms=200)
 
@@ -1242,6 +1307,7 @@ def main():
                 _RAMP_CONTROLLER,
                 _RAMP_CTRL_MODE,
                 pos_gains=_RAMP_POS_GAINS,
+                per_robot=per_robot_from_yaml,
             )
             print("[flight] Landing...")
             allcfs.land(targetHeight=0.06, duration=2.0)
