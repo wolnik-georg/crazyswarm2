@@ -276,24 +276,32 @@ def A7(dz_start: float = 1.10, dz_end: float = 0.10, speed: float = 0.30,
         notes='Continuous separation sweep -- the gradient, not just the levels.')
 
 
-def A8(dz: float = 0.25, span: float = 1.0, duration: float = 6.0, settle: float = 2.0, **_):
+def A8(dz: float = 0.25, span: float = 1.0, duration: float = 6.0, settle: float = 2.0,
+       passes: int = 1, **_):
     """A8 vertical swap, 2 robots. Fixed heights, horizontal side exchange.
 
     At the crossing the horizontal offset is zero and the vertical separation is dz, in
     {0.20, 0.25} m -- the Neural-Swarm geometry. Unlike the static cases the wash arrives
     as a transient with a known arrival time, which is the hardest thing for a
     feed-forward interaction model to get right.
+
+    `passes` (default 1, unchanged, this is the validated matrix's own case): number of
+    one-way crossings. 1 = the original single swap, ending with the vehicles on opposite
+    sides. 2 = there-and-back -- both vehicles cross once, then return to their starting
+    side, so the flight ends where it began. `Shuttle` with `passes=1` is bit-for-bit the
+    same rest-to-rest translation `Line` produced, so the default case is unaffected.
     """
     half = span / 2.0
     return Scenario(
-        'A8', f'Vertical swap (2 robots), dz={dz:.2f} m at crossing, span={span:.2f} m',
+        'A8', f'Vertical swap (2 robots), dz={dz:.2f} m at crossing, span={span:.2f} m, '
+              f'passes={passes}',
         [RobotPlan('bottom', _v(0, -half, 0),
-                   C.Then(C.Pause(settle), C.Line([0.0, span, 0.0], duration))),
+                   C.Then(C.Pause(settle), C.Shuttle([0.0, span, 0.0], duration, passes=passes))),
          RobotPlan('top', _v(0, +half, dz),
-                   C.Then(C.Pause(settle), C.Line([0.0, -span, 0.0], duration)))],
+                   C.Then(C.Pause(settle), C.Shuttle([0.0, -span, 0.0], duration, passes=passes)))],
         tags=['swap', 'data_collection'],
-        params=dict(dz=dz, span=span, duration=duration),
-        notes='Vehicles exchange sides; they are exactly stacked at the midpoint.')
+        params=dict(dz=dz, span=span, duration=duration, passes=passes),
+        notes='Vehicles exchange sides; they are exactly stacked at the midpoint(s).')
 
 
 # ── Priority B -- three robots ──────────────────────────────────────────────
@@ -677,8 +685,13 @@ def check_spec(scenario: Scenario, tol: float = 2e-3) -> list[str]:
         if not (d[:, 1].min() < 0 < d[:, 1].max()):
             bad.append(f'A8: vehicles should exchange sides (dy range '
                        f'{d[:, 1].min():.3f}..{d[:, 1].max():.3f})')
-        if abs(d[0, 1] + d[-1, 1]) > tol:
-            bad.append('A8: start and end lateral offsets should be exact opposites')
+        if p.get('passes', 1) % 2 == 1:
+            if abs(d[0, 1] + d[-1, 1]) > tol:
+                bad.append('A8: start and end lateral offsets should be exact opposites')
+        else:
+            if abs(d[0, 1] - d[-1, 1]) > tol:
+                bad.append('A8: an even number of passes should return to the start '
+                            'lateral offset')
     elif sid in ('B1', 'B2'):
         for (i, j, want, name) in ((1, 0, p['dz2'], 'dz2'), (2, 1, p['dz1'], 'dz1')):
             d = rel(i, j)
