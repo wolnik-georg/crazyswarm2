@@ -283,7 +283,7 @@ def main():
 
     from .formation_flight import DroneLogger, load_controller_config
 
-    controller, traj_ctrl_mode, indi_gains, pos_gains = load_controller_config()
+    controller, traj_ctrl_mode, indi_gains, pos_gains, per_robot = load_controller_config()
 
     swarm = Crazyswarm()
     th = swarm.timeHelper
@@ -375,6 +375,17 @@ def main():
                 c.setParam(f'indi_gains.{k}', float(v))
             for k, v in (pgains or {}).items():
                 c.setParam(f'pos_gains.{k}', float(v))
+        # 2026-09-14: same fix as formation_flight.py's apply() (crazyswarm2 fdfc640,
+        # 2026-09-12) -- the broadcast above is uniform across the whole swarm, so
+        # cf_second's stock-Lee pin (or any other per-robot override, e.g. cf231_active's
+        # temporary ctrl_mode) gets silently wiped by this same call, before takeoff even
+        # happens. This file never got that fix when formation_flight.py did. Re-push each
+        # robot's own overrides last so they always win.
+        for c in cfs:
+            name = c.prefix.lstrip('/')
+            for key, v in per_robot.get(name, {}).items():
+                is_int_param = key in ('stabilizer.controller', 'indi_gains.ctrl_mode')
+                c.setParam(key, int(v) if is_int_param else float(v))
         th.sleep(_CTRL_SETTLE_S)
         print(f'[formation] {phase}: controller={ctrl} ctrl_mode={mode_}')
 
