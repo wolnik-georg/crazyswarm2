@@ -120,9 +120,18 @@ def load_controller_config():
               "stabilizer.controller or .indi_gains.ctrl_mode")
         sys.exit(1)
     per_robot = load_per_robot_overrides(cfg)
+    # 2026-09-14: kr_geo/kw_geo/kr_z_geo/kw_z_geo (the SEPARATE, geometric-only attitude
+    # gains used when ctrl_mode=0 -- see the yaml's own extensive comment on why these must
+    # never be confused with kr/kw, the INDI pair) were missing from this whitelist, so
+    # apply() never pushed them -- a geometric flight ran on whatever kr_geo/kw_geo
+    # happened to already be resident on the drone (a stale value from a previous session,
+    # or the firmware's compiled-in default), not the yaml's tuned values. First surfaced
+    # 2026-09-14 when cf231_active's first geometric flight via this script looked
+    # wrongly-tuned.
     gains = {k: indi[k] for k in
-             ("kr", "kw", "kr_z", "kw_z", "fc_bw", "mass",
-              "kt1", "kt2", "kt3", "kt4", "j_scale", "notch_f0", "notch_bw") if k in indi}
+             ("kr", "kw", "kr_z", "kw_z", "kr_geo", "kw_geo", "kr_z_geo", "kw_z_geo",
+              "fc_bw", "mass", "kt1", "kt2", "kt3", "kt4", "j_scale",
+              "notch_f0", "notch_bw") if k in indi}
     pos = fp.get("pos_gains", {})
     pos_gains = {k: pos[k] for k in ("kp_xy", "kp_z", "kv_xy", "kv_z") if k in pos}
     return int(stab["controller"]), int(indi["ctrl_mode"]), gains, pos_gains, per_robot
