@@ -26,6 +26,12 @@ robots:
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
+    # 2026-09-14: temporary override for today's geometric-first A8 flight -- the shared
+    # `all:` default is ctrl_mode=3 (full INDI). REMOVE this override before flying step 2
+    # (full INDI) so cf231_active falls back to that shared default.
+    firmware_params:
+      indi_gains:
+        ctrl_mode: 0   # geometric, for today's first A8 flight
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -61,7 +67,9 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-13: temporarily disabled to isolate a connect hang -- re-enable after
+    enabled: true                        # 2026-09-14: re-enabled -- the 09-13 hang was root-caused to
+                                          # cf231_active's wrong firmware platform/bootloader, unrelated to
+                                          # cf_second (see docs/lab_sessions/2026-09-13.md)
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
     type: cf21                           # standard CF2.1 -- fine indefinitely, see above
@@ -159,7 +167,7 @@ all:
     custom_topics:
       # /cf231/state — pos + vel (6 floats = 24 bytes, fits in one CRTP log packet)
       state:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["stateEstimate.x", "stateEstimate.y", "stateEstimate.z",
                "stateEstimate.vx", "stateEstimate.vy", "stateEstimate.vz"]
       # /cf231/attitude — attitude + thrust + battery (5 floats = 20 bytes)
@@ -170,24 +178,24 @@ all:
       # run at 100Hz without issue, so bandwidth headroom exists. Revert to 20 if this
       # causes radio packet loss/log gaps.
       attitude:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["stabilizer.roll", "stabilizer.pitch", "stabilizer.yaw",
                "stabilizer.thrust", "pm.vbat"]
       # /cf231/gyro_acc — gyro and accelerometer (6 floats = 24 bytes)
       # Bumped 20 -> 100 Hz alongside attitude above, same reason.
       gyro_acc:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
       # /cf231/indi_state — INDI torques + filtered alpha (6 floats = 24 bytes)
       # tau_{x,y,z}: torque command [Nm] — non-zero only in mode>=2.
       # alp_{x,y,z}: BW-filtered angular acceleration [rad/s²] — logged in ALL modes.
       indi_state:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["indi.tau_x", "indi.tau_y", "indi.tau_z",
                "indi.alp_x", "indi.alp_y", "indi.alp_z"]
       # /cf231/indi_alp_raw — pre-filter angular accel (3 floats = 12 bytes, separate packet)
       indi_alp_raw:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z"]
       # /cfXXX/indi_e_r — geometric attitude error e_R (Lee et al. 2010), the same vector used
       # in the torque law. Present under every ctrl_mode (0-3), not only INDI. Mandatory copy
@@ -202,7 +210,7 @@ all:
       # formation. THE core measurement for the thesis. Logged in ALL controller modes (needs an
       # RPM source only), so downwash can be recorded while flying plain geometric too.
       indi_a_res:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["indi.a_res_x", "indi.a_res_y", "indi.a_res_z"]
       # /cfXXX/rnn_pred — learned residual prediction a_res_hat [m/s^2], world frame, plus the
       # clamp flag. Comparing this against indi_a_res above IS the evaluation of every learned
@@ -221,7 +229,7 @@ all:
       # (shake investigation): always computed/logged regardless of indi_gains.notch_en so
       # alp_raw / alp (stage-1 BW) / alp_notch (stage-2 notch) can be compared from one flight.
       indi_alp_notch:
-        frequency: 100 # Hz
+        frequency: 20 # Hz  # 2026-09-14: dropped from 100 for 2-drone radio headroom (uSD is the real dataset)
         vars: ["indi.alp_notch_x", "indi.alp_notch_y", "indi.alp_notch_z"]
       # /cf231/indi_filter_char — FILTER CHARACTERISATION ONLY (swap with indi_state above)
       # fc_bw=70 Hz confirmed 2026-07-11 on UPGRADED drone (same result as standard 2026-07-03).
