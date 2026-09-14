@@ -369,6 +369,12 @@ class CrazyflieSIL:
         self.sensors.gyro.y = np.degrees(state.omega[1])
         self.sensors.gyro.z = np.degrees(state.omega[2])
 
+        # gyroNoLpf: the sim applies no software LPF to begin with, so the unfiltered
+        # signal controller=7 (naindi.rs) reads is the same ground-truth omega as gyro.
+        self.sensors.gyroNoLpf.x = self.sensors.gyro.x
+        self.sensors.gyroNoLpf.y = self.sensors.gyro.y
+        self.sensors.gyroNoLpf.z = self.sensors.gyro.z
+
         # Actual rotor speeds, if this backend reports them. Backends that do not still
         # fall back to the commanded value below, so nothing changes for them.
         rpm = getattr(state, 'rpm', None)
