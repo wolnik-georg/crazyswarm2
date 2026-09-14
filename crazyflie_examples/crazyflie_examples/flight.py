@@ -405,14 +405,25 @@ def _apply_flight_settings(
     # 2026-09-14): any per-robot override (e.g. cf_second's stabilizer.controller=5 pin) gets
     # silently wiped by this same call, before takeoff even happens. Re-push each robot's own
     # overrides last so they always win.
+    effective_controller, effective_ctrl_mode = controller, ctrl_mode
     if per_robot:
         for c in allcfs.crazyflies:
             name = c.prefix.lstrip("/")
-            for key, v in per_robot.get(name, {}).items():
+            overrides = per_robot.get(name, {})
+            for key, v in overrides.items():
                 is_int_param = key in ("stabilizer.controller", "indi_gains.ctrl_mode")
                 c.setParam(key, int(v) if is_int_param else float(v))
+            # 2026-09-14: the meta log used to always print the shared `all:` broadcast
+            # value even when a per-robot override won on the wire (e.g. cf_second's
+            # stabilizer.controller=5 pin) -- made the log actively misleading about what
+            # the connected drone actually ran under. Single-drone tests log one set of
+            # values, so take the first connected robot's effective (post-override) values.
+            if "stabilizer.controller" in overrides:
+                effective_controller = int(overrides["stabilizer.controller"])
+            if "indi_gains.ctrl_mode" in overrides:
+                effective_ctrl_mode = int(overrides["indi_gains.ctrl_mode"])
     th.sleep(_CTRL_SETTLE_S)
-    _log_phase(phase, controller, ctrl_mode)
+    _log_phase(phase, effective_controller, effective_ctrl_mode)
 
 
 # ── Filename helpers ────────────────────────────────────────────────────────
