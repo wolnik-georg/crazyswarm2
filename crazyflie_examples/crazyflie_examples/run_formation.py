@@ -393,19 +393,38 @@ def main():
     meta.update({f'pos_{k}': v for k, v in pos_gains.items()})
 
     def apply(phase, ctrl, mode_, gains=None, pgains=None):
+        # 2026-09-15: the shared broadcast below and the per-robot override re-push used to
+        # be two SEPARATE radio round-trips -- broadcast the shared value to everyone first,
+        # then correct any per-robot-pinned drone back to its own value a moment later. In
+        # between, a pinned drone (e.g. cf_second on stock Lee) genuinely ran the SHARED
+        # controller/gains -- our OOT/INDI controller, tuned for a different airframe's
+        # mass/kt -- for however long that gap took. That is a real physical bad-torque
+        # command, not a logging artifact: it's what caused the mid-flight tumbles that
+        # night (both cf_second and cf231_active glitched at the exact same elapsed time in
+        # every A8 flight, regardless of scenario length, because apply('scenario', ...)
+        # always fires at the same point in the sequence). Fix: a per-robot override key is
+        # never sent in the shared broadcast at all -- only the override loop sets it, so
+        # each param is written exactly once. See docs/lab_sessions/2026-09-15.md.
         for c in cfs:
-            c.setParam('stabilizer.controller', ctrl)
-            c.setParam('indi_gains.ctrl_mode', mode_)
+            name = c.prefix.lstrip('/')
+            overrides = per_robot.get(name, {})
+            if 'stabilizer.controller' not in overrides:
+                c.setParam('stabilizer.controller', ctrl)
+            if 'indi_gains.ctrl_mode' not in overrides:
+                c.setParam('indi_gains.ctrl_mode', mode_)
             for k, v in (gains or {}).items():
-                c.setParam(f'indi_gains.{k}', float(v))
+                key = f'indi_gains.{k}'
+                if key not in overrides:
+                    c.setParam(key, float(v))
             for k, v in (pgains or {}).items():
-                c.setParam(f'pos_gains.{k}', float(v))
+                key = f'pos_gains.{k}'
+                if key not in overrides:
+                    c.setParam(key, float(v))
         # 2026-09-14: same fix as formation_flight.py's apply() (crazyswarm2 fdfc640,
-        # 2026-09-12) -- the broadcast above is uniform across the whole swarm, so
-        # cf_second's stock-Lee pin (or any other per-robot override, e.g. cf231_active's
-        # temporary ctrl_mode) gets silently wiped by this same call, before takeoff even
-        # happens. This file never got that fix when formation_flight.py did. Re-push each
-        # robot's own overrides last so they always win.
+        # 2026-09-12) -- any per-robot firmware_params override (e.g. cf_second's own
+        # stock-Lee pin, or cf231_active's temporary ctrl_mode) must still be (re-)applied
+        # here -- this is the only place these values are set now that the loop above skips
+        # them in the shared broadcast.
         for c in cfs:
             name = c.prefix.lstrip('/')
             for key, v in per_robot.get(name, {}).items():

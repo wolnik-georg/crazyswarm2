@@ -398,20 +398,39 @@ def _apply_flight_settings(
     per_robot: dict | None = None,
 ):
     """Set stabilizer.controller, indi_gains.*, pos_gains.* on all drones, settle, then log."""
+    # 2026-09-15: the broadcast below and the per-robot override re-push used to be two
+    # SEPARATE radio round-trips -- broadcast the shared value to everyone first, then
+    # correct any per-robot-pinned drone back to its own value a moment later. In between,
+    # a pinned drone (e.g. cf_second on stock Lee) genuinely ran the SHARED controller/gains
+    # -- our OOT/INDI controller, tuned for a different airframe's mass/kt -- for however
+    # long that gap took. That is a real physical bad-torque command, not a logging
+    # artifact: it's what caused mid-flight tumbles in formation_flight.py/run_formation.py
+    # that night, at the exact same elapsed time in every flight regardless of scenario
+    # length, because this apply happens at the same point in the sequence every time. Fix:
+    # a per-robot override key is never sent in the shared broadcast at all -- only the
+    # override loop sets it, so each param is written exactly once. See
+    # docs/lab_sessions/2026-09-15.md.
     for c in allcfs.crazyflies:
-        c.setParam("stabilizer.controller", controller)
-        c.setParam("indi_gains.ctrl_mode", ctrl_mode)
+        name = c.prefix.lstrip("/")
+        overrides = (per_robot or {}).get(name, {})
+        if "stabilizer.controller" not in overrides:
+            c.setParam("stabilizer.controller", controller)
+        if "indi_gains.ctrl_mode" not in overrides:
+            c.setParam("indi_gains.ctrl_mode", ctrl_mode)
         if indi_gains:
             for k, v in indi_gains.items():
-                c.setParam(f"indi_gains.{k}", float(v))
+                key = f"indi_gains.{k}"
+                if key not in overrides:
+                    c.setParam(key, float(v))
         if pos_gains:
             for k, v in pos_gains.items():
-                c.setParam(f"pos_gains.{k}", float(v))
-    # 2026-09-14: the broadcast above is uniform across the whole swarm -- this is the exact
-    # bug already found and fixed elsewhere (formation_flight.py 2026-09-12, run_formation.py
-    # 2026-09-14): any per-robot override (e.g. cf_second's stabilizer.controller=5 pin) gets
-    # silently wiped by this same call, before takeoff even happens. Re-push each robot's own
-    # overrides last so they always win.
+                key = f"pos_gains.{k}"
+                if key not in overrides:
+                    c.setParam(key, float(v))
+    # 2026-09-14: the exact bug already found and fixed elsewhere (formation_flight.py
+    # 2026-09-12, run_formation.py 2026-09-14): any per-robot override (e.g. cf_second's
+    # stabilizer.controller=5 pin) must still be (re-)applied here -- this is the only place
+    # these values are set now that the loop above skips them in the shared broadcast.
     effective_controller, effective_ctrl_mode = controller, ctrl_mode
     if per_robot:
         for c in allcfs.crazyflies:
