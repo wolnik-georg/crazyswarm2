@@ -601,6 +601,29 @@ def main():
             except Exception as e:
                 print(f'[formation] WARN: {lg.name} log not saved ({e}) -- '
                       f'{len(lg.rows)} rows lost')
+
+        # 2026-09-15: twice tonight a per-drone radio log came out with the right number of
+        # rows but EVERY value zero -- the subscriber was alive, the drone's log topics simply
+        # published nothing. Both times only one drone was affected, and both times it was
+        # noticed hours later during analysis, not in the lab. A silent all-zero log is
+        # indistinguishable from a real file until you open it, so say it out loud NOW, while
+        # the drone is still on the bench and the flight can simply be repeated.
+        for lg in loggers:
+            rows = getattr(lg, 'rows', None)
+            if not rows:
+                continue
+            try:
+                # any non-zero value anywhere in the numeric payload means the link carried data
+                alive = any(any(abs(float(v)) > 0.0 for v in r[1:]) for r in rows)
+            except (TypeError, ValueError):
+                alive = True   # unexpected row shape -- don't cry wolf
+            if not alive:
+                print(f'[formation] ***** WARNING: {lg.name} radio log is ALL ZERO across '
+                      f'{len(rows)} rows *****')
+                print(f'[formation]       The log topics published nothing for this drone. The '
+                      f'uSD log (if the deck is fitted) is unaffected and still valid, but this '
+                      f'drone has NO radio telemetry for this flight. Re-fly if you need it.')
+
         relative_report(loggers, sc, poses=end_of_flight_poses)
 
 
