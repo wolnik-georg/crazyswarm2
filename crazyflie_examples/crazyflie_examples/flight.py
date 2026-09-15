@@ -1082,6 +1082,25 @@ def main():
         print("[flight] Uploading onboard trajectory (OOT active, drone on ground)...")
         _upload_traj_to_oot(cf, th, onboard_segs, onboard_z_segs, args.height, ox, oy)
 
+    # ── usec.reset MUST happen HERE, ON THE GROUND, BEFORE TAKEOFF ──────────────────
+    # 2026-09-14 added this broadcast mid-flight, right before usd.logging=1.
+    # 2026-09-15: that CRASHED EVERY FLIGHT, on every scenario including a pure A1 hover.
+    # The high-level commander's entire time base is this same clock
+    # (crtp_commander_high_level.c: `float t = usecTimestamp() / 1e6;`), and the planner
+    # stores `t_begin` from it when takeoff/goTo starts. Zeroing the timer mid-flight
+    # leaves t_begin holding a large value, so piecewise_eval computes `t - t_begin` ~=
+    # MINUS several hundred seconds, evaluates a degree-7 polynomial far outside its
+    # domain, and hands the controller an astronomically wrong setpoint -- motors cut or
+    # the vehicle slams over, within one HLC tick. On the ground the planner is IDLE (no
+    # t_begin in use) and takeoff samples the clock AFTER the reset, so the time base
+    # stays monotonic for the whole flight. uSD logs still get their shared origin: what
+    # matters is that every drone's clock is zeroed together, not that logging starts at
+    # exactly t=0.
+    try:
+        allcfs.setParam("usec.reset", 1)
+    except Exception:
+        pass
+
     _apply_flight_settings(
         allcfs, th, "takeoff", _RAMP_CONTROLLER, _RAMP_CTRL_MODE,
         pos_gains=_RAMP_POS_GAINS, per_robot=per_robot_from_yaml,
@@ -1285,14 +1304,11 @@ def main():
             else:
                 _log_phase("trajectory", yaml_controller, traj_ctrl_mode)
             print("[flight] Starting trajectory...")
-            # 2026-09-14: zero the onboard usec timer before logging starts -- see the long
-            # note in formation_flight.py. Harmless for single-drone flights (no relative
-            # offset to matter), but keeps this script consistent if more than one drone is
-            # ever enabled here.
-            try:
-                allcfs.setParam("usec.reset", 1)
-            except Exception:
-                pass
+            # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground,
+            # before takeoff -- see the long comment at that call site. Sending it at this
+            # point (mid-flight, which is where it originally sat from 2026-09-14 until
+            # 2026-09-15) destroys the high-level commander's time base and crashes the
+            # vehicle within one control tick.
             for c in allcfs.crazyflies:
                 try:
                     c.setParam("usd.logging", 1)

@@ -436,6 +436,26 @@ def main():
     usd_start = None
     end_of_flight_poses = latest
     try:
+        # ── usec.reset MUST happen HERE, ON THE GROUND, BEFORE TAKEOFF ──────────────
+        # 2026-09-15: this broadcast was originally placed mid-flight, right before
+        # usd.logging=1. That CRASHED EVERY FLIGHT, on every scenario including a pure
+        # A1 hover. The high-level commander's entire time base is this same clock
+        # (crtp_commander_high_level.c: `float t = usecTimestamp() / 1e6;`), and the
+        # planner stores `t_begin` from it when takeoff/goTo starts. Zeroing the timer
+        # mid-flight leaves t_begin holding a large value, so piecewise_eval computes
+        # `t - t_begin` ~= MINUS several hundred seconds, evaluates a degree-7 polynomial
+        # far outside its domain, and hands the controller an astronomically wrong
+        # setpoint -- motors cut or the vehicle slams over, within one HLC tick.
+        # On the ground the planner is IDLE (no t_begin in use) and takeoff samples the
+        # clock AFTER the reset, so the time base stays monotonic for the whole flight.
+        # uSD logs still get their shared origin: what matters is that every drone's
+        # clock is zeroed together, not that logging starts at exactly t=0.
+        try:
+            allcfs.setParam('usec.reset', 1)
+        except Exception as e:
+            print(f'[formation] WARN: usec.reset broadcast failed ({e}) -- uSD timestamps may '
+                  f'carry a per-drone offset')
+
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
@@ -468,19 +488,10 @@ def main():
 
         apply('scenario', controller, traj_ctrl_mode, indi_gains, pos_gains)
 
-        # 2026-09-15: run_formation.py never had this -- formation_flight.py and flight.py got
-        # it 2026-09-14, and a stale comment below already claimed it was here. It wasn't, which
-        # is exactly why tonight's A8 uSD logs showed no clock reset at all: each drone's
-        # usecTimestamp() free-runs from its own power-on, so without a shared broadcast reset
-        # right before logging starts, per-drone uSD timestamps carry an unknown, per-drone
-        # offset with no way to line them up except post-hoc correlation against a known
-        # trajectory. One broadcast, BEFORE usd.logging=1, fixes it going forward.
-        try:
-            allcfs.setParam('usec.reset', 1)
-        except Exception as e:
-            print(f'[formation] WARN: usec.reset broadcast failed ({e}) -- uSD timestamps may '
-                  f'carry a per-drone offset')
-
+        # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
+        # takeoff -- see the long comment at the top of this try block. Sending it at this
+        # point (mid-flight, which is where it originally sat) destroys the high-level
+        # commander's time base and crashes the vehicle within one control tick.
         try:
             allcfs.setParam('usd.logging', 1)
             usd_start = time.monotonic()

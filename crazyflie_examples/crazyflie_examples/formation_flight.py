@@ -480,6 +480,26 @@ def main():
         print(f"[formation] {phase}: controller={ctrl} ctrl_mode={mode_}")
 
     try:
+        # ── usec.reset MUST happen HERE, ON THE GROUND, BEFORE TAKEOFF ──────────────
+        # 2026-09-14 added this broadcast mid-flight, right before usd.logging=1.
+        # 2026-09-15: that CRASHED EVERY FLIGHT, on every scenario including a pure A1
+        # hover. The high-level commander's entire time base is this same clock
+        # (crtp_commander_high_level.c: `float t = usecTimestamp() / 1e6;`), and the
+        # planner stores `t_begin` from it when takeoff/goTo starts. Zeroing the timer
+        # mid-flight leaves t_begin holding a large value, so piecewise_eval computes
+        # `t - t_begin` ~= MINUS several hundred seconds, evaluates a degree-7 polynomial
+        # far outside its domain, and hands the controller an astronomically wrong
+        # setpoint -- motors cut or the vehicle slams over, within one HLC tick.
+        # On the ground the planner is IDLE (no t_begin in use) and takeoff samples the
+        # clock AFTER the reset, so the time base stays monotonic for the whole flight.
+        # uSD logs still get their shared origin: what matters is that every drone's
+        # clock is zeroed together, not that logging starts at exactly t=0.
+        try:
+            allcfs.setParam("usec.reset", 1)
+        except Exception as e:
+            print(f"[formation] WARN: usec.reset broadcast failed ({e}) -- uSD timestamps "
+                  f"may carry a per-drone offset")
+
         apply("takeoff", ramp_controller, ramp_ctrl_mode)
         # Arming is a generic Crazyflie safety gate, not brushless-specific: standard CF2.1
         # auto-arms by default (supervisor.c: "we do not require an arming action by the
@@ -552,18 +572,11 @@ def main():
         except Exception as e:
             print(f"[formation] WARN: sidecar meta.json not written ({e}) -- continuing flight")
 
-        # 2026-09-14: zero every drone's onboard usec timer BEFORE starting uSD logging.
-        # usecTimestamp() free-runs from each drone's own power-on, so without this every
-        # log's absolute timestamp values carry a constant, per-drone offset (not drift --
-        # a fixed offset set at boot). Stock firmware already exposes this exact fix as a
-        # broadcastable param (usec_time.c, PARAM_GROUP usec/reset), documented upstream as
-        # "useful for time synchronization between UAVs, if reset is sent as a broadcast" --
-        # we were never calling it. Must happen as its own broadcast before the uSD-start
-        # broadcast below, so every drone's samples are timestamped from a shared zero.
-        try:
-            allcfs.setParam("usec.reset", 1)
-        except Exception as e:
-            print(f"[formation] WARN: usec.reset broadcast failed ({e}) — uSD timestamps may carry a per-drone offset")
+        # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
+        # takeoff -- see the long comment at that call site. Sending it at this point
+        # (mid-flight, which is where it originally sat from 2026-09-14 until 2026-09-15)
+        # destroys the high-level commander's time base and crashes the vehicle within one
+        # control tick.
 
         # uSD logging start — ONE BROADCAST, not a per-drone loop. This is what makes the
         # per-drone SD logs mergeable: each drone stamps samples with its own usecTimestamp()
