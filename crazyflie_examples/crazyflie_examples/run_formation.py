@@ -449,6 +449,19 @@ def main():
 
         apply('scenario', controller, traj_ctrl_mode, indi_gains, pos_gains)
 
+        # 2026-09-15: run_formation.py never had this -- formation_flight.py and flight.py got
+        # it 2026-09-14, and a stale comment below already claimed it was here. It wasn't, which
+        # is exactly why tonight's A8 uSD logs showed no clock reset at all: each drone's
+        # usecTimestamp() free-runs from its own power-on, so without a shared broadcast reset
+        # right before logging starts, per-drone uSD timestamps carry an unknown, per-drone
+        # offset with no way to line them up except post-hoc correlation against a known
+        # trajectory. One broadcast, BEFORE usd.logging=1, fixes it going forward.
+        try:
+            allcfs.setParam('usec.reset', 1)
+        except Exception as e:
+            print(f'[formation] WARN: usec.reset broadcast failed ({e}) -- uSD timestamps may '
+                  f'carry a per-drone offset')
+
         try:
             allcfs.setParam('usd.logging', 1)
             usd_start = time.monotonic()
