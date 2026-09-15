@@ -392,6 +392,64 @@ def main():
     meta.update({f'indi_{k}': v for k, v in indi_gains.items()})
     meta.update({f'pos_{k}': v for k, v in pos_gains.items()})
 
+    # ── What each drone ACTUALLY flies ──────────────────────────────────────────────
+    # 2026-09-15: the meta above is the shared `all:` block, and until now it was written
+    # verbatim into EVERY drone's log. Any drone with its own per-robot firmware_params
+    # (cf_second's permanent stock-Lee pin, cf231_active's geometric pin) therefore had its
+    # log claim a controller and gain set it never ran -- e.g. every A8 since 2026-09-14
+    # recorded ctrl_mode=3/full INDI while cf231_active actually flew ctrl_mode=0/geometric
+    # with different pos_gains. The flights were correct; the metadata was not, which is
+    # worse, because it silently mislabels the dataset for any later analysis that groups
+    # by controller.
+    #
+    # Per-robot config is a first-class, supported thing: each drone may run its own
+    # controller and its own gains, or the same as everyone else. So resolve it explicitly
+    # per drone and write THAT into that drone's own log.
+    def effective_for(name):
+        """Resolve the config this specific drone actually flies: the shared `all:` block
+        with its own robots.<name>.firmware_params applied on top (which is exactly the
+        precedence apply() enforces on the wire)."""
+        eff = {'controller': controller, 'ctrl_mode': traj_ctrl_mode,
+               'indi': dict(indi_gains), 'pos': dict(pos_gains)}
+        for key, v in per_robot.get(name, {}).items():
+            if key == 'stabilizer.controller':
+                eff['controller'] = int(v)
+            elif key == 'indi_gains.ctrl_mode':
+                eff['ctrl_mode'] = int(v)
+            elif key.startswith('indi_gains.'):
+                eff['indi'][key.split('.', 1)[1]] = float(v)
+            elif key.startswith('pos_gains.'):
+                eff['pos'][key.split('.', 1)[1]] = float(v)
+        return eff
+
+    def meta_for(name):
+        """This drone's own log metadata: scenario info, plus ITS effective config."""
+        m = dict(meta)
+        eff = effective_for(name)
+        m['controller'] = eff['controller']
+        m['ctrl_mode'] = eff['ctrl_mode']
+        m.update({f'indi_{k}': v for k, v in eff['indi'].items()})
+        m.update({f'pos_{k}': v for k, v in eff['pos'].items()})
+        # Make the distinction explicit rather than something to infer by diffing files.
+        m['config_source'] = ('all+robot_override' if per_robot.get(name) else 'all')
+        m['shared_controller'] = controller
+        m['shared_ctrl_mode'] = traj_ctrl_mode
+        # indi_gains/pos_gains/ctrl_mode are consumed by OUR OOT controller (6) only. A
+        # drone pinned to a stock firmware controller (e.g. cf_second on stock Lee, 5)
+        # ignores them entirely, so recording them unqualified would imply they shaped that
+        # flight. Flag it instead of dropping them -- the values are still the ones that
+        # were pushed, they just had no effect on this vehicle.
+        m['gains_apply'] = 1 if eff['controller'] == 6 else 0
+        return m
+
+    effective = {c.prefix.lstrip('/'): effective_for(c.prefix.lstrip('/')) for c in cfs}
+    print('\n[formation] per-drone effective config (what each vehicle actually flies):')
+    for n, e in effective.items():
+        src = 'own override' if per_robot.get(n) else 'shared all:'
+        print(f'    {n:14s} controller={e["controller"]} ctrl_mode={e["ctrl_mode"]}  '
+              f'pos_gains kp_xy={e["pos"].get("kp_xy")} kv_xy={e["pos"].get("kv_xy")} '
+              f'kp_z={e["pos"].get("kp_z")} kv_z={e["pos"].get("kv_z")}   [{src}]')
+
     def apply(phase, ctrl, mode_, gains=None, pgains=None):
         # 2026-09-15: the shared broadcast below and the per-robot override re-push used to
         # be two SEPARATE radio round-trips -- broadcast the shared value to everyone first,
@@ -519,7 +577,12 @@ def main():
                            'names': [c.prefix.lstrip('/') for c in cfs],
                            'height': args.height, 'anchor': list(map(float, anchor)),
                            't_start_sim': t_start, 'duration': sc.duration,
-                           'timescale': args.timescale}, fh, indent=2)
+                           'timescale': args.timescale,
+                           # 2026-09-15: per-drone effective config, so the sidecar records
+                           # what each vehicle actually flew rather than only the shared
+                           # block. Drones may run the same controller or different ones;
+                           # either way this is the authoritative record for the flight.
+                           'per_drone': effective}, fh, indent=2)
             print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
         except Exception as e:
             print(f'[formation] WARNING: metadata sidecar not written ({e}) -- '
@@ -597,7 +660,7 @@ def main():
             meta['usd_start_s'] = f'{usd_start - log_t0:.6f}'
         for lg in loggers:
             try:
-                lg.save(LOG_DIR / f'{sc.sid}_{lg.name}_{stamp}.csv', meta)
+                lg.save(LOG_DIR / f'{sc.sid}_{lg.name}_{stamp}.csv', meta_for(lg.name))
             except Exception as e:
                 print(f'[formation] WARN: {lg.name} log not saved ({e}) -- '
                       f'{len(lg.rows)} rows lost')

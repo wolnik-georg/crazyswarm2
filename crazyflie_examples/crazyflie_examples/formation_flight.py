@@ -438,6 +438,50 @@ def main():
     meta.update({f"indi_{k}": v for k, v in indi_gains.items()})
     meta.update({f"pos_{k}": v for k, v in pos_gains.items()})
 
+    # ── What each drone ACTUALLY flies (see run_formation.py for the full rationale) ──
+    # 2026-09-15: the meta above is the shared `all:` block and used to be written verbatim
+    # into EVERY drone's log, so any drone with its own per-robot firmware_params had its log
+    # claim a controller and gains it never ran. Per-drone config is first-class -- each drone
+    # may run its own controller or the same as everyone else -- so resolve it explicitly and
+    # write THAT into that drone's own log.
+    def effective_for(name):
+        eff = {"controller": controller, "ctrl_mode": traj_ctrl_mode,
+               "indi": dict(indi_gains), "pos": dict(pos_gains)}
+        for key, v in per_robot.get(name, {}).items():
+            if key == "stabilizer.controller":
+                eff["controller"] = int(v)
+            elif key == "indi_gains.ctrl_mode":
+                eff["ctrl_mode"] = int(v)
+            elif key.startswith("indi_gains."):
+                eff["indi"][key.split(".", 1)[1]] = float(v)
+            elif key.startswith("pos_gains."):
+                eff["pos"][key.split(".", 1)[1]] = float(v)
+        return eff
+
+    def meta_for(name):
+        m = dict(meta)
+        eff = effective_for(name)
+        m["controller"] = eff["controller"]
+        m["ctrl_mode"] = eff["ctrl_mode"]
+        m.update({f"indi_{k}": v for k, v in eff["indi"].items()})
+        m.update({f"pos_{k}": v for k, v in eff["pos"].items()})
+        m["config_source"] = ("all+robot_override" if per_robot.get(name) else "all")
+        m["shared_controller"] = controller
+        m["shared_ctrl_mode"] = traj_ctrl_mode
+        # gains are consumed by our OOT controller (6) only; a stock-firmware controller
+        # ignores them, so flag that rather than implying they shaped the flight.
+        m["gains_apply"] = 1 if eff["controller"] == 6 else 0
+        return m
+
+    print("\n[formation] per-drone effective config (what each vehicle actually flies):")
+    for c in cfs:
+        nm = c.prefix.lstrip("/")
+        e = effective_for(nm)
+        src = "own override" if per_robot.get(nm) else "shared all:"
+        print(f"    {nm:14s} controller={e['controller']} ctrl_mode={e['ctrl_mode']}  "
+              f"pos_gains kp_xy={e['pos'].get('kp_xy')} kv_xy={e['pos'].get('kv_xy')} "
+              f"kp_z={e['pos'].get('kp_z')} kv_z={e['pos'].get('kv_z')}   [{src}]")
+
     def apply(phase, ctrl, mode_, gains=None, pgains=None):
         # 2026-09-15: the shared broadcast below and the per-robot override re-push used to
         # be two SEPARATE radio round-trips -- broadcast the shared value to everyone first,
@@ -656,7 +700,7 @@ def main():
         label = f"{args.trajectory}_{args.formation}{args.separation:.2f}"
         for lg in loggers:
             try:
-                lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta)
+                lg.save(LOG_DIR / f"{label}_{lg.name}_{stamp}.csv", meta_for(lg.name))
             except Exception as e:
                 print(f"[formation] WARN: {lg.name} log not saved ({e}) -- "
                       f"{len(lg.rows)} rows lost")
