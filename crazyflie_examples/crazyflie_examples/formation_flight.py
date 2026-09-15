@@ -331,10 +331,11 @@ def main():
     if per_robot:
         print(f"[formation] per-robot firmware_params overrides (re-applied after every "
               f"broadcast, so they always win last): {per_robot}")
-    if controller == 6 and traj_ctrl_mode == 0:
-        pos_gains = dict(GEOMETRIC_POS_GAINS)
-        print(f"[formation] ctrl_mode=0: using GEOMETRIC_POS_GAINS {pos_gains}, "
-              f"not crazyflies.yaml's INDI-tuned pos_gains")
+    # NOTE: the geometric-pos_gains substitution that used to live here (keyed on the SHARED
+    # ctrl_mode) moved into resolve() below, where it is decided PER DRONE. Keying it on the
+    # shared mode was wrong once controllers differ per vehicle: a drone pinned to ctrl_mode=0
+    # while the shared block said 3 kept the INDI-tuned pos_gains, which is 2026-09-09 root
+    # cause #1 all over again. Do not reintroduce it here.
 
     # Safety fix (2026-09-12): _RAMP_CONTROLLER/_RAMP_CTRL_MODE (6/0) assume the target is
     # always our own OOT controller, so takeoff/landing ramp on OOT-geometric and switch to
@@ -444,18 +445,35 @@ def main():
     # claim a controller and gains it never ran. Per-drone config is first-class -- each drone
     # may run its own controller or the same as everyone else -- so resolve it explicitly and
     # write THAT into that drone's own log.
+    def resolve(name, ctrl, mode_, pgains):
+        """Resolve (controller, ctrl_mode, pos_gains) for ONE drone in ONE phase.
+
+        The geometric-pos_gains rule (crazyflies.yaml's pos_gains block is INDI-tuned, and
+        flying geometric on it was 2026-09-09 root cause #1) used to be applied ONCE, above,
+        keyed on the SHARED ctrl_mode. That is wrong as soon as controllers differ per drone:
+        a vehicle pinned to ctrl_mode=0 while the shared block says 3 would silently keep the
+        INDI gains unless its own override happened to also carry pos_gains. Decided per drone
+        here instead.
+        """
+        overrides = per_robot.get(name, {})
+        eff_ctrl = int(overrides.get("stabilizer.controller", ctrl))
+        eff_mode = int(overrides.get("indi_gains.ctrl_mode", mode_))
+        pos = dict(pgains) if pgains else None
+        if pos is not None and eff_ctrl == _RAMP_CONTROLLER and eff_mode == 0:
+            pos = dict(GEOMETRIC_POS_GAINS)
+        if pos is not None:
+            for key, v in overrides.items():
+                if key.startswith("pos_gains."):
+                    pos[key.split(".", 1)[1]] = float(v)
+        return eff_ctrl, eff_mode, pos
+
     def effective_for(name):
-        eff = {"controller": controller, "ctrl_mode": traj_ctrl_mode,
-               "indi": dict(indi_gains), "pos": dict(pos_gains)}
+        eff_ctrl, eff_mode, pos = resolve(name, controller, traj_ctrl_mode, pos_gains)
+        eff = {"controller": eff_ctrl, "ctrl_mode": eff_mode,
+               "indi": dict(indi_gains), "pos": pos if pos is not None else dict(pos_gains)}
         for key, v in per_robot.get(name, {}).items():
-            if key == "stabilizer.controller":
-                eff["controller"] = int(v)
-            elif key == "indi_gains.ctrl_mode":
-                eff["ctrl_mode"] = int(v)
-            elif key.startswith("indi_gains."):
+            if key.startswith("indi_gains.") and key != "indi_gains.ctrl_mode":
                 eff["indi"][key.split(".", 1)[1]] = float(v)
-            elif key.startswith("pos_gains."):
-                eff["pos"][key.split(".", 1)[1]] = float(v)
         return eff
 
     def meta_for(name):
@@ -499,6 +517,10 @@ def main():
         for c in cfs:
             name = c.prefix.lstrip("/")
             overrides = per_robot.get(name, {})
+            # pos_gains are resolved PER DRONE (see resolve()): a drone on our controller in
+            # geometric mode must not get the yaml's INDI-tuned pos_gains, whether that mode
+            # came from the shared block or from its own pin.
+            _, _, pg = resolve(name, ctrl, mode_, pgains)
             if "stabilizer.controller" not in overrides:
                 c.setParam("stabilizer.controller", ctrl)
             if "indi_gains.ctrl_mode" not in overrides:
@@ -507,7 +529,7 @@ def main():
                 key = f"indi_gains.{k}"
                 if key not in overrides:
                     c.setParam(key, float(v))
-            for k, v in (pgains or {}).items():
+            for k, v in (pg or {}).items():
                 key = f"pos_gains.{k}"
                 if key not in overrides:
                     c.setParam(key, float(v))
