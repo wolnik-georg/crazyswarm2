@@ -198,6 +198,7 @@ class DroneLogger:
         self.latest = defaultdict(float)
         self.rows = []
         self.active = False
+        self._short_state = 0   # count of /state messages with a short/empty payload
         # ONE clock shared by every drone in the run. Each logger having its own t0 would offset
         # the drones by however long their construction took, and the whole point of these logs is
         # to correlate one drone's residual against another's relative position -- that needs a
@@ -211,6 +212,23 @@ class DroneLogger:
 
     def _state(self, msg):
         v = msg.values
+        # 2026-09-15: twice this session a drone's radio log came out with the RIGHT number of
+        # rows but every value zero. This is the mechanism: rows are appended from this
+        # callback, and every field is read from `self.latest`, a defaultdict(float). If
+        # `msg.values` arrives empty or short, the zip() below updates nothing and the row is
+        # written entirely from defaults -- a full-length, plausible-looking, all-zero log.
+        # The messages themselves were arriving at the normal rate, so the subscription was
+        # fine; the payload was not. Say so on the FIRST bad message, while the drone is still
+        # on the ground, instead of leaving it to be discovered during analysis hours later.
+        if len(v) < 6:
+            self._short_state += 1
+            if self._short_state == 1:
+                print(f"[logger] ***** {self.name}: /state carries {len(v)} value(s), expected "
+                      f"6 *****")
+                print(f"[logger]       Every row logged from now on will be zeros. The log "
+                      f"block did not start correctly on this drone -- the subscription is "
+                      f"working, the payload is empty. Fix before relying on this flight's "
+                      f"radio telemetry (the uSD log, if fitted, is unaffected).")
         self.latest.update(zip(("pos_x", "pos_y", "pos_z", "vel_x", "vel_y", "vel_z"), v))
         if self.active:
             self.rows.append([time.monotonic() - self.t0]
