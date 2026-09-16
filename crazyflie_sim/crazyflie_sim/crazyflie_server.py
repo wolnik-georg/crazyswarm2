@@ -87,7 +87,7 @@ class CrazyflieServer(Node):
 
         # Configure the out-of-tree controller BEFORE the backend exists, because the
         # backend builds its vehicle model from these numbers.
-        self._oot_active = self._ros_parameters['sim'].get('controller') == 'oot'
+        self._oot_active = self._ros_parameters['sim'].get('controller') in ('oot', 'oot2', 'oot3')
         if self._oot_active:
             self._setup_oot()
 
@@ -328,15 +328,24 @@ class CrazyflieServer(Node):
         # Simulating gains nobody flies is worse than not simulating at all.
         self._apply_oot_firmware_params(_firm)
 
-        if 'oot_ctrl_mode' in sim:
-            # The per-run selector wins over the yaml's ctrl_mode, so one config file
-            # can be flown under several control laws.
-            _firm.cvar.g_controller_mode = int(sim['oot_ctrl_mode'])
-        names = {0: 'geometric SE(3)', 1: 'position INDI',
-                 2: 'attitude INDI', 3: 'full INDI'}
-        mode = int(_firm.cvar.g_controller_mode)
-        self.get_logger().info(
-            'out-of-tree controller: ctrl_mode=%d (%s)' % (mode, names.get(mode, '?')))
+        if sim.get('controller') == 'oot':
+            if 'oot_ctrl_mode' in sim:
+                # The per-run selector wins over the yaml's ctrl_mode, so one config file
+                # can be flown under several control laws.
+                _firm.cvar.g_controller_mode = int(sim['oot_ctrl_mode'])
+            names = {0: 'geometric SE(3)', 1: 'position INDI',
+                     2: 'attitude INDI', 3: 'full INDI'}
+            mode = int(_firm.cvar.g_controller_mode)
+            self.get_logger().info(
+                'out-of-tree controller: ctrl_mode=%d (%s)' % (mode, names.get(mode, '?')))
+        else:
+            # oot2/oot3 (naindi.rs / naindi_hybrid.rs) have no ctrl_mode concept -- the
+            # control law is fixed by which Rust module is compiled in, not a runtime param.
+            self.get_logger().info(
+                'out-of-tree controller: %s (%s)' % (
+                    sim.get('controller'),
+                    'naindi.rs, use_nn=0' if sim.get('controller') == 'oot2'
+                    else 'naindi_hybrid.rs, use_nn=1'))
 
         if 'physics' not in sim:
             sim['physics'] = {

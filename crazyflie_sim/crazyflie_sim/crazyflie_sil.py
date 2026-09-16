@@ -32,6 +32,14 @@ class CrazyflieSIL:
 
     # Flight modes.
     _oot_count = 0
+    # 2026-09-16: separate counters for controller=7/8 (naindi.rs / naindi_hybrid.rs).
+    # Unlike controllerOutOfTree's own static (swapped per-vehicle via oot_select_drone,
+    # see _oot_index below), these two keep ONE process-global `static mut ST` each with
+    # no per-vehicle swap mechanism at all. Two vehicles sharing either controller in one
+    # sim run would silently share filters/integrators -- guarded against in __init__
+    # rather than left as a silent correctness bug.
+    _oot2_count = 0
+    _oot3_count = 0
 
     MODE_IDLE = 0
     MODE_HIGH_POLY = 1
@@ -139,6 +147,43 @@ class CrazyflieSIL:
             self.controller = firm.controllerOutOfTree
             # Thrust constants the controller inverts. Used below to make the
             # PWM -> RPM -> force chain self-consistent; see pwm_to_rpm.
+            self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
+                       firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
+            self.thrust_max = firm.oot_thrust_max()
+        elif controller_name in ('oot2', 'oot3'):
+            # controller=7 (naindi.rs, use_nn=0) / controller=8 (naindi_hybrid.rs,
+            # use_nn=1): faithful ports of Cobo & Briesewitz's NA-INDI, numerically
+            # verified against their own compiled controller_lee.c (see
+            # firmware_app/host/test_naindi_reference.py / test_naindi_hybrid_
+            # reference.py) but, until now, never run through this closed-loop
+            # simulator -- only through hand-built static test vectors. Both read
+            # g_indi_mass/g_indi_kt1-4 for their position-INDI term, same as 'oot',
+            # so the plant is still built from the firmware's own constants (see
+            # crazyflie_server.py's _setup_oot).
+            attr = 'controllerOutOfTree2' if controller_name == 'oot2' else 'controllerOutOfTree3'
+            if not hasattr(firm, attr):
+                raise ValueError(
+                    "controller '{}' needs cffirmware built with that out-of-tree "
+                    'controller. Build it with:\n'
+                    '  cd flying_drone_stack/firmware_app && RUSTFLAGS="-C panic=abort" \\\n'
+                    '      cargo build --release --target x86_64-unknown-linux-gnu\n'
+                    '  cd crazyflie-firmware && make bindings_python'.format(controller_name))
+            # Neither naindi.rs nor naindi_hybrid.rs has an oot_select_drone equivalent
+            # for its own static -- see the class-level comment on _oot2_count/_oot3_count.
+            # Refuse a second vehicle on the same controller rather than silently sharing
+            # one controller's filters/integrators between two drones.
+            count_attr = '_oot2_count' if controller_name == 'oot2' else '_oot3_count'
+            if getattr(CrazyflieSIL, count_attr) > 0:
+                raise ValueError(
+                    "controller '{}' ({}) has no per-vehicle state-swap mechanism yet "
+                    '(unlike controllerOutOfTree\'s oot_select_drone) -- only one vehicle '
+                    'may use it per sim run. Use controller \'oot\' for multi-drone runs, '
+                    'or add a naindi_select_drone-style hook first.'.format(
+                        controller_name,
+                        'naindi.rs' if controller_name == 'oot2' else 'naindi_hybrid.rs'))
+            setattr(CrazyflieSIL, count_attr, getattr(CrazyflieSIL, count_attr) + 1)
+            getattr(firm, attr + 'Init')()
+            self.controller = getattr(firm, attr)
             self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
                        firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
             self.thrust_max = firm.oot_thrust_max()
@@ -408,7 +453,7 @@ class CrazyflieSIL:
         # controller once per millisecond and hold the command over the substeps.
         # Only the out-of-tree controller is affected -- every other controller keeps
         # its original call pattern so existing simulation results still reproduce.
-        if self.controller_name == 'oot':
+        if self.controller_name in ('oot', 'oot2', 'oot3'):
             if tick == self._last_ctrl_tick and self._last_action is not None:
                 return self._last_action
             self._last_ctrl_tick = tick
@@ -440,6 +485,24 @@ class CrazyflieSIL:
                 self.a_res = [firm.oot_get_a_res(i) for i in range(3)]
                 self.rnn_pred = [firm.cvar.g_rnn_pred_x, firm.cvar.g_rnn_pred_y,
                                  firm.cvar.g_rnn_pred_z]
+        elif self.controller_name in ('oot2', 'oot3'):
+            # Same RPM injection as 'oot' above, and for the same reason -- attitude
+            # INDI derives tau_current from measured RPM^2 and silently falls back to
+            # tau_prev without it. rpm_get_all() is a single global shared by every
+            # out-of-tree controller (not per-vehicle-swapped like controllerOutOfTree's
+            # own static), so the same call works unchanged; no oot_select_drone here,
+            # see __init__'s guard -- naindi.rs/naindi_hybrid.rs have no such mechanism.
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            # controller=8 only: its NN reads commanded PWM ratio (motorsGetRatio), not
+            # RPM -- see naindi_hybrid.rs's module doc. The previous tick's own PWM
+            # command is the SIL's equivalent of "commanded", same pattern as the RPM
+            # injection above (last tick's output, not this tick's not-yet-computed one).
+            if self.controller_name == 'oot3' and hasattr(firm, 'oot_set_pwm_ratio'):
+                pwm = self.motors_thrust_pwm
+                firm.oot_set_pwm_ratio(int(pwm.motors.m1), int(pwm.motors.m2),
+                                        int(pwm.motors.m3), int(pwm.motors.m4))
+            self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         elif self.controller_name != 'mellinger':
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         else:

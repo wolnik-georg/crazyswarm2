@@ -307,6 +307,7 @@ def main():
         indi_gains_from_yaml,
         pos_gains_from_yaml,
         diag_gains_from_yaml,
+        _per_robot_from_yaml,
     ) = _f._load_firmware_controller_config()
     _f._yaml_indi_gains.update(indi_gains_from_yaml)
     _f._yaml_pos_gains.update(pos_gains_from_yaml)
