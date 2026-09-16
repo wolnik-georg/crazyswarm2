@@ -118,6 +118,15 @@ _ATTITUDE_VARS = [
 ]
 _GYRO_VARS = ["gyro.x", "gyro.y", "gyro.z", "acc.x", "acc.y", "acc.z"]
 _RPM_VARS = ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+# 2026-09-16: these are internal dict-key LABELS only (the ROS message carries an ordered
+# value array, not variable names) -- what actually streams is whatever crazyflies.yaml's
+# `all.firmware_logging.rpm.vars` names, currently motor.m1_rpm..m4_rpm (DShot), not the
+# optical deck's rpm.m1-4 these labels still say. Keeping the "rpm.mN" label string is
+# harmless (only ever used as an internal key, matched 1:1 against the .get() calls below)
+# but was actively misleading during today's DShot re-test -- every CSV column labeled
+# rpm_m1-4 was, in fact, showing deck data the whole time regardless of indi_gains.rpm_source,
+# because this subscription and that control-path param are completely independent switches.
+# Update this comment (and crazyflies.yaml's own rpm: block) together if the source changes.
 _INDI_STATE_VARS = [
     "indi.tau_x",
     "indi.tau_y",
