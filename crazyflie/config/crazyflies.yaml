@@ -46,18 +46,20 @@ robots:
     # secured bench test -- a real, newly-found hardware defect. `rpm_source: 1` switches
     # cf231_active's attitude-INDI RPM read to DShot bidirectional telemetry (confirmed
     # clean on the bench too, all 4 motors, no missing values past the documented ~0.2s
-    # startup sentinel). `ctrl_mode: 1` (position INDI only) is deliberately NOT 3 yet --
-    # per the plan's staged order, isolate the historically-safe sub-loop first; only step
-    # to 2 then 3 after this passes clean. ABORT CONDITION: any divergence at any step ->
-    # set rpm_source back to 0 immediately, do not gain-sweep chasing it (2026-07-15 already
-    # tried that on DShot without success). Everything else here is the confirmed-good
-    # 2026-09-11 locked config (kr=2400/kw=170/pos_gains 64/5/48/7, from the shared `all:`
-    # block, unchanged) -- deliberately isolating "is DShot's RPM good enough" from the
-    # separate, still-open question of whether the 2026-09-09 audit fix (N1, pins alpha_ref
-    # to the INDI gain pair even during the geometric ramp) needs its own review.
+    # startup sentinel). `ctrl_mode: 3` (full INDI) directly -- the plan's own staged order
+    # suggested position-INDI-only (1) first, but operator's own flight experience is that
+    # the sub-loop-only modes (1, 2) consistently perform WORSE than either endpoint (0 or
+    # 3), regardless of RPM source -- not a meaningful "safer intermediate" in practice, so
+    # testing them would not give a useful signal either way. ABORT CONDITION: any
+    # divergence -> set rpm_source back to 0 immediately, do not gain-sweep chasing it
+    # (2026-07-15 already tried that on DShot without success). Everything else here is the
+    # confirmed-good 2026-09-11 locked config (kr=2400/kw=170/pos_gains 64/5/48/7, from the
+    # shared `all:` block, unchanged) -- deliberately isolating "is DShot's RPM good enough"
+    # from the separate, still-open question of whether the 2026-09-09 audit fix (N1, pins
+    # alpha_ref to the INDI gain pair even during the geometric ramp) needs its own review.
     firmware_params:
       indi_gains:
-        ctrl_mode: 1    # position INDI only -- step 1 of the staged DShot re-test
+        ctrl_mode: 3    # full INDI directly, see note above
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # firmware_params:
     #   kalman:
