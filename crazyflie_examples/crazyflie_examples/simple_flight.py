@@ -346,6 +346,24 @@ def main():
         for c in allcfs.crazyflies:
             c.uploadTrajectory(0, 0, traj)
 
+    # ── usec.reset MUST happen HERE, ON THE GROUND, BEFORE TAKEOFF ──────────────────
+    # 2026-09-16: this was previously placed mid-flight, right before usd.logging=1 (see
+    # below) -- the exact placement that CRASHED EVERY FLIGHT in flight.py/formation_flight.py
+    # until 2026-09-15 (a pure A1 hover included). flight.py and run_formation.py both moved
+    # it here already; simple_flight.py never got the same fix. The high-level commander's
+    # entire time base is this same clock (crtp_commander_high_level.c: `float t =
+    # usecTimestamp() / 1e6;`), and the planner stores `t_begin` from it when takeoff/goTo
+    # starts. Zeroing the timer mid-flight leaves t_begin holding a large value, so
+    # piecewise_eval computes `t - t_begin` ~= MINUS several hundred seconds, evaluates a
+    # degree-7 polynomial far outside its domain, and hands the controller an astronomically
+    # wrong setpoint -- motors cut or the vehicle slams over, within one HLC tick. On the
+    # ground the planner is IDLE (no t_begin in use) and takeoff samples the clock AFTER the
+    # reset, so the time base stays monotonic for the whole flight.
+    try:
+        allcfs.setParam('usec.reset', 1)
+    except Exception:
+        pass
+
     # Push indi_gains at takeoff too, not just pos_gains: with the ramp pinned to the
     # trajectory config the vehicle must already be in its FINAL configuration before it
     # leaves the ground, or the mid-air param push this fix exists to remove comes back.
@@ -389,13 +407,8 @@ def main():
         else:
             _f._log_phase('trajectory', yaml_controller, traj_ctrl_mode)
 
-        # 2026-09-14: zero the onboard usec timer before logging starts -- see the long
-        # note in formation_flight.py. Harmless for single-drone flights, keeps this script
-        # consistent if more than one drone is ever enabled here.
-        try:
-            allcfs.setParam('usec.reset', 1)
-        except Exception:
-            pass
+        # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
+        # takeoff -- see the long comment above `_apply_flight_settings(..., 'takeoff', ...)`.
         for c in allcfs.crazyflies:
             try:
                 c.setParam('usd.logging', 1)
