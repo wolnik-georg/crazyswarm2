@@ -28,11 +28,24 @@ robots:
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
-    # 2026-09-14 geometric-first override REMOVED 2026-09-16 (desk prep for the next lab
-    # session's step 2 per docs/next_flight_card.html): the geometric A8 flight this pinned
-    # is done and uSD-validated (2026-09-15). cf231_active now falls back to the shared
-    # `all:` block's ctrl_mode=3 (full INDI) and its pos_gains (kp_xy=64/kv_xy=5, frozen to
-    # match locked kr=2400/kw=170) -- exactly the "step 1: Full INDI, 2 drones, A8" gate.
+    # 2026-09-16: two A8 (2-drone) full-INDI attempts crashed -- cf231_active destabilizes
+    # first, cf_second ~0.3-0.4s later, separation only GROWS (not a collision). RPM deck
+    # confirmed healthy on the bench same day (clean 4-motor response). Root cause is still
+    # NOT fully identified, but two things ARE ruled out: (1) the geometric->full-INDI
+    # mid-air switch itself -- flight.py/simple_flight.py already do this exact switch for
+    # single-drone INDI, which has "always worked fine" per the operator; (2) --passes 2 --
+    # it's the MOST-flown value in this project's history, including the validated 09-15
+    # 2-drone dataset. Leading theory: cf231_active's own known, unresolved trajectory-
+    # tracking oscillation, combined for the first time with REAL downwash from a nearby
+    # crossing drone (never present in single-drone testing), pushes it into full divergence
+    # -- i.e. a robustness gap in full INDI under 2-drone interaction, not a new bug.
+    #
+    # Override REMOVED here again, but ONLY because cf_second is disabled below (enabled:
+    # false) for a single-drone-only sanity/oscillation check. cf231_active now falls back
+    # to the shared `all:` block's ctrl_mode=3 (full INDI) for the "scenario"/"trajectory"
+    # phase, ctrl_mode=0 (geometric) for ramp -- the SAME switch already proven safe single-
+    # drone. RESTORE this override (ctrl_mode: 0 + pos_gains 40/8/30/10, see git history)
+    # and re-enable cf_second's `enabled: true` below BEFORE any further 2-drone attempt.
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -68,7 +81,10 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-14: re-enabled -- the 09-13 hang was root-caused to
+    enabled: false                       # 2026-09-16 TEMP: disabled for a single-drone full-INDI
+                                          # hover sanity check on cf231_active alone (see the
+                                          # ctrl_mode override note above) -- re-enable for any
+                                          # 2-drone flight. 2026-09-14: re-enabled -- the 09-13 hang was root-caused to
                                           # cf231_active's wrong firmware platform/bootloader, unrelated to
                                           # cf_second (see docs/lab_sessions/2026-09-13.md)
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
