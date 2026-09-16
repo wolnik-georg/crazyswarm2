@@ -28,26 +28,11 @@ robots:
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21  # see robot_types
-    # 2026-09-14: temporary override for today's geometric-first A8 flight -- the shared
-    # `all:` default is ctrl_mode=3 (full INDI). REMOVE this override before flying step 2
-    # (full INDI) so cf231_active falls back to that shared default.
-    #
-    # pos_gains ALSO overridden here: the shared `all:` pos_gains block (kp_xy=64/kv_xy=5)
-    # is explicitly documented there as "FROZEN: matches locked kr=2400/kw=170" -- i.e.
-    # tuned for INDI's attitude bandwidth, not geometric's. That same comment block records
-    # 2026-09-11 "Attempt 4": pos_gains=(40/8/30/10) is what actually fixed geometric's
-    # position holding completely, before being reverted to the 64/5 INDI-paired point to
-    # end that session in a confirmed-clean INDI state -- not because 64/5 was better for
-    # geometric. Using that proven point here instead. REMOVE this override too before
-    # flying step 2 (full INDI), same as ctrl_mode above.
-    firmware_params:
-      indi_gains:
-        ctrl_mode: 0   # geometric, for today's first A8 flight
-      pos_gains:
-        kp_xy: 40.0    # 2026-09-11 Attempt 4: proven to fix geometric's position holding
-        kv_xy: 8.0
-        kp_z: 30.0
-        kv_z: 10.0
+    # 2026-09-14 geometric-first override REMOVED 2026-09-16 (desk prep for the next lab
+    # session's step 2 per docs/next_flight_card.html): the geometric A8 flight this pinned
+    # is done and uSD-validated (2026-09-15). cf231_active now falls back to the shared
+    # `all:` block's ctrl_mode=3 (full INDI) and its pos_gains (kp_xy=64/kv_xy=5, frozen to
+    # match locked kr=2400/kw=170) -- exactly the "step 1: Full INDI, 2 drones, A8" gate.
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
