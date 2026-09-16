@@ -549,6 +549,14 @@ all:
       # controller_indi.c). CANDIDATE ROOT-CAUSE FIX for the ~5-8 Hz attitude limit cycle — set
       # to 1 and hover-test vs 0. Standard/upgraded unaffected (default 0 in their yaml blocks).
       filt_tau: 1
+      # dt source for alpha_raw/alpha_meas (2026-09-16, requires cload'd firmware with dt_usec
+      # toggle). NA-INDI comparison item #5 (docs/22 sec 2e) -- their reference uses
+      # usecTimestamp() (microsecond dt) for this finite difference, we used a 1ms-quantised
+      # tick counter. Isolated A/B on a full-INDI hover: dt_usec=1 indistinguishable from
+      # dt_usec=0 (docs/22 sec 2f, "#5"). Left ON anyway -- strictly more precise, byte-for-byte
+      # no worse in the one flight tested, and keeps this path closer to the reference
+      # implementation for future comparisons. 0 = legacy tick counter (prior default).
+      dt_usec: 1
       # INDI effectiveness scale (2026-07-18, requires cload'd firmware with j_scale). Multiplies J
       # in the increment delta_tau = j_scale*J*(alpha_ref - alpha_meas). 1.0 = J as-is. The
       # brushless J (Busetto 2025) is a Crazyflow SIMULATOR DEFAULT for a 45g drone under a
