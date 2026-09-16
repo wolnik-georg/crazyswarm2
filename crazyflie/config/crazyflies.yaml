@@ -40,23 +40,31 @@ robots:
     # crossing drone (never present in single-drone testing), pushes it into full divergence
     # -- i.e. a robustness gap in full INDI under 2-drone interaction, not a new bug.
     #
-    # 2026-09-16, DShot re-test step 1 (flying_drone_stack/docs/dshot_rpm_source_plan.md):
-    # the optical RPM deck was found to report EXACTLY ZERO for 2 of 4 motors throughout an
+    # 2026-09-16, DShot re-test RESOLVED -- rpm_source: 1 is now the STANDING config, not a
+    # temporary probe (flying_drone_stack/docs/dshot_rpm_source_plan.md). Sequence: the
+    # optical RPM deck was found to report EXACTLY ZERO for 2 of 4 motors throughout an
     # actual flight (rpm_m2/rpm_m4 stuck at 0.0 the whole time), despite reading clean on a
-    # secured bench test -- a real, newly-found hardware defect. `rpm_source: 1` switches
-    # cf231_active's attitude-INDI RPM read to DShot bidirectional telemetry (confirmed
-    # clean on the bench too, all 4 motors, no missing values past the documented ~0.2s
-    # startup sentinel). `ctrl_mode: 3` (full INDI) directly -- the plan's own staged order
-    # suggested position-INDI-only (1) first, but operator's own flight experience is that
-    # the sub-loop-only modes (1, 2) consistently perform WORSE than either endpoint (0 or
-    # 3), regardless of RPM source -- not a meaningful "safer intermediate" in practice, so
-    # testing them would not give a useful signal either way. ABORT CONDITION: any
-    # divergence -> set rpm_source back to 0 immediately, do not gain-sweep chasing it
-    # (2026-07-15 already tried that on DShot without success). Everything else here is the
-    # confirmed-good 2026-09-11 locked config (kr=2400/kw=170/pos_gains 64/5/48/7, from the
-    # shared `all:` block, unchanged) -- deliberately isolating "is DShot's RPM good enough"
-    # from the separate, still-open question of whether the 2026-09-09 audit fix (N1, pins
-    # alpha_ref to the INDI gain pair even during the geometric ramp) needs its own review.
+    # secured bench test -- a real hardware defect, in-flight-only, invisible on the bench.
+    # Switched to DShot (also clean on the bench). First two flight attempts on DShot
+    # (single-drone hover, then figure8) LOOKED clean but a second, independent bug meant
+    # the radio log's rpm_m1-4 columns were STILL reading the deck's own variables the whole
+    # time regardless of rpm_source (crazyflies.yaml's `rpm:` log topic and indi_gains.
+    # rpm_source are two completely separate switches -- fixed in the same commit that added
+    # this note, see the `rpm:` block below). Once the log topic was also switched to DShot's
+    # own variables, a clean 24s hover confirmed genuine ground truth: all 4 motors report
+    # continuously and consistently (zero dropouts across 530 samples, ~14-17k RPM), roll
+    # bounded to +-5 deg, pitch to +-12 deg -- no divergence, only the known baseline
+    # oscillation. DShot is now confirmed both clean AND sufficient for full INDI hover;
+    # keep rpm_source=1 going forward, don't revert to the deck without new evidence.
+    # `ctrl_mode: 3` (full INDI) directly -- operator's own flight experience is that the
+    # sub-loop-only modes (1, 2) consistently perform WORSE than either endpoint (0 or 3),
+    # regardless of RPM source, so they were skipped as not a meaningful "safer intermediate."
+    # Everything else here is the confirmed-good 2026-09-11 locked config (kr=2400/kw=170/
+    # pos_gains 64/5/48/7, from the shared `all:` block, unchanged). Still separately open:
+    # whether the 2026-09-09 audit fix (N1, pins alpha_ref to the INDI gain pair even during
+    # the geometric ramp) needs its own review, and whether full INDI survives 2-drone A8 --
+    # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
+    # of the earlier 2-drone crashes.
     firmware_params:
       indi_gains:
         ctrl_mode: 3    # full INDI directly, see note above
