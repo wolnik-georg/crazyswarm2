@@ -130,6 +130,19 @@ class CrazyflieSIL:
         elif controller_name == 'brescianini':
             firm.controllerBrescianiniInit()
             self.controller = firm.controllerBrescianini
+        elif controller_name == 'indi':
+            # Bitcraze's own stock INDI (controller_indi.c + position_controller_indi.c,
+            # mainline crazyflie-firmware -- ControllerTypeINDI=3), wired in 2026-09-18 as a
+            # third reference point for the controller=7 SIL investigation (docs/07). A
+            # structurally DIFFERENT INDI from both this project's own (lib.rs, Tal & Karaman)
+            # and naindi.rs (Cobo-Briesewitz's controller_lee.c port): pure gyro-differentiation,
+            # no RPM feedback at all -- confirmed by grep, no rpm/Rpm/RPM/motorsGetRatio symbol
+            # anywhere in controller_indi.c. Self-contained from sensors/state/setpoint alone,
+            # same shape as 'pid'/'mellinger'/'brescianini' above -- no injection plumbing
+            # needed, unlike 'oot'/'oot2'/'oot3'. Flew clean on real hardware (operator report,
+            # 2026-09-17) with no oscillation, just worse tracking than either INDI above.
+            firm.controllerINDIInit()
+            self.controller = firm.controllerINDI
         elif controller_name == 'oot':
             # The thesis controller: the SAME geometric SE(3) / INDI Rust source that
             # flies on the drone (flying_drone_stack/firmware_app), compiled for the
