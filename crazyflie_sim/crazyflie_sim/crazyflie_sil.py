@@ -199,6 +199,25 @@ class CrazyflieSIL:
                     else 'naindi_hybrid_test_set_gains'
                 getattr(firm, setter)(0.010117, 0.010066, 0.011054,
                                        0.0028906, 0.0028760, 0.0022109)
+            # 2026-09-18: diagnostic only, NOT a proposed flying config -- naindi.rs's
+            # POS_GAIN_TEST_OVERRIDE comment. By the time this was added, mass/kt/arm/t2t/J/
+            # KR/KOMEGA/KPOS_P/KPOS_D/KPOS_I had ALL already been set to the reference
+            # authors' own values in one run and it still crashed (docs/07, 2026-09-17), so
+            # there's no "which number is wrong" question left -- this scales KPOS_P/KPOS_D/
+            # KPOS_I together by NAINDI_POS_GAIN_SCALE (env var, float; e.g. "0.25") to test
+            # whether the ~1.4s oscillation period found in that run tracks the position
+            # gain the way a real position-loop resonance would. controller=8 has no
+            # equivalent setter yet (naindi_hybrid_test_set_pos_gains doesn't exist).
+            pos_scale = os.environ.get('NAINDI_POS_GAIN_SCALE')
+            if pos_scale is not None and controller_name == 'oot2':
+                f = float(pos_scale)
+                kp, kd, ki = 12.0 * f, 10.5 * f, 2.0 * f
+                firm.naindi_test_set_pos_gains(kp, kp, kp, kd, kd, kd, ki, ki, ki)
+                # CrazyflieSIL has no get_logger() (that's the server Node's method, not
+                # this per-vehicle class's) -- plain print is what the rest of this
+                # __init__ path uses for anything printed before the node exists.
+                print('NAINDI_POS_GAIN_SCALE=%s: KPOS_P/D/I -> %.3f/%.3f/%.3f '
+                      '(reference values x%s)' % (pos_scale, kp, kd, ki, pos_scale))
             self.controller = getattr(firm, attr)
             self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
                        firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
