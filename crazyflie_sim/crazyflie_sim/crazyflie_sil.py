@@ -7,6 +7,8 @@ Crazyflie Software-In-The-Loop Wrapper that uses the firmware Python bindings.
 """
 from __future__ import annotations
 
+import os
+
 import cffirmware as firm
 import numpy as np
 import rowan
@@ -183,6 +185,20 @@ class CrazyflieSIL:
                         'naindi.rs' if controller_name == 'oot2' else 'naindi_hybrid.rs'))
             setattr(CrazyflieSIL, count_attr, getattr(CrazyflieSIL, count_attr) + 1)
             getattr(firm, attr + 'Init')()
+            # 2026-09-17: opt-in test of the inertia-mismatch hypothesis for the CS2 SIL
+            # divergence found 2026-09-16 (docs/07 History (39)/(40)) -- KR/KOMEGA are the
+            # reference's own torque gains, tuned for their J, applied unchanged to this
+            # project's real, ~44.5%/43.8%/10.6% (x/y/z) heavier CF21BL inertia. Scaling both
+            # gains by the same per-axis J_real/J_ref ratio restores the reference's intended
+            # omega_n AND damping ratio (docs/22 §2h-style analysis, worked out for this
+            # controller in naindi.rs's GAIN_TEST_OVERRIDE comment). Off by default -- the
+            # numerically-verified-to-1e-9 reference gains are untouched unless this env var
+            # is set, so nothing about the default byte-for-bit port changes.
+            if os.environ.get('NAINDI_SCALED_GAINS') == '1':
+                setter = 'naindi_test_set_gains' if controller_name == 'oot2' \
+                    else 'naindi_hybrid_test_set_gains'
+                getattr(firm, setter)(0.010117, 0.010066, 0.011054,
+                                       0.0028906, 0.0028760, 0.0022109)
             self.controller = getattr(firm, attr)
             self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
                        firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]

@@ -3,7 +3,7 @@
     ros2 run crazyflie_examples upload_residual_weights -- --weights weights/a1.npz
     ros2 run crazyflie_examples upload_residual_weights -- --weights w.npz --cf cf231 --enable
 
-Reads the `.npz` written by `flying_drone_stack/tools/residual/train.py` and pushes the 987
+Reads the `.npz` written by `flying_drone_stack/tools/residual/train.py` and pushes the 19297
 floats through the `rnn.*` parameter protocol, then verifies `rnn.ready` came back as 1.
 
 **Uploading does not switch anything on.** `rnn.en` stays at 0 unless `--enable` is passed, and
@@ -28,7 +28,8 @@ from rcl_interfaces.srv import SetParameters
 
 from crazyflie_py import Crazyswarm
 
-N_WEIGHTS = 987          # must match residual_nn.rs and tools/residual/model.py
+N_WEIGHTS = 19297        # must match residual_nn.rs and tools/residual/model.py
+                         # (Neural-Swarm2 port, 2026-09-14; was 987 for the old custom deep-sets net)
 
 
 def _set_sync(cf, th, name, value):
