@@ -353,21 +353,33 @@ class CrazyflieServer(Node):
         # (0.041 kg) onto g_indi_mass/g_indi_kt1-4 -- the same globals naindi.rs/
         # naindi_hybrid.rs read directly and the ones the physics snapshot below reads to
         # build the plant. Overriding them here, before that snapshot, means both the
-        # controller's internal model AND the simulated plant see the reference's own
-        # values (0.034 kg; kt left at the compiled default, the closest number on hand to
-        # "some CF2.1-class airframe" since the reference's own kt isn't in this project in
-        # RPM^2-domain units). Off by default -- does nothing for 'oot' (controller=6),
-        # and nothing here unless the env var is set, so no other simulated flight is
-        # affected. Only meaningful with the platform rebuild in naindi.rs's
+        # controller's internal model AND the simulated plant see the reference authors'
+        # OWN airframe -- not a partial/guessed one. mass=0.034 is controller_lee.c's own
+        # `.mass` literal; kt (their `kappa_f[4]`, force[i]=kappa_f[i]*rpm^2, the exact same
+        # formula naindi.rs uses) is declared with NO compiled default in their firmware
+        # (a plain runtime PARAM_FLOAT, zero-initialized) -- their real, per-motor MEASURED
+        # values live in their own host-side tooling instead: ~/Desktop/NA-INDI/
+        # pwm2thrust.py and LMCE/residual_calculation.py, both hardcoding the identical
+        # array. Using THAT rather than a guess or our own measured kt is the point --
+        # 2026-09-17's first attempt paired their mass with our OWN real kt, a
+        # self-inconsistent mix that made hover unstable; this pairs their mass with
+        # their own kt, both from the same real airframe.
+        # Off by default -- does nothing for 'oot' (controller=6), and nothing here unless
+        # the env var is set. Only meaningful with the platform rebuild in naindi.rs's
         # GAIN_TEST_OVERRIDE comment (DRONE_PLATFORM unset + OOT_PLATFORM=
-        # CONFIG_PLATFORM_CF2) -- without it this just introduces a NEW mismatch against
+        # CONFIG_PLATFORM_CF2) -- without it this introduces a NEW mismatch against
         # naindi.rs's own (still brushless) arm/J.
         if os.environ.get('NAINDI_REFERENCE_MASS') == '1' \
                 and sim.get('controller') in ('oot2', 'oot3'):
             _firm.cvar.g_indi_mass = 0.034
+            _firm.cvar.g_indi_kt1 = 2.139974655714972e-10
+            _firm.cvar.g_indi_kt2 = 2.3783777845095615e-10
+            _firm.cvar.g_indi_kt3 = 1.9693330742680727e-10
+            _firm.cvar.g_indi_kt4 = 2.559402652634741e-10
             self.get_logger().info(
-                'NAINDI_REFERENCE_MASS=1: g_indi_mass overridden to 0.034 kg '
-                '(kt left at compiled default) before the plant snapshot')
+                'NAINDI_REFERENCE_MASS=1: g_indi_mass -> 0.034 kg, g_indi_kt1-4 -> the '
+                "reference's own measured kappa_f (NA-INDI/pwm2thrust.py) before the "
+                'plant snapshot')
 
         if 'physics' not in sim:
             sim['physics'] = {
