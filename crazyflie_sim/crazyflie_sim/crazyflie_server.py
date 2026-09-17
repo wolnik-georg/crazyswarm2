@@ -347,6 +347,28 @@ class CrazyflieServer(Node):
                     'naindi.rs, use_nn=0' if sim.get('controller') == 'oot2'
                     else 'naindi_hybrid.rs, use_nn=1'))
 
+        # 2026-09-18: opt-in test of the mass/kt half of the reference-airframe hypothesis
+        # for oot2/oot3 (docs/07 History, 2026-09-17 hover fix). _apply_oot_firmware_params
+        # above already pushed crazyflies_sim1.yaml's REAL measured brushless mass/kt
+        # (0.041 kg) onto g_indi_mass/g_indi_kt1-4 -- the same globals naindi.rs/
+        # naindi_hybrid.rs read directly and the ones the physics snapshot below reads to
+        # build the plant. Overriding them here, before that snapshot, means both the
+        # controller's internal model AND the simulated plant see the reference's own
+        # values (0.034 kg; kt left at the compiled default, the closest number on hand to
+        # "some CF2.1-class airframe" since the reference's own kt isn't in this project in
+        # RPM^2-domain units). Off by default -- does nothing for 'oot' (controller=6),
+        # and nothing here unless the env var is set, so no other simulated flight is
+        # affected. Only meaningful with the platform rebuild in naindi.rs's
+        # GAIN_TEST_OVERRIDE comment (DRONE_PLATFORM unset + OOT_PLATFORM=
+        # CONFIG_PLATFORM_CF2) -- without it this just introduces a NEW mismatch against
+        # naindi.rs's own (still brushless) arm/J.
+        if os.environ.get('NAINDI_REFERENCE_MASS') == '1' \
+                and sim.get('controller') in ('oot2', 'oot3'):
+            _firm.cvar.g_indi_mass = 0.034
+            self.get_logger().info(
+                'NAINDI_REFERENCE_MASS=1: g_indi_mass overridden to 0.034 kg '
+                '(kt left at compiled default) before the plant snapshot')
+
         if 'physics' not in sim:
             sim['physics'] = {
                 'mass': float(_firm.cvar.g_indi_mass),
