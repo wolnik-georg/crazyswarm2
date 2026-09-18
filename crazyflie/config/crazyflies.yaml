@@ -123,16 +123,10 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-18 TEMP: disabled -- battery was critically
-                                          # low last A8 attempt (3.85-3.95V, thrust~0, never
-                                          # left the ground the whole 30s flight). SWAP BATTERY
-                                          # before re-enabling. Also disabled to run C5 solo on
-                                          # cf231_active via run_formation.py itself (not
-                                          # simple_flight.py) -- isolating whether the repeated
-                                          # A8 crash (identical ~t=3.68s timing across 3
-                                          # different controller/gain configs, including one
-                                          # where cf_second never actually flew) is a
-                                          # run_formation.py script-level issue.
+    enabled: true                        # 2026-09-18: battery swapped -- re-enabled for the
+                                          # A8 retest with the real root-cause fix in place
+                                          # (run_formation.py's apply('takeoff'/'landing', ...)
+                                          # now pushes pos_gains, see commit 9ce06e2).
                                           # 2026-09-18: re-enabled -- both drones confirmed
                                           # individually clean (cf_second stock Lee hover,
                                           # cf231_active full-INDI hover+figure8). Back to
