@@ -518,7 +518,16 @@ def main():
                 is_int_param = key in ('stabilizer.controller', 'indi_gains.ctrl_mode')
                 c.setParam(key, int(v) if is_int_param else float(v))
         th.sleep(_CTRL_SETTLE_S)
-        print(f'[formation] {phase}: controller={ctrl} ctrl_mode={mode_}')
+        # 2026-09-18: this used to print the raw (ctrl, mode_) ARGUMENTS this call was
+        # invoked with -- the shared `all:` block's values, not what any per-robot-pinned
+        # drone actually resolved to and had pushed. Misleadingly showed e.g. "ctrl_mode=3"
+        # for the scenario phase even when every pinned drone was correctly running
+        # ctrl_mode=0 underneath -- actively confusing to debug against. Print each drone's
+        # real per-robot-resolved value instead.
+        for c in cfs:
+            name = c.prefix.lstrip('/')
+            eff_ctrl, eff_mode, _ = resolve(name, ctrl, mode_, pgains)
+            print(f'[formation] {phase}: {name} controller={eff_ctrl} ctrl_mode={eff_mode}')
 
     usd_start = None
     end_of_flight_poses = latest
@@ -543,7 +552,19 @@ def main():
             print(f'[formation] WARN: usec.reset broadcast failed ({e}) -- uSD timestamps may '
                   f'carry a per-drone offset')
 
-        apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+        # 2026-09-18: MUST pass indi_gains/pos_gains here, not just (ctrl, mode_) -- without
+        # them, resolve()'s GEOMETRIC_POS_GAINS substitution (used by apply('scenario', ...)
+        # below) never runs for the takeoff/climb/goTo phase, so a drone that resolves to
+        # geometric via a per-robot ctrl_mode override (with no separate per-robot pos_gains
+        # override) flies the ENTIRE ramp on the shared block's raw pos_gains -- INDI-tuned
+        # (64/5/48/7), the documented 2026-09-09 root cause #1 for geometric instability.
+        # Root-caused after 3 reproducible A8 crashes today, all at the same point in stage 2
+        # (goTo), independent of controller/gains -- because the actual bug was upstream of
+        # all of that, in the ramp phase, which every test coincidentally shared. Confirmed
+        # against the 2026-09-14 clean A8 flight, which had cf231_active's own explicit
+        # pos_gains: override (since removed by the 2026-09-15 resolve()/substitution
+        # refactor, which only ever wired the fix into the 'scenario' apply() call).
+        apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
         # is a harmless no-op there and the one CF21BL actually needs. Always do it, or a
@@ -630,7 +651,7 @@ def main():
         end_of_flight_poses = [p.copy() for p in latest]
 
         print('[formation] done, landing...')
-        apply('landing', _RAMP_CONTROLLER, _RAMP_CTRL_MODE)
+        apply('landing', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         try:
             allcfs.setParam('usd.logging', 0)
         except Exception:
