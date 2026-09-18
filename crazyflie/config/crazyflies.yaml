@@ -22,7 +22,10 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: true  # 2026-09-14: re-enabled -- height sweep confirmed cf_second's ~0.40m
+    enabled: false # 2026-09-18 TEMP: disabled for cf_second's own brushless-swap shakedown
+                   # (cf_second physically broke as standard CF2.1, swapped to brushless
+                   # hardware). RE-ENABLE once cf_second's solo shakedown is done.
+                   # 2026-09-14: re-enabled -- height sweep confirmed cf_second's ~0.40m
                    # shortfall is constant, compensation added in flight.py/run_formation.py/
                    # formation_flight.py. Back to 2-drone A8.
     uri: radio://0/80/2M/E7E7E7E7E7
@@ -67,11 +70,10 @@ robots:
     # of the earlier 2-drone crashes.
     firmware_params:
       indi_gains:
-        ctrl_mode: 0    # 2026-09-18 TEMP: geometric sanity check after A8 full-INDI crash
-                         # recurrence (cf231_active destabilizes at handover, cf_second
-                         # follows ~0.3-0.5s later) -- isolates whether the crash is
-                         # INDI-specific or a generic 2-drone A8 issue. REVERT to 3 before
-                         # any further full-INDI flight.
+        ctrl_mode: 3    # 2026-09-18: geometric A8 sanity check ALSO crashed, same timing/
+                         # shape as full-INDI (~t=3.6-3.7s, during takeoff climb->goTo, before
+                         # the A8 trajectory even starts) -- rules out INDI/gains as the cause.
+                         # Back to full INDI for the single-drone isolation test.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
     # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
@@ -119,7 +121,13 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-18: re-enabled for the 2-drone full-INDI A8 gate
+    enabled: true                        # 2026-09-18: enabled ALONE for cf_second's own
+                                          # brushless-swap solo shakedown (cf231_active
+                                          # disabled above). RE-CHECK the +0.40m height
+                                          # compensation below -- it was measured on the OLD
+                                          # standard-CF2.1 cf_second, may not carry over to
+                                          # the new brushless frame/motors.
+                                          # 2026-09-18: re-enabled for the 2-drone full-INDI A8 gate
                                           # re-attempt (see docs/lab_sessions/2026-09-16.md #5).
                                           # 2026-09-16 TEMP note (superseded): was disabled for a
                                           # single-drone full-INDI hover sanity check on cf231_active
@@ -132,7 +140,16 @@ robots:
     type: cf21                           # standard CF2.1 -- fine indefinitely, see above
     firmware_params:
       stabilizer:
-        controller: 5   # stock Lee, permanent -- cf_second is never the controller under study
+        controller: 6   # 2026-09-18 TEMP: cf_second is now brushless (identical hardware to
+                         # cf231_active per operator), testing OUR controller solo on it to
+                         # isolate airframe vs. cf231_active-specific tuning as a cause of the
+                         # 2-drone A8 crash. No indi_gains override here -- inherits the exact
+                         # same shared `all:` block (kt1-4/mass/kr/kw/fc_bw) cf231_active uses,
+                         # since hardware is now the same. REVERT to 5 (stock Lee, permanent
+                         # pin) once this diagnostic is done.
+      indi_gains:
+        ctrl_mode: 0    # start geometric (safer) for this first-ever run of our controller
+                         # on this specific airframe instance
 
   cf5:
     enabled: false
