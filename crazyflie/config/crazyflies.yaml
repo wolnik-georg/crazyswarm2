@@ -70,6 +70,14 @@ robots:
     # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
     # of the earlier 2-drone crashes.
     firmware_params:
+      stabilizer:
+        controller: 5   # 2026-09-18 TEMP: FINAL decisive test -- stock Lee on cf231_active,
+                         # solo (cf_second stays disabled). Same code path already proven
+                         # clean on cf_second earlier today. If this ALSO fails, it's not our
+                         # controller/gains/scripts and not this specific airframe's damage --
+                         # points at mocap or something shared (crazyswarm2 core, radio dongle,
+                         # room/environment). REVERT to controller=6 (ctrl_mode below,
+                         # unchanged) once this diagnostic is done.
       indi_gains:
         ctrl_mode: 3    # 2026-09-18: A8 geometric retest (18:31:15) succeeded with the
                          # apply('takeoff'/'landing', ...) pos_gains fix -- only the known
