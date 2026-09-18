@@ -322,8 +322,18 @@ def main():
     # (kp_xy=64/kv_xy=5, locked 2026-07-19 against kr=2400/kw=170) and geometric was never
     # flown on them until 2026-09-07, when it oscillated -- with a_indi identically zero in
     # geometric, the residual sign cannot explain that, the gains can. See _select_pos_gains.
+    #
+    # 2026-09-18: MUST use this drone's per-robot-RESOLVED (controller, ctrl_mode), not the
+    # raw shared `all:` values -- same bug class as _apply_flight_settings' missing
+    # per_robot=, different call site. Confirmed on hardware: cf_second pinned to ctrl_mode=0
+    # (geometric) still got pos_kp_xy=64 (INDI's) because this call saw the shared block's
+    # ctrl_mode=3 instead. Geometric flown on INDI-tuned pos_gains is the documented
+    # 2026-09-09 root cause #1 -- likely what actually crashed today's "geometric" test.
+    _cf_overrides = _per_robot_from_yaml.get(cf_name, {})
+    _eff_controller = int(_cf_overrides.get('stabilizer.controller', yaml_controller))
+    _eff_ctrl_mode = int(_cf_overrides.get('indi_gains.ctrl_mode', traj_ctrl_mode))
     pos_gains_from_yaml, pg_source = _select_pos_gains(
-        yaml_controller, traj_ctrl_mode, pos_gains_from_yaml
+        _eff_controller, _eff_ctrl_mode, pos_gains_from_yaml
     )
     print(f'[simple_flight] position gains: {pos_gains_from_yaml}  <- {pg_source}')
     _f._yaml_pos_gains.clear()

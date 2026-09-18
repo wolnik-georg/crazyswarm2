@@ -140,16 +140,11 @@ robots:
     type: cf21                           # standard CF2.1 -- fine indefinitely, see above
     firmware_params:
       stabilizer:
-        controller: 6   # 2026-09-18 TEMP: cf_second is now brushless (identical hardware to
-                         # cf231_active per operator), testing OUR controller solo on it to
-                         # isolate airframe vs. cf231_active-specific tuning as a cause of the
-                         # 2-drone A8 crash. No indi_gains override here -- inherits the exact
-                         # same shared `all:` block (kt1-4/mass/kr/kw/fc_bw) cf231_active uses,
-                         # since hardware is now the same. REVERT to 5 (stock Lee, permanent
-                         # pin) once this diagnostic is done.
-      indi_gains:
-        ctrl_mode: 0    # start geometric (safer) for this first-ever run of our controller
-                         # on this specific airframe instance
+        controller: 5   # 2026-09-18: back to stock Lee, permanent pin -- pure hardware
+                         # sanity check on the freshly brushless-swapped frame, isolated from
+                         # the two simple_flight.py per-robot-override bugs just found and
+                         # fixed (ctrl_mode ignored; pos_gains selected on the wrong mode).
+                         # Our controller (6) test on this airframe resumes after this.
 
   cf5:
     enabled: false
