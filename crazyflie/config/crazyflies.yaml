@@ -104,12 +104,14 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-16 TEMP: disabled for a single-drone full-INDI
-                                          # hover sanity check on cf231_active alone (see the
-                                          # ctrl_mode override note above) -- re-enable for any
-                                          # 2-drone flight. 2026-09-14: re-enabled -- the 09-13 hang was root-caused to
-                                          # cf231_active's wrong firmware platform/bootloader, unrelated to
-                                          # cf_second (see docs/lab_sessions/2026-09-13.md)
+    enabled: true                        # 2026-09-18: re-enabled for the 2-drone full-INDI A8 gate
+                                          # re-attempt (see docs/lab_sessions/2026-09-16.md #5).
+                                          # 2026-09-16 TEMP note (superseded): was disabled for a
+                                          # single-drone full-INDI hover sanity check on cf231_active
+                                          # alone. 2026-09-14: re-enabled -- the 09-13 hang was
+                                          # root-caused to cf231_active's wrong firmware
+                                          # platform/bootloader, unrelated to cf_second
+                                          # (see docs/lab_sessions/2026-09-13.md)
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
     type: cf21                           # standard CF2.1 -- fine indefinitely, see above
