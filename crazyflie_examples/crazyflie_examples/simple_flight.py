@@ -364,6 +364,17 @@ def main():
     except Exception:
         pass
 
+    # 2026-09-18: all three _apply_flight_settings() calls below were missing per_robot=
+    # entirely -- _apply_flight_settings() itself has the per-robot-override skip-then-repush
+    # logic (the 2026-09-15 fix ported from formation_flight.py/run_formation.py), but with
+    # per_robot=None its `overrides` is always {}, so it unconditionally broadcasts the
+    # SHARED `all:` value to every drone regardless of any per-robot pin. Confirmed on
+    # hardware: a per-robot ctrl_mode=0 (geometric) override on cf_second was silently
+    # overwritten by indi_gains.ctrl_mode=3 from the shared block during the trajectory
+    # phase (onboard param readback + trajectory_ctrl_mode both showed 3, not 0). Takeoff/
+    # landing happened to look correct only because the ramp default (0) already matches
+    # most per-robot pins used so far -- this was never actually exercised until today.
+    #
     # Push indi_gains at takeoff too, not just pos_gains: with the ramp pinned to the
     # trajectory config the vehicle must already be in its FINAL configuration before it
     # leaves the ground, or the mid-air param push this fix exists to remove comes back.
@@ -371,6 +382,7 @@ def main():
         allcfs, th, 'takeoff', _f._RAMP_CONTROLLER, _f._RAMP_CTRL_MODE,
         indi_gains=getattr(_f, '_RAMP_INDI_GAINS', None),
         pos_gains=_f._RAMP_POS_GAINS,
+        per_robot=_per_robot_from_yaml,
     )
 
     for c in allcfs.crazyflies:
@@ -403,6 +415,7 @@ def main():
             _f._apply_flight_settings(
                 allcfs, th, 'trajectory', yaml_controller, traj_ctrl_mode,
                 indi_gains_from_yaml, pos_gains_from_yaml,
+                per_robot=_per_robot_from_yaml,
             )
         else:
             _f._log_phase('trajectory', yaml_controller, traj_ctrl_mode)
@@ -454,6 +467,7 @@ def main():
             allcfs, th, 'landing', _f._RAMP_CONTROLLER, _f._RAMP_CTRL_MODE,
             indi_gains=getattr(_f, '_RAMP_INDI_GAINS', None),
             pos_gains=_f._RAMP_POS_GAINS,
+            per_robot=_per_robot_from_yaml,
         )
         print('[simple_flight] Landing...')
         allcfs.land(targetHeight=0.06, duration=2.0)
