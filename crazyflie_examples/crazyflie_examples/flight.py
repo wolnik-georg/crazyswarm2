@@ -687,14 +687,34 @@ def _notify_setpoints_stop_sync(cf, th, remain_ms: int = 100):
 
 
 def _kalman_reset_pulse(cf, th):
-    """Rust kalman_reset(): pulse resetEstimation so back-to-back flights start clean."""
+    """Reset the EKF so back-to-back flights start clean.
+
+    2026-09-18: this used to pulse `kalman.resetEstimation` alone, which is NOT
+    sufficient after a crash -- this project's own documented finding is that the
+    EKF can stay frozen at wrong values when the gyro bias is bad, and
+    resetEstimation=1->0 does not clear it. The complementary filter
+    (stabilizer.estimator=1) re-initialises attitude from raw accel in ~1s;
+    handing back to the Kalman filter (=2) afterwards gives a genuinely clean start.
+
+    Symptom this fixes (seen repeatedly on 2026-09-18 after the first hard crash):
+    the reported position freezes completely -- 0.57 mm of movement logged across an
+    entire flight -- while the vehicle physically climbs into the ceiling, because the
+    controller sees a constant position error and keeps commanding climb. Independent
+    of controller and script; cleared only by a power cycle. Mocap was verified healthy
+    throughout, so the stuck estimator was on the drone, not in tracking.
+    """
     if "kalman.resetEstimation" not in cf.paramTypeDict:
         print("[flight] WARN: kalman.resetEstimation not in TOC — skipping EKF reset.")
         return
+    if "stabilizer.estimator" in cf.paramTypeDict:
+        _set_param_sync(cf, th, "stabilizer.estimator", 1)   # complementary re-init from accel
+        th.sleep(1.0)
+        _set_param_sync(cf, th, "stabilizer.estimator", 2)   # back to Kalman
+        th.sleep(0.2)
     _set_param_sync(cf, th, "kalman.resetEstimation", 1)
     th.sleep(0.2)
     _set_param_sync(cf, th, "kalman.resetEstimation", 0)
-    print("[flight] Kalman reset pulse sent.")
+    print("[flight] EKF reset (complementary re-init → Kalman) sent.")
 
 
 def _firmware_idle_reset(cf, th):

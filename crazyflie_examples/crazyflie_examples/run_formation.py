@@ -570,6 +570,59 @@ def main():
         # against the 2026-09-14 clean A8 flight, which had cf231_active's own explicit
         # pos_gains: override (since removed by the 2026-09-15 resolve()/substitution
         # refactor, which only ever wired the fix into the 'scenario' apply() call).
+        # ── EKF reset + convergence gate ────────────────────────────────────────────
+        # 2026-09-18: this script had NO EKF reset at all -- every flight ran on
+        # whatever estimator state the PREVIOUS flight left behind. After a crash the
+        # EKF can stay frozen at wrong values (bad gyro bias), and this project's own
+        # documented finding is that `kalman.resetEstimation` alone does NOT clear it:
+        # the complementary filter (estimator=1) must re-init attitude from raw accel
+        # first, then hand back to the Kalman filter (estimator=2).
+        #
+        # That is exactly the failure seen all session on 2026-09-18: after the first
+        # hard crash (18:14), flight after flight reported a COMPLETELY FROZEN position
+        # (x/y std 0.57mm across a whole flight) while the vehicle physically climbed
+        # into the ceiling -- the controller saw a constant position error and kept
+        # commanding climb because its estimate never moved. Independent of controller
+        # (=5 and =6 both), independent of script, and cleared only by a battery/power
+        # cycle -- all consistent with a stuck EKF, not with mocap (mocap was verified
+        # tracking correctly throughout).
+        print('[formation] resetting EKF (complementary re-init, then Kalman)...')
+        for c in cfs:
+            c.setParam('stabilizer.estimator', 1)   # complementary: re-init attitude from accel
+        th.sleep(1.0)
+        for c in cfs:
+            c.setParam('stabilizer.estimator', 2)   # back to Kalman
+        th.sleep(0.2)
+        for c in cfs:
+            c.setParam('kalman.resetEstimation', 1)
+        th.sleep(0.2)
+        for c in cfs:
+            c.setParam('kalman.resetEstimation', 0)
+        print('[formation] waiting for EKF to converge on mocap...')
+        th.sleep(3.0)
+
+        # Gate: the drone's OWN estimate must agree with mocap before it is allowed to
+        # arm. A stuck EKF is invisible until the vehicle is already in the air, and by
+        # then the only outcome is a climb to the ceiling. Compare each drone's logged
+        # EKF position against its mocap pose; refuse to fly on disagreement.
+        bad = []
+        for lg, mocap, c in zip(loggers, latest, cfs):
+            name = c.prefix.lstrip('/')
+            ekf = np.array([lg.latest['pos_x'], lg.latest['pos_y'], lg.latest['pos_z']])
+            err = float(np.linalg.norm(ekf - mocap))
+            print(f'    {name:14s} EKF {ekf.round(3)}  mocap {np.asarray(mocap).round(3)}  '
+                  f'|err| {err*1000:.0f} mm')
+            if err > 0.15:
+                bad.append((name, err))
+        if bad:
+            print('\n[formation] *** ABORT: EKF does not agree with mocap ***')
+            for name, err in bad:
+                print(f'[formation]   {name}: |err| {err*1000:.0f} mm (limit 150 mm)')
+            print('[formation] The estimator is not tracking. Flying now would command a')
+            print('[formation] runaway climb. Power-cycle the drone(s), place them on their')
+            print('[formation] initial_position, and relaunch. NOT taking off.')
+            return
+
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
