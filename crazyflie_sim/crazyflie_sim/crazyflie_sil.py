@@ -7,13 +7,62 @@ Crazyflie Software-In-The-Loop Wrapper that uses the firmware Python bindings.
 """
 from __future__ import annotations
 
+import csv
 import os
+import time
 
 import cffirmware as firm
 import numpy as np
 import rowan
 
 from . import sim_data_types
+
+# 2026-09-18: opt-in per-tick debug log for the controller=7/8 real-SIL investigation
+# (flying_robot_course docs/07, firmware_app/host/naindi_reference_build_notes.md
+# "Investigation plan"). Logs every Python-level executeController() call attempt for
+# oot2/oot3 -- both genuine 500 Hz Rust-side computes and the ones the Rust-side
+# RATE_DO_EXECUTE gate silently no-ops -- so the real dt-between-computes, setpoint
+# trajectory shape, and any x/y motion become directly observable instead of assumed. Off
+# by default; set NAINDI_DEBUG_LOG=<path> to enable. Writes are append-only per process.
+_naindi_debug_writer = None
+_naindi_debug_file = None
+_naindi_debug_last_thrust = None
+
+
+def _naindi_debug_log(cf, tick):
+    global _naindi_debug_writer, _naindi_debug_file, _naindi_debug_last_thrust
+    path = os.environ.get('NAINDI_DEBUG_LOG')
+    if not path:
+        return
+    if _naindi_debug_writer is None:
+        _naindi_debug_file = open(path, 'w', newline='')
+        _naindi_debug_writer = csv.writer(_naindi_debug_file)
+        _naindi_debug_writer.writerow([
+            'wall_time', 'tick', 'real_compute',
+            'sp_x', 'sp_y', 'sp_z', 'sp_vx', 'sp_vy', 'sp_vz', 'sp_ax', 'sp_ay', 'sp_az',
+            'st_x', 'st_y', 'st_z', 'st_vx', 'st_vy', 'st_vz',
+            'gyro_x', 'gyro_y', 'gyro_z',
+            'thrust', 'tau_x', 'tau_y', 'tau_z',
+        ])
+    thrust = cf.control.thrustSi
+    # The Rust-side RATE_DO_EXECUTE-equivalent gate leaves control_t entirely unchanged on
+    # a no-op tick -- an EXACT repeat of the previous thrust value (not just "close") is the
+    # signature of a gated-out call, distinct from a genuine recompute that happens to
+    # command similar thrust between ticks (float equality is intentional here, not sloppy).
+    real_compute = (thrust != _naindi_debug_last_thrust)
+    _naindi_debug_last_thrust = thrust
+    sp, st, se, c = cf.setpoint, cf.state, cf.sensors, cf.control
+    _naindi_debug_writer.writerow([
+        time.time(), tick, int(real_compute),
+        sp.position.x, sp.position.y, sp.position.z,
+        sp.velocity.x, sp.velocity.y, sp.velocity.z,
+        sp.acceleration.x, sp.acceleration.y, sp.acceleration.z,
+        st.position.x, st.position.y, st.position.z,
+        st.velocity.x, st.velocity.y, st.velocity.z,
+        se.gyro.x, se.gyro.y, se.gyro.z,
+        c.thrustSi, c.torqueX, c.torqueY, c.torqueZ,
+    ])
+    _naindi_debug_file.flush()
 
 
 class TrajectoryPolynomialPiece:
@@ -480,6 +529,31 @@ class CrazyflieSIL:
         self.sensors.acc.y = state.acc[1]
         self.sensors.acc.z = state.acc[2]
 
+        # 2026-09-18: REAL BUG FIX -- self.state.acc (state_t's own field) was never set
+        # anywhere in this class, only self.sensors.acc above. naindi.rs (controller=7)
+        # reads state->acc, NOT sensors->acc, for its position-INDI residual term (a_imu) --
+        # confirmed directly in naindi.rs (module doc + line ~389, `let acc = &st.acc`).
+        # So a_imu was ALWAYS EXACTLY ZERO for the entire flight, every controller=7/8 SIL
+        # run to date, making the INDI residual (a_res = a_imu - a_rpm) equal -a_rpm instead
+        # of a genuine measured-vs-modeled comparison -- roughly constant (harmless) during
+        # steady hover, but large and dynamically varying whenever commanded thrust changes
+        # (climb, landing), exactly the failure window every crash to date was observed in.
+        # Root-caused via firmware_app/host/naindi_reference_closed_loop.py's
+        # --zero-state-acc flag, which reproduces this exact bug standalone and diverges at
+        # the same ~10s mark a real crashing SIL run does (docs/07, 2026-09-18).
+        #
+        # state->acc's convention (controller_lee.c: a_imu = 9.81 * state->acc, compared
+        # directly against a_rpm = f_thrust_world/mass - g_vec, i.e. world-frame,
+        # gravity-EXCLUDED, reads (0,0,0) at hover) differs from sensors.acc's convention
+        # (body-frame specific force, gravity implicitly present via the thrust reaction,
+        # reads (0,0,1) at hover) -- rotate into world frame, then subtract the
+        # gravity-cancelling (0,0,1) hover offset to get the gravity-excluded quantity
+        # state->acc actually means.
+        acc_world = rowan.rotate(state.quat, state.acc)
+        self.state.acc.x = acc_world[0]
+        self.state.acc.y = acc_world[1]
+        self.state.acc.z = acc_world[2] - 1.0
+
     def executeController(self):
         if self.controller is None:
             return None
@@ -551,6 +625,7 @@ class CrazyflieSIL:
                 firm.oot_set_pwm_ratio(int(pwm.motors.m1), int(pwm.motors.m2),
                                         int(pwm.motors.m3), int(pwm.motors.m4))
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
+            _naindi_debug_log(self, tick)
         elif self.controller_name != 'mellinger':
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         else:
