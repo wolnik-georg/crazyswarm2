@@ -178,6 +178,19 @@ class CrazyflieSIL:
         elif controller_name == 'brescianini':
             firm.controllerBrescianiniInit()
             self.controller = firm.controllerBrescianini
+        elif controller_name == 'lee':
+            # Stock geometric SE(3) (controller_lee.c, mainline crazyflie-firmware --
+            # ControllerTypeLee=5), wired in 2026-09-18 as a third-party sanity baseline for
+            # the strategy comparison: isolates whether any issue with our own geometric
+            # (controller=6, ctrl_mode=0) is specific to our implementation or general to the
+            # control law. This is `cf_second`'s permanent real-hardware pin, never before run
+            # through this SIL. Like Mellinger, `controllerLee()` takes an explicit `self`
+            # struct (not a hidden static) -- the CRAZYFLIE_FW-gated `controllerLeeFirmware`
+            # wrapper that normally hides this on real hardware isn't built for the host, so
+            # the struct is carried here per-vehicle, same pattern as `mellinger_control`.
+            self.lee_control = firm.controllerLee_t()
+            firm.controllerLeeInit(self.lee_control)
+            self.controller = firm.controllerLee
         elif controller_name == 'indi':
             # Bitcraze's own stock INDI (controller_indi.c + position_controller_indi.c,
             # mainline crazyflie-firmware -- ControllerTypeINDI=3), wired in 2026-09-18 as a
@@ -626,9 +639,7 @@ class CrazyflieSIL:
                                         int(pwm.motors.m3), int(pwm.motors.m4))
             self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
             _naindi_debug_log(self, tick)
-        elif self.controller_name != 'mellinger':
-            self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
-        else:
+        elif self.controller_name == 'mellinger':
             self.controller(
                 self.mellinger_control,
                 self.control,
@@ -636,6 +647,16 @@ class CrazyflieSIL:
                 self.sensors,
                 self.state,
                 tick)
+        elif self.controller_name == 'lee':
+            self.controller(
+                self.lee_control,
+                self.control,
+                self.setpoint,
+                self.sensors,
+                self.state,
+                tick)
+        else:
+            self.controller(self.control, self.setpoint, self.sensors, self.state, tick)
         self._last_action = self._fwcontrol_to_sim_data_types_action()
         return self._last_action
 
