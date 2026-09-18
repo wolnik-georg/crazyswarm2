@@ -16,3 +16,11 @@ state_collect/
 state_predict/
 state_compensate/
 state_indi/
+state_stock_indi/
+state_naindi/
+state_naindi_hybrid/
+state_naindi_hybrid_circle/
+state_naindi_hybrid_oval/
+state_naindi_2drone/
+state_naindi_hybrid_2drone/
+state_naindi_regress/

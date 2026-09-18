@@ -37,7 +37,9 @@
       # module's own doc for why this does NOT compensate this thesis's interaction
       # force). No ctrl_mode, same reasoning as server_sim_naindi.yaml. First run
       # through this closed-loop simulator; only ever run through host-level static
-      # test vectors before (test_naindi_hybrid_reference.py). Requires exactly ONE
-      # enabled robot -- naindi_hybrid.rs has no per-vehicle state-swap mechanism yet,
-      # see crazyflie_sim's CrazyflieSIL.__init__ guard. Use crazyflies_sim1.yaml.
+      # test vectors before (test_naindi_hybrid_reference.py). 2026-09-18: naindi_hybrid.rs
+      # now has its own per-vehicle state-swap (naindi_hybrid_select_drone, mirrors
+      # controllerOutOfTree's oot_select_drone) -- multiple robots are fine; use
+      # crazyflies_sim.yaml for 2. This file still defaults to crazyflies_sim1.yaml (1
+      # robot) and backend: np (no downwash model) as the cheapest smoke test.
       controller: oot3

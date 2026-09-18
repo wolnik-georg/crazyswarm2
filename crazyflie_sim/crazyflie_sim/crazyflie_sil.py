@@ -84,11 +84,10 @@ class CrazyflieSIL:
     # Flight modes.
     _oot_count = 0
     # 2026-09-16: separate counters for controller=7/8 (naindi.rs / naindi_hybrid.rs).
-    # Unlike controllerOutOfTree's own static (swapped per-vehicle via oot_select_drone,
-    # see _oot_index below), these two keep ONE process-global `static mut ST` each with
-    # no per-vehicle swap mechanism at all. Two vehicles sharing either controller in one
-    # sim run would silently share filters/integrators -- guarded against in __init__
-    # rather than left as a silent correctness bug.
+    # 2026-09-18: each now has its own per-vehicle state-swap hook (naindi_select_drone /
+    # naindi_hybrid_select_drone in oot_host.c), same shape as controllerOutOfTree's own
+    # oot_select_drone -- these counters assign each vehicle its slot index (self._naindi_index),
+    # same pattern as _oot_index below.
     _oot2_count = 0
     _oot3_count = 0
 
@@ -232,19 +231,13 @@ class CrazyflieSIL:
                     '  cd flying_drone_stack/firmware_app && RUSTFLAGS="-C panic=abort" \\\n'
                     '      cargo build --release --target x86_64-unknown-linux-gnu\n'
                     '  cd crazyflie-firmware && make bindings_python'.format(controller_name))
-            # Neither naindi.rs nor naindi_hybrid.rs has an oot_select_drone equivalent
-            # for its own static -- see the class-level comment on _oot2_count/_oot3_count.
-            # Refuse a second vehicle on the same controller rather than silently sharing
-            # one controller's filters/integrators between two drones.
+            # 2026-09-18: naindi.rs/naindi_hybrid.rs each now have their own state-swap hook
+            # (naindi_select_drone / naindi_hybrid_select_drone in oot_host.c, mirroring
+            # controllerOutOfTree's oot_select_drone -- see that file's oot_swap_select).
+            # This index is this vehicle's slot in that controller's own swap pool, same
+            # pattern as _oot_index above.
             count_attr = '_oot2_count' if controller_name == 'oot2' else '_oot3_count'
-            if getattr(CrazyflieSIL, count_attr) > 0:
-                raise ValueError(
-                    "controller '{}' ({}) has no per-vehicle state-swap mechanism yet "
-                    '(unlike controllerOutOfTree\'s oot_select_drone) -- only one vehicle '
-                    'may use it per sim run. Use controller \'oot\' for multi-drone runs, '
-                    'or add a naindi_select_drone-style hook first.'.format(
-                        controller_name,
-                        'naindi.rs' if controller_name == 'oot2' else 'naindi_hybrid.rs'))
+            self._naindi_index = getattr(CrazyflieSIL, count_attr)
             setattr(CrazyflieSIL, count_attr, getattr(CrazyflieSIL, count_attr) + 1)
             getattr(firm, attr + 'Init')()
             # 2026-09-17: opt-in test of the inertia-mismatch hypothesis for the CS2 SIL
@@ -608,12 +601,19 @@ class CrazyflieSIL:
                 self.rnn_pred = [firm.cvar.g_rnn_pred_x, firm.cvar.g_rnn_pred_y,
                                  firm.cvar.g_rnn_pred_z]
         elif self.controller_name in ('oot2', 'oot3'):
+            # 2026-09-18: hand the controller this vehicle's own state, same pattern as
+            # 'oot' above (firm.oot_select_drone).
+            if self.controller_name == 'oot2':
+                firm.naindi_select_drone(self._naindi_index)
+            else:
+                firm.naindi_hybrid_select_drone(self._naindi_index)
             # Same RPM injection as 'oot' above, and for the same reason -- attitude
             # INDI derives tau_current from measured RPM^2 and silently falls back to
             # tau_prev without it. rpm_get_all() is a single global shared by every
             # out-of-tree controller (not per-vehicle-swapped like controllerOutOfTree's
-            # own static), so the same call works unchanged; no oot_select_drone here,
-            # see __init__'s guard -- naindi.rs/naindi_hybrid.rs have no such mechanism.
+            # own static) -- unlike the two controller-state swaps above, this one global
+            # is intentionally shared, since each vehicle sets it immediately before its
+            # own controller() call and nothing reads it in between.
             r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
             firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
             # controller=8 only: its NN reads commanded PWM ratio (motorsGetRatio), not

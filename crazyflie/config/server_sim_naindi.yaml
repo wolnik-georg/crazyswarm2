@@ -36,7 +36,9 @@
       # use_nn=0 (their plain INDI). No ctrl_mode: unlike 'oot', this control law is
       # fixed by which Rust module is compiled in, not a runtime selector. First run
       # through this closed-loop simulator; only ever run through host-level static
-      # test vectors before (test_naindi_reference.py). Requires exactly ONE enabled
-      # robot -- naindi.rs has no per-vehicle state-swap mechanism yet, see crazyflie_
-      # sim's CrazyflieSIL.__init__ guard. Use crazyflies_sim1.yaml.
+      # test vectors before (test_naindi_reference.py). 2026-09-18: naindi.rs now has its
+      # own per-vehicle state-swap (naindi_select_drone, mirrors controllerOutOfTree's
+      # oot_select_drone) -- multiple robots are fine; use crazyflies_sim.yaml for 2. This
+      # file still defaults to crazyflies_sim1.yaml (1 robot) and backend: np (no downwash
+      # model) as the cheapest smoke test.
       controller: oot2
