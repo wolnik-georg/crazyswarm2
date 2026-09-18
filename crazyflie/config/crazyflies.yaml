@@ -69,6 +69,17 @@ robots:
       indi_gains:
         ctrl_mode: 3    # full INDI directly, see note above
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
+    # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
+    # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
+    # build exposes. cf_second runs stock, unmodified CF2.1 firmware with no DShot RPM
+    # logging support at all, so with cf_second re-enabled the global block broke its
+    # connect ("could not find motor m1 rpm") -- not a brushless issue, cf_second was never
+    # meant to log RPM (see the architecture note below cf_second's block).
+    firmware_logging:
+      custom_topics:
+        rpm:
+          frequency: 20 # Hz
+          vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -281,26 +292,11 @@ all:
       #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
       #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
       # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
-      # ── SWITCH when changing drone ──────────────────────────────────────────
-      # 2026-09-16: swapped to DShot -- this log topic's variable NAMES were completely
-      # independent of indi_gains.rpm_source (which only selects what the CONTROL LAW
-      # reads via rpm_get_all() in traj_iface.c). With rpm_source=1 (DShot) active for
-      # today's re-test, this block was STILL streaming the optical deck's own rpm.m1-4,
-      # so every flight.py CSV column labeled rpm_m1-4 showed deck data regardless of
-      # which source actually drove the controller -- including flights where the deck
-      # was independently confirmed to report rpm_m2/rpm_m4 as exactly zero the whole
-      # time. That defect is real, but it was never what fed the controller once
-      # rpm_source flipped to 1; it just looked that way because the log never switched.
-      # Swapping so what's logged actually matches what's used -- SWITCH BACK to the
-      # rpm.m1-4 block below if rpm_source reverts to 0 (deck).
-      rpm:
-        frequency: 20 # Hz
-        vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
-      # Optical RPM deck (2026-07-16 -> 2026-09-16 default, until 2 of 4 channels were found
-      # reporting exactly zero throughout real flight -- restore this if rpm_source reverts to 0:
-      # rpm:
-      #   frequency: 20 # Hz
-      #   vars: ["rpm.m1", "rpm.m2", "rpm.m3", "rpm.m4"]
+      # 2026-09-18: MOVED to robots.cf231_active.firmware_logging.custom_topics -- this
+      # topic logs DShot-only vars (motor.m1_rpm..m4_rpm) that cf_second's stock firmware
+      # doesn't expose; living under `all:` broke cf_second's connect once it was
+      # re-enabled for 2-drone flights ("could not find motor m1 rpm"). See that block for
+      # the full DShot-vs-deck history this comment used to carry.
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
