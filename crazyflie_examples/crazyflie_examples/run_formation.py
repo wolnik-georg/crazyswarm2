@@ -55,7 +55,13 @@ _CTRL_SETTLE_S = 0.3
 # 2026-09-15: hoisted from a local inside main() to module level so tools/find_flight_window.py
 # can import it directly -- reconstructing a commanded trajectory to verify against needs the
 # SAME compensation that was actually applied at flight time, not a second guess at its value.
-Z_OFFSET_COMPENSATION = {'cf_second': 0.40}
+#
+# 2026-09-18: REMOVED -- cf_second was swapped to brushless hardware (new rigid-body mount),
+# and the A8 retest with the old 0.40 compensation still active showed only a ~0.10m
+# undershoot (commanded 1.65m incl. compensation, achieved 1.552m), not the original ~0.40m.
+# The physical miscalibration this compensated for is gone; leaving it in now overcorrects
+# by ~0.30m. Empty for now -- re-add per-drone here if a similar offset ever reappears.
+Z_OFFSET_COMPENSATION = {}
 
 
 def build_parser():

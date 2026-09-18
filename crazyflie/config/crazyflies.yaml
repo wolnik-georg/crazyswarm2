@@ -71,10 +71,11 @@ robots:
     # of the earlier 2-drone crashes.
     firmware_params:
       indi_gains:
-        ctrl_mode: 0    # 2026-09-18: cf231_active solo hover+figure8 confirmed clean on full
-                         # INDI (baseline oscillation only, no divergence). Re-running 2-drone
-                         # A8, geometric first (this uses run_formation.py's own resolve(),
-                         # already confirmed correct for the geometric pos_gains substitution
+        ctrl_mode: 3    # 2026-09-18: A8 geometric retest (18:31:15) succeeded with the
+                         # apply('takeoff'/'landing', ...) pos_gains fix -- only the known
+                         # standing baseline oscillation (10-24 deg, bounded), no divergence.
+                         # Moving to full INDI next, same fix now covers this phase's own
+                         # pos_gains (64/5/48/7, INDI-tuned, no substitution needed at ctrl_mode=3).
                          # -- unaffected by the two simple_flight.py bugs found/fixed today).
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs

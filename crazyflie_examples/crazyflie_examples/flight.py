@@ -278,7 +278,11 @@ _COEF_UPLOAD_DELAY_S = 0.008  # Rust upload_coef: 8 ms after each ci/cv/cw commi
 # cause: this vehicle's mocap rigid-body Z origin is miscalibrated by ~0.4m (cf231_active
 # shows no such offset). Real fix is recalibrating the rigid body in the mocap software;
 # this just adds the missing height to the commanded target until then. REMOVE once fixed.
-_Z_OFFSET_COMPENSATION = {"cf_second": 0.40}
+#
+# 2026-09-18: REMOVED -- see run_formation.py's Z_OFFSET_COMPENSATION comment. cf_second's
+# brushless swap fixed the underlying mocap miscalibration; leaving this active now
+# overcorrects by ~0.30m.
+_Z_OFFSET_COMPENSATION = {}
 # OOT geometric (controller 6) for takeoff/landing — state preserved on trajectory start.
 _RAMP_CONTROLLER = 6
 _RAMP_CTRL_MODE = 0  # geometric — takeoff and landing (hardcoded)
