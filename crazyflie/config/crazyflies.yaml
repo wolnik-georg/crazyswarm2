@@ -22,9 +22,10 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: false # 2026-09-18 TEMP: disabled for cf_second's own brushless-swap shakedown
-                   # (cf_second physically broke as standard CF2.1, swapped to brushless
-                   # hardware). RE-ENABLE once cf_second's solo shakedown is done.
+    enabled: true  # 2026-09-18: re-enabled for its own solo hover+figure8 sanity check
+                   # (cf_second's brushless swap confirmed clean on stock Lee -- architecture
+                   # decision stands: cf_second=stock Lee permanent, cf231_active=our
+                   # controller). cf_second disabled below for this solo test.
                    # 2026-09-14: re-enabled -- height sweep confirmed cf_second's ~0.40m
                    # shortfall is constant, compensation added in flight.py/run_formation.py/
                    # formation_flight.py. Back to 2-drone A8.
@@ -121,12 +122,14 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-18: enabled ALONE for cf_second's own
-                                          # brushless-swap solo shakedown (cf231_active
-                                          # disabled above). RE-CHECK the +0.40m height
-                                          # compensation below -- it was measured on the OLD
-                                          # standard-CF2.1 cf_second, may not carry over to
-                                          # the new brushless frame/motors.
+    enabled: false                       # 2026-09-18 TEMP: disabled for cf231_active's own
+                                          # solo hover+figure8 sanity check. cf_second's
+                                          # brushless-swap hover was CLEAN on stock Lee --
+                                          # confirmed good hardware, keeping it on stock Lee
+                                          # (controller=5) permanently as originally planned.
+                                          # RE-ENABLE for the next 2-drone A8 attempt. Still
+                                          # need to re-check the +0.40m height compensation
+                                          # below on the new brushless frame before trusting it.
                                           # 2026-09-18: re-enabled for the 2-drone full-INDI A8 gate
                                           # re-attempt (see docs/lab_sessions/2026-09-16.md #5).
                                           # 2026-09-16 TEMP note (superseded): was disabled for a
