@@ -124,7 +124,13 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-18: battery swapped -- re-enabled for the
+    enabled: false                       # 2026-09-18 TEMP: disabled for the decisive C5 solo
+                                          # test on cf231_active via run_formation.py itself --
+                                          # isolating whether the repeated same-timing,
+                                          # different-symptom A8 failures are 2-drone radio
+                                          # contention (leading hypothesis) vs. something else.
+                                          # RE-ENABLE after.
+    #enabled: true                        # 2026-09-18: battery swapped -- re-enabled for the
                                           # A8 retest with the real root-cause fix in place
                                           # (run_formation.py's apply('takeoff'/'landing', ...)
                                           # now pushes pos_gains, see commit 9ce06e2).
