@@ -70,14 +70,6 @@ robots:
     # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
     # of the earlier 2-drone crashes.
     firmware_params:
-      stabilizer:
-        controller: 5   # 2026-09-18 TEMP: stock Lee hardware sanity check on cf231_active --
-                         # C5 solo crashed both before AND after a battery swap, ruling out
-                         # battery. Testing whether the airframe/hardware itself (motors,
-                         # props, ESCs -- possibly damaged from today's repeated hard crashes)
-                         # is still sound, independent of our controller/software entirely.
-                         # REVERT to controller=6 (see indi_gains.ctrl_mode below, unchanged)
-                         # once this diagnostic is done.
       indi_gains:
         ctrl_mode: 3    # 2026-09-18: A8 geometric retest (18:31:15) succeeded with the
                          # apply('takeoff'/'landing', ...) pos_gains fix -- only the known
