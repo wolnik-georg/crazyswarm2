@@ -67,7 +67,11 @@ robots:
     # of the earlier 2-drone crashes.
     firmware_params:
       indi_gains:
-        ctrl_mode: 3    # full INDI directly, see note above
+        ctrl_mode: 0    # 2026-09-18 TEMP: geometric sanity check after A8 full-INDI crash
+                         # recurrence (cf231_active destabilizes at handover, cf_second
+                         # follows ~0.3-0.5s later) -- isolates whether the crash is
+                         # INDI-specific or a generic 2-drone A8 issue. REVERT to 3 before
+                         # any further full-INDI flight.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
     # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
