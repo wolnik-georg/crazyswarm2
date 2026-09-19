@@ -180,11 +180,14 @@ robots:
                                          # cf231_active's old A8 slot
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
-      indi_gains:
-        ctrl_mode: 3    # 2026-09-19: geometric A8 flew clean too. Now full INDI on cf5 --
-                         # completes the 3-pass A8 sequence (stock Lee / geometric / full INDI)
-                         # on the new cf5+cf_second pairing.
-        rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
+      stabilizer:
+        controller: 3   # 2026-09-19: stock Bitcraze INDI (Two Ways to Build INDI card /
+                         # docs/07). Confirmed by reading controller_indi.c directly: uses
+                         # finite_difference_from_filter() on the filtered gyro signal for its
+                         # incremental estimate -- NO rpm_get_all()/rpm_source anywhere in the
+                         # file, no motorGetRPM call. Genuinely RPM-source-agnostic (neither
+                         # DShot nor the optical deck), unlike our own controller=6/7/8. cf5
+                         # stays the bottom/study drone; cf_second unchanged on stock Lee.
     # firmware_logging:
     #  custom_topics:
     #    topic_name3:
