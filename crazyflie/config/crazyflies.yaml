@@ -147,7 +147,17 @@ robots:
                                           # enabled here or physically removed. Never in between.
     uri: radio://0/80/2M/E7E7E7E7E9      # real address, confirmed differs from cf231_active
     initial_position: [0.0, -0.3, 0.0]   # 2026-09-12: moved from X to Y, mirrors cf231_active
-    type: cf21                           # standard CF2.1 -- fine indefinitely, see above
+    type: cf21_active                    # 2026-09-19: switched from cf21 (default_single_marker,
+                                          # 1 point) to cf21_active (active_deck, 4-point square)
+                                          # -- physically confirmed cf_second also has the 4-marker
+                                          # deck mounted. Applied to BOTH drones deliberately: a
+                                          # single point on either one is still confusable with
+                                          # anything else in the volume, so fixing only cf231_active
+                                          # would leave half the disambiguation gap open. See
+                                          # cf231_active's own type note above and
+                                          # docs/lab_sessions/2026-09-19.md. NOTE: "standard CF2.1"
+                                          # in the old comment below refers to airframe/firmware,
+                                          # unrelated to this tracking change.
     firmware_params:
       stabilizer:
         controller: 5   # 2026-09-18: back to stock Lee, permanent pin -- pure hardware
