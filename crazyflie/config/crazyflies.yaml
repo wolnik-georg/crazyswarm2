@@ -22,11 +22,11 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: true  # 2026-09-19: re-enabled. cf_second's own 3-controller sequence came back
-                   # clean (checkpoint crazyswarm2 cfcb4af), and the burning-smell concern was
-                   # checked and cleared. Same solo sequence now on cf231_active, starting with
-                   # stock Lee -- repeating test 1/6 from earlier, which showed near-zero thrust
-                   # / "3 of 4 motors" that time. cf_second disabled below for this solo test.
+    enabled: false # 2026-09-19 TEMP: disabled -- stock Lee flew clean, but the geometric retest
+                   # (test 2/6) did not fly, suspected hardware issue. Swapping in a third
+                   # brushless drone (cf5 slot, uri E7E7E7BB02) with the identical config that
+                   # just failed here, to isolate whether this is cf231_active's own airframe
+                   # or something shared (script/config).
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21_active  # 2026-09-19: switched from cf21 (default_single_marker, 1 point) to the
@@ -173,19 +173,26 @@ robots:
                          # INDI, same airframe, same solo config otherwise.
 
   cf5:
-    enabled: false
-    uri: radio://0/80/2M/E7E7E7E705
+    enabled: true   # 2026-09-19 TEST: isolating a genuine hardware issue vs cf231_active's own
+                    # airframe -- a THIRD brushless drone (physically found in the lab), same
+                    # geometric config that failed to fly on cf231_active. Stock Lee first, same
+                    # solo sequence. cf231_active disabled below. Physically confirmed the
+                    # 4-marker active_deck is mounted on this one too.
+                    # RE-CHECK/UPDATE this initial_position before flying -- placement precision
+                    # matters for the 4-point rigid-body match (today's lesson); place the drone
+                    # here or update this value to wherever it actually sits.
+    uri: radio://0/80/2M/E7E7E7BB02
     initial_position: [0.0, -0.5, 0.0]
-    type: cf21  # see robot_types
-    # firmware_params:
-    #   kalman:
-    #     pNAcc_xy: 1.0 # default 0.5
-    #firmware_logging:
+    type: cf21_active  # 4-marker active_deck, confirmed mounted
+    firmware_params:
+      stabilizer:
+        controller: 5   # stock Lee first, same order as the other two drones
+    # firmware_logging:
     #  custom_topics:
-    #    topic_name3: 
+    #    topic_name3:
     #      frequency: 1
     #      vars: ["acc.x", "acc.y", "acc.z"]
-    # reference_frame: "odom_cf5" 
+    # reference_frame: "odom_cf5"
 
 # Definition of the various robot types
 robot_types:
