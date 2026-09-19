@@ -181,10 +181,9 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       indi_gains:
-        ctrl_mode: 0    # 2026-09-19: stock-Lee A8 pass flew clean on both drones (2-drone
-                         # mechanics confirmed). Now geometric on cf5 -- controller=5 override
-                         # removed, falls through to shared all: controller=6. cf_second stays
-                         # on stock Lee (its permanent pin).
+        ctrl_mode: 3    # 2026-09-19: geometric A8 flew clean too. Now full INDI on cf5 --
+                         # completes the 3-pass A8 sequence (stock Lee / geometric / full INDI)
+                         # on the new cf5+cf_second pairing.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # firmware_logging:
     #  custom_topics:
