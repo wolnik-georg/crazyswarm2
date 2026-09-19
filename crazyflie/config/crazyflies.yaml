@@ -74,14 +74,11 @@ robots:
     # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
     # of the earlier 2-drone crashes.
     firmware_params:
-      stabilizer:
-        controller: 5   # 2026-09-19 TEST 1/6: solo re-validation after the marker fix + A1
-                         # collision/tumble. cf231_active stock Lee hover first (simplest,
-                         # proven-elsewhere law) -- then geometric, then full INDI (remove this
-                         # override, ctrl_mode 0 then 3), all solo, cf_second disabled
-                         # throughout. Then repeat all three on cf_second. Zero 2-drone risk.
       indi_gains:
-        ctrl_mode: 0    # irrelevant while controller=5 override is active above
+        ctrl_mode: 0    # 2026-09-19 TEST 2/6: stock Lee clean (no repeat of the earlier
+                         # near-zero-thrust/"3 of 4 motors" symptom) -- now geometric, solo,
+                         # cf_second still disabled. controller=5 override removed, so this
+                         # falls through to the shared all: controller=6.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
     # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
