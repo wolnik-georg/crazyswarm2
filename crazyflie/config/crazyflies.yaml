@@ -22,11 +22,11 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: false # 2026-09-19 TEMP: disabled -- stock Lee flew clean, but the geometric retest
-                   # (test 2/6) did not fly, suspected hardware issue. Swapping in a third
-                   # brushless drone (cf5 slot, uri E7E7E7BB02) with the identical config that
-                   # just failed here, to isolate whether this is cf231_active's own airframe
-                   # or something shared (script/config).
+    enabled: true  # 2026-09-19: ONE RETRY of the geometric config that failed to fly earlier
+                   # today (test 2/6), now that cf_second AND a third drone (cf5) both flew this
+                   # exact config clean -- checkpoint crazyswarm2 971f4b2. If this fails again
+                   # too, treat as a real, isolated hardware fault (bench diagnosis, not another
+                   # flight attempt); if clean, resume the plan on cf231_active as normal.
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21_active  # 2026-09-19: switched from cf21 (default_single_marker, 1 point) to the
@@ -173,11 +173,8 @@ robots:
                          # INDI, same airframe, same solo config otherwise.
 
   cf5:
-    enabled: true   # 2026-09-19 TEST: isolating a genuine hardware issue vs cf231_active's own
-                    # airframe -- a THIRD brushless drone (physically found in the lab), same
-                    # geometric config that failed to fly on cf231_active. Stock Lee first, same
-                    # solo sequence. cf231_active disabled below. Physically confirmed the
-                    # 4-marker active_deck is mounted on this one too.
+    enabled: false  # 2026-09-19 TEMP: disabled -- its own 3-controller sequence is complete and
+                    # clean (checkpoint 971f4b2). cf231_active's turn for one geometric retry.
                     # RE-CHECK/UPDATE this initial_position before flying -- placement precision
                     # matters for the 4-point rigid-body match (today's lesson); place the drone
                     # here or update this value to wherever it actually sits.
