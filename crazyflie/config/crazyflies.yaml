@@ -174,7 +174,8 @@ robots:
                          # themselves aren't broken, independent of cf231_active's hardware
                          # issue. REVERT to 5 (permanent pin) once this diagnostic is done.
       indi_gains:
-        ctrl_mode: 0    # geometric first
+        ctrl_mode: 3    # 2026-09-19: geometric hover on cf_second confirmed clean -- now full
+                         # INDI, same airframe, same solo config otherwise.
 
   cf5:
     enabled: false
