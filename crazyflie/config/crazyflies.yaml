@@ -185,8 +185,12 @@ robots:
     initial_position: [0.0, -0.5, 0.0]
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
-      stabilizer:
-        controller: 5   # stock Lee first, same order as the other two drones
+      indi_gains:
+        ctrl_mode: 0    # 2026-09-19: stock Lee flew clean (post-reflash). Now geometric --
+                         # controller=5 override removed, falls through to shared all:
+                         # controller=6. This is the exact config that failed on cf231_active
+                         # (test 2/6).
+        rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # firmware_logging:
     #  custom_topics:
     #    topic_name3:
