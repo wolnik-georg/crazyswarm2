@@ -31,7 +31,13 @@ robots:
                    # formation_flight.py. Back to 2-drone A8.
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
-    type: cf21  # see robot_types
+    type: cf21_active  # 2026-09-19: switched from cf21 (default_single_marker, 1 point) to the
+                        # recovered cf21_active (active_deck, 4-point square) -- physically
+                        # confirmed the 4-marker deck is mounted. Leading hypothesis for the
+                        # close-proximity tracking failures (A1 today, earlier A8 crashes):
+                        # a single point has nothing to disambiguate itself from any other
+                        # marker in the volume; a 4-point rigid pattern does. See robot_types
+                        # and docs/lab_sessions/2026-09-19.md.
     # 2026-09-16: two A8 (2-drone) full-INDI attempts crashed -- cf231_active destabilizes
     # first, cf_second ~0.3-0.4s later, separation only GROWS (not a collision). RPM deck
     # confirmed healthy on the bench same day (clean 4-motor response). Root cause is still
