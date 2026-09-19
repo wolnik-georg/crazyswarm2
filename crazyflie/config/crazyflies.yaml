@@ -22,11 +22,10 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: true  # 2026-09-19: ONE RETRY of the geometric config that failed to fly earlier
-                   # today (test 2/6), now that cf_second AND a third drone (cf5) both flew this
-                   # exact config clean -- checkpoint crazyswarm2 971f4b2. If this fails again
-                   # too, treat as a real, isolated hardware fault (bench diagnosis, not another
-                   # flight attempt); if clean, resume the plan on cf231_active as normal.
+    enabled: false # 2026-09-19: SET ASIDE for today -- repeated the same geometric failure on
+                   # retry, against 2 other airframes that flew the identical config clean.
+                   # Real, isolated hardware fault; needs bench diagnosis (motor/ESC), not more
+                   # flight attempts. cf5 takes over its role for the rest of the session.
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21_active  # 2026-09-19: switched from cf21 (default_single_marker, 1 point) to the
@@ -126,10 +125,9 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-19 TEMP: disabled -- its own checkpoint
-                                          # (crazyswarm2 cfcb4af) is verified clean on all 3
-                                          # controllers. cf231_active's turn now, same sequence,
-                                          # solo.
+    enabled: true                        # 2026-09-19: re-enabled for the first A8 pass with cf5
+                                          # taking over cf231_active's role (set aside, hardware
+                                          # fault). Back to its own permanent stock-Lee pin below.
                                           # 2026-09-19 (superseded for now): cf_second is in the
                                           # flight volume and must therefore be REGISTERED, not
                                           # merely present. Pattern across two sessions, now
@@ -163,29 +161,32 @@ robots:
                                           # unrelated to this tracking change.
     firmware_params:
       stabilizer:
-        controller: 6   # 2026-09-19 TEST: our controller solo on cf_second's airframe, stock
-                         # Lee hover having just flown clean (previous test). Geometric first
-                         # (ctrl_mode below), then full INDI -- confirming geometric/INDI
-                         # themselves aren't broken, independent of cf231_active's hardware
-                         # issue. REVERT to 5 (permanent pin) once this diagnostic is done.
+        controller: 5   # 2026-09-19: back to the permanent stock-Lee pin -- its own solo
+                         # 3-controller diagnostic (checkpoint cfcb4af) is done. First A8 pass
+                         # uses stock Lee on both drones deliberately.
       indi_gains:
-        ctrl_mode: 3    # 2026-09-19: geometric hover on cf_second confirmed clean -- now full
+        ctrl_mode: 3    # irrelevant while controller=5 override is active above -- full
                          # INDI, same airframe, same solo config otherwise.
 
   cf5:
-    enabled: false  # 2026-09-19 TEMP: disabled -- its own 3-controller sequence is complete and
-                    # clean (checkpoint 971f4b2). cf231_active's turn for one geometric retry.
-                    # RE-CHECK/UPDATE this initial_position before flying -- placement precision
-                    # matters for the 4-point rigid-body match (today's lesson); place the drone
-                    # here or update this value to wherever it actually sits.
+    enabled: true   # 2026-09-19: cf231_active repeated the SAME geometric failure a 2nd time
+                    # (2 clean airframes vs 1 repeatable failure -> real, isolated hardware
+                    # fault, set aside for today, needs bench diagnosis not more flight
+                    # attempts). cf5 takes over cf231_active's role as the study drone.
+                    # initial_position below moved to cf231_active's old slot to match what
+                    # A8/run_formation.py expects.
     uri: radio://0/80/2M/E7E7E7BB02
-    initial_position: [0.0, -0.5, 0.0]
+    initial_position: [0.0, 0.3, 0.0]   # moved from the solo-test placeholder to
+                                         # cf231_active's old A8 slot
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
-      indi_gains:
-        ctrl_mode: 3    # 2026-09-19: geometric flew clean too. Now full INDI, solo --
-                         # completes the 3-controller sequence on this drone.
-        rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
+      stabilizer:
+        controller: 5   # 2026-09-19: cf5 has NEVER flown 2-drone before, and A1 already had a
+                         # real collision today on an otherwise-proven config. First A8 pass:
+                         # BOTH drones on stock Lee -- the most conservative possible check of
+                         # the 2-drone mechanics (mocap, formation script, proximity) before
+                         # adding any controller risk. Geometric and full INDI come after this
+                         # is confirmed clean.
     # firmware_logging:
     #  custom_topics:
     #    topic_name3:
