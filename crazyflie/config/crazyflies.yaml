@@ -168,11 +168,13 @@ robots:
                                           # unrelated to this tracking change.
     firmware_params:
       stabilizer:
-        controller: 5   # 2026-09-18: back to stock Lee, permanent pin -- pure hardware
-                         # sanity check on the freshly brushless-swapped frame, isolated from
-                         # the two simple_flight.py per-robot-override bugs just found and
-                         # fixed (ctrl_mode ignored; pos_gains selected on the wrong mode).
-                         # Our controller (6) test on this airframe resumes after this.
+        controller: 6   # 2026-09-19 TEST: our controller solo on cf_second's airframe, stock
+                         # Lee hover having just flown clean (previous test). Geometric first
+                         # (ctrl_mode below), then full INDI -- confirming geometric/INDI
+                         # themselves aren't broken, independent of cf231_active's hardware
+                         # issue. REVERT to 5 (permanent pin) once this diagnostic is done.
+      indi_gains:
+        ctrl_mode: 0    # geometric first
 
   cf5:
     enabled: false
