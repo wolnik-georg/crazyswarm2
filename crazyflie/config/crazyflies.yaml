@@ -213,7 +213,25 @@ robot_types:
     #    topic_name3: 
     #      frequency: 1
     #      vars: ["acc.x", "acc.y", "acc.z"]
-    # reference_frame: "mocap" 
+    # reference_frame: "mocap"
+
+  # 2026-09-19: RECOVERED from a dangling git blob, never committed to any branch in this repo
+  # -- see debug/lab_logs/find_active_deck_geometry.sh and docs/lab_sessions/2026-09-19.md.
+  # 4-point marker (motion_capture.yaml's active_deck, restored alongside this) instead of
+  # default_single_marker's single point. NOT YET USED by any robot below -- cf231_active is
+  # still `type: cf21` pending physical verification that a 4-marker deck in the front-left/
+  # front-right/back-left/back-right square pattern active_deck describes is actually mounted.
+  # To apply: change cf231_active's `type:` to `cf21_active` below.
+  cf21_active:
+    motion_capture:
+      tracking: "librigidbodytracker" # one of "vendor", "librigidbodytracker"
+      # only if enabled; see motion_capture.yaml
+      marker: active_deck
+      dynamics: default
+    big_quad: false
+    battery:
+      voltage_warning: 3.8  # V
+      voltage_critical: 3.7 # V
 
 # global settings for all robots
 all:

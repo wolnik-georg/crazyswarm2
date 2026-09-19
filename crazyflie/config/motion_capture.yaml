@@ -33,6 +33,23 @@
           p1: [0.00, -0.03, 0.0] # right
           p2: [-0.015, 0.0, 0.0] # back
           p3: [0.00, 0.03, 0.0] # left
+      # 2026-09-19: RECOVERED from a dangling git blob (never committed to any branch in this
+      # repo, predates this repo's own history -- see debug/lab_logs/find_active_deck_geometry.sh
+      # and docs/lab_sessions/2026-09-19.md). Used by robot_types.cf21_active below. A real
+      # 4-point rigid pattern for librigidbodytracker to match, unlike default_single_marker's
+      # single point -- a single point has nothing to disambiguate itself from any other marker
+      # in the volume (including the other drone's), which is the leading hypothesis for the
+      # 2026-09-18/19 close-proximity tracking failures (A1 hover, A8's pre-fix crashes).
+      # NOT YET APPLIED to any robot -- cf231_active is still `type: cf21` pending physical
+      # verification that a 4-marker deck in exactly this front-left/front-right/back-left/
+      # back-right square pattern is actually mounted.
+      active_deck:
+        offset: [0.0, 0.0, -0.02]
+        points:
+          p0: [-0.019, 0.019, 0.0] # front left (M4)
+          p1: [0.019, 0.019, 0.0] # front right (M1)
+          p2: [-0.019, -0.019, 0.0] # back left (M3)
+          p3: [0.019, -0.019, 0.0] # back right (M2)
       medium_frame:
         offset: [0.0, 0.0, -0.03]
         points:
