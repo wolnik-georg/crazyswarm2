@@ -70,21 +70,11 @@ robots:
     # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
     # of the earlier 2-drone crashes.
     firmware_params:
-      stabilizer:
-        controller: 5   # 2026-09-18 TEMP: FINAL decisive test -- stock Lee on cf231_active,
-                         # solo (cf_second stays disabled). Same code path already proven
-                         # clean on cf_second earlier today. If this ALSO fails, it's not our
-                         # controller/gains/scripts and not this specific airframe's damage --
-                         # points at mocap or something shared (crazyswarm2 core, radio dongle,
-                         # room/environment). REVERT to controller=6 (ctrl_mode below,
-                         # unchanged) once this diagnostic is done.
       indi_gains:
-        ctrl_mode: 3    # 2026-09-18: A8 geometric retest (18:31:15) succeeded with the
-                         # apply('takeoff'/'landing', ...) pos_gains fix -- only the known
-                         # standing baseline oscillation (10-24 deg, bounded), no divergence.
-                         # Moving to full INDI next, same fix now covers this phase's own
-                         # pos_gains (64/5/48/7, INDI-tuned, no substitution needed at ctrl_mode=3).
-                         # -- unaffected by the two simple_flight.py bugs found/fixed today).
+        ctrl_mode: 0    # 2026-09-19: geometric for the EKF-fix validation flight. The
+                         # estimator reset is what is under test, so fly the simplest law
+                         # available; switch to 3 for the A8 full-INDI re-confirmation
+                         # (step 3) once step 1 has passed.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
     # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
