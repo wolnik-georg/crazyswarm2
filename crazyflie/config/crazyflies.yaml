@@ -180,13 +180,12 @@ robots:
                                          # cf231_active's old A8 slot
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
-      stabilizer:
-        controller: 5   # 2026-09-19: cf5 has NEVER flown 2-drone before, and A1 already had a
-                         # real collision today on an otherwise-proven config. First A8 pass:
-                         # BOTH drones on stock Lee -- the most conservative possible check of
-                         # the 2-drone mechanics (mocap, formation script, proximity) before
-                         # adding any controller risk. Geometric and full INDI come after this
-                         # is confirmed clean.
+      indi_gains:
+        ctrl_mode: 0    # 2026-09-19: stock-Lee A8 pass flew clean on both drones (2-drone
+                         # mechanics confirmed). Now geometric on cf5 -- controller=5 override
+                         # removed, falls through to shared all: controller=6. cf_second stays
+                         # on stock Lee (its permanent pin).
+        rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # firmware_logging:
     #  custom_topics:
     #    topic_name3:
