@@ -22,13 +22,11 @@ fileversion: 3
 
 robots:
   cf231_active:
-    enabled: true  # 2026-09-18: re-enabled for its own solo hover+figure8 sanity check
-                   # (cf_second's brushless swap confirmed clean on stock Lee -- architecture
-                   # decision stands: cf_second=stock Lee permanent, cf231_active=our
-                   # controller). cf_second disabled below for this solo test.
-                   # 2026-09-14: re-enabled -- height sweep confirmed cf_second's ~0.40m
-                   # shortfall is constant, compensation added in flight.py/run_formation.py/
-                   # formation_flight.py. Back to 2-drone A8.
+    enabled: false # 2026-09-19 TEMP: disabled -- stock Lee hover showed near-zero thrust,
+                   # ~8-10 deg damped roll rocking, never left ground, "3 of 4 motors spin"
+                   # observed. Physical motor/ESC check came back clean, so testing whether
+                   # cf_second shows the SAME pattern (-> script/shared cause) or flies clean
+                   # (-> real hardware fault specific to this airframe, needs deeper inspection).
     uri: radio://0/80/2M/E7E7E7E7E7
     initial_position: [0.0, 0.3, 0.0]  # 2026-09-12: moved from X to Y for the 2-drone layout
     type: cf21_active  # 2026-09-19: switched from cf21 (default_single_marker, 1 point) to the
@@ -131,9 +129,12 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-19 TEMP: disabled for cf231_active's solo
-                                          # 3-controller re-validation (1/6-3/6) after the A1
-                                          # collision/tumble. Its own turn is tests 4/6-6/6.
+    enabled: true                        # 2026-09-19: cf231_active's stock-Lee hover showed
+                                          # near-zero thrust / "3 of 4 motors" / never left
+                                          # ground, physical check on it came back clean --
+                                          # testing cf_second now on the SAME stock-Lee hover to
+                                          # see if it's a shared (script/sequence) cause or
+                                          # specific to cf231_active's airframe.
                                           # 2026-09-19 (superseded for now): cf_second is in the
                                           # flight volume and must therefore be REGISTERED, not
                                           # merely present. Pattern across two sessions, now
