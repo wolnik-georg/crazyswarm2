@@ -76,11 +76,14 @@ robots:
     # neither is resolved by this RPM finding, which only ruled out RPM source as the cause
     # of the earlier 2-drone crashes.
     firmware_params:
+      stabilizer:
+        controller: 5   # 2026-09-19 TEST 1/6: solo re-validation after the marker fix + A1
+                         # collision/tumble. cf231_active stock Lee hover first (simplest,
+                         # proven-elsewhere law) -- then geometric, then full INDI (remove this
+                         # override, ctrl_mode 0 then 3), all solo, cf_second disabled
+                         # throughout. Then repeat all three on cf_second. Zero 2-drone risk.
       indi_gains:
-        ctrl_mode: 0    # 2026-09-19: geometric for the EKF-fix validation flight. The
-                         # estimator reset is what is under test, so fly the simplest law
-                         # available; switch to 3 for the A8 full-INDI re-confirmation
-                         # (step 3) once step 1 has passed.
+        ctrl_mode: 0    # irrelevant while controller=5 override is active above
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
     # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
     # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
@@ -128,9 +131,13 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-19 TEST: cf_second is in the flight volume and
-                                          # must therefore be REGISTERED, not merely present.
-                                          # Pattern across two sessions, now consistent on every
+    enabled: false                       # 2026-09-19 TEMP: disabled for cf231_active's solo
+                                          # 3-controller re-validation (1/6-3/6) after the A1
+                                          # collision/tumble. Its own turn is tests 4/6-6/6.
+                                          # 2026-09-19 (superseded for now): cf_second is in the
+                                          # flight volume and must therefore be REGISTERED, not
+                                          # merely present. Pattern across two sessions, now
+                                          # consistent on every
                                           # observation: enabled -> A8 clean (09-18 18:31, 18:39);
                                           # physically REMOVED -> clean (09-18 19:43/19:45, 09-19
                                           # run 2); PRESENT BUT DISABLED -> fails (09-18 19:16-19:25,
