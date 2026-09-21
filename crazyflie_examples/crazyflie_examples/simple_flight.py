@@ -432,11 +432,18 @@ def main():
 
         # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
         # takeoff -- see the long comment above `_apply_flight_settings(..., 'takeoff', ...)`.
-        for c in allcfs.crazyflies:
-            try:
-                c.setParam('usd.logging', 1)
-            except Exception:
-                pass  # uSD deck not present -- skip silently
+        run_tag = int(time.time())
+        try:
+            allcfs.setParam('usd.runTag', run_tag)
+            th.sleep(0.05)
+            allcfs.setParam('usd.logging', 1)
+            print(f'[simple_flight] uSD run_tag={run_tag} (broadcast)')
+        except Exception:
+            for c in allcfs.crazyflies:
+                try:
+                    c.setParam('usd.logging', 1)
+                except Exception:
+                    pass  # uSD deck not present -- skip silently
 
         if hover_mode:
             print(f'[simple_flight] Hovering {args.duration:.0f}s ({n_drones} drones)...')

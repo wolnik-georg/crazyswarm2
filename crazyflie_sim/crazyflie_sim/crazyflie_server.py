@@ -11,7 +11,7 @@ from functools import partial
 import importlib
 import os
 
-from crazyflie_interfaces.msg import FullState, Hover
+from crazyflie_interfaces.msg import FullState, Hover, LogDataGeneric
 from crazyflie_interfaces.srv import GoTo, Land, Takeoff
 from crazyflie_interfaces.srv import NotifySetpointsStop, StartTrajectory, UploadTrajectory
 from geometry_msgs.msg import PoseStamped, Twist
@@ -142,6 +142,7 @@ class CrazyflieServer(Node):
         # any client-side code that reads it (formation scripts' collision/landing checks
         # included) silently saw [0, 0, 0] forever instead of a missing-topic error.
         self.pose_publishers = {}
+        self.state_log_publishers = {}
         for name, _ in self.cfs.items():
             pub = self.create_publisher(
                     String,
@@ -156,6 +157,10 @@ class CrazyflieServer(Node):
 
             self.pose_publishers[name] = self.create_publisher(
                     PoseStamped, name + '/pose', 10)
+            # Hardware publishes custom log group "state" (stateEstimate.*) over CRTP;
+            # formation scripts' EKF gate reads {name}/state, not /pose directly.
+            self.state_log_publishers[name] = self.create_publisher(
+                    LogDataGeneric, name + '/state', 10)
 
             self.create_service(
                 Empty,
@@ -510,17 +515,24 @@ class CrazyflieServer(Node):
 
         stamp = self.get_clock().now().to_msg()
         for name, cf in self.cfs.items():
+            sx, sy, sz, svx, svy, svz = cf.state_estimate
             msg = PoseStamped()
             msg.header.stamp = stamp
             msg.header.frame_id = 'world'
-            msg.pose.position.x = float(cf.state.position.x)
-            msg.pose.position.y = float(cf.state.position.y)
-            msg.pose.position.z = float(cf.state.position.z)
+            msg.pose.position.x = sx
+            msg.pose.position.y = sy
+            msg.pose.position.z = sz
             msg.pose.orientation.w = float(cf.state.attitudeQuaternion.w)
             msg.pose.orientation.x = float(cf.state.attitudeQuaternion.x)
             msg.pose.orientation.y = float(cf.state.attitudeQuaternion.y)
             msg.pose.orientation.z = float(cf.state.attitudeQuaternion.z)
             self.pose_publishers[name].publish(msg)
+
+            st = LogDataGeneric()
+            st.header.stamp = stamp
+            st.timestamp = int(self.backend.time() * 1000)
+            st.values = [sx, sy, sz, svx, svy, svz]
+            self.state_log_publishers[name].publish(st)
 
         for vis in self.visualizations:
             vis.step(self.backend.time(), states_next, states_desired, actions)

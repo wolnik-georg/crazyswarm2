@@ -659,7 +659,10 @@ def main():
         # takeoff -- see the long comment at the top of this try block. Sending it at this
         # point (mid-flight, which is where it originally sat) destroys the high-level
         # commander's time base and crashes the vehicle within one control tick.
+        run_tag = int(time.time())
         try:
+            allcfs.setParam('usd.runTag', run_tag)
+            th.sleep(0.05)
             allcfs.setParam('usd.logging', 1)
             usd_start = time.monotonic()
             print(f'[formation] uSD logging started (broadcast) at '
@@ -687,6 +690,7 @@ def main():
                            'height': args.height, 'anchor': list(map(float, anchor)),
                            't_start_sim': t_start, 'duration': sc.duration,
                            'timescale': args.timescale,
+                           'usd_run_tag': run_tag,
                            # 2026-09-15: per-drone effective config, so the sidecar records
                            # what each vehicle actually flew rather than only the shared
                            # block. Drones may run the same controller or different ones;

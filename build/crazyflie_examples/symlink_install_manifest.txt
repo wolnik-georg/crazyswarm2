@@ -320,6 +320,8 @@
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/formations/A2_dz0.4_speed0.5_length1.2_radius0.75_period9.42469213048225_laps2.0_hold12.0_rotate_deg0.0_r1_top.csv
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/formations/A4_dz0.6_offset0.2_speed0.3_length1.2_radius0.45_period13.328345361810495_laps2.0_rotate_deg0.0_r0_bottom.csv
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/formations/A4_dz0.6_offset0.2_speed0.3_length1.2_radius0.45_period13.328345361810495_laps2.0_rotate_deg0.0_r1_top.csv
+/home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/formations/A8_dz0.4_span1.0_duration6.0_settle2.0_passes2_rotate_deg0.0_r0_bottom.csv
+/home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/formations/A8_dz0.4_span1.0_duration6.0_settle2.0_passes2_rotate_deg0.0_r1_top.csv
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/helix_mode1_kt0.05.csv
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/helix_mode1_kt0.05_onboard.csv
 /home/georg/Desktop/crazyswarm2/install/crazyflie_examples/local/lib/python3.10/dist-packages/crazyflie_examples/data/helix_mode1_kt0.05_onboard.meta.json

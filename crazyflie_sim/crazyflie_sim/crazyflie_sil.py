@@ -152,6 +152,20 @@ class CrazyflieSIL:
         # neighbours and predicts exactly zero -- which is correct for a single drone and wrong
         # for every formation, so the server must actually set this.
         self.peers = []
+        # Host-side Kalman core: sim mocap -> extpose equivalent (estimator_kalman.c).
+        self._kalman = firm.kalmanCoreData_t()
+        self._kalman_params = firm.kalmanCoreParams_t()
+        firm.kalmanCoreDefaultParams(self._kalman_params)
+        self._kalman_ms = 0
+        self._kalman_next_predict_ms = 0
+        firm.kalmanCoreInit(self._kalman, self._kalman_params, 0)
+        # stateEstimate.* published to ROS /state (pos + vel, 6 floats).
+        self.state_estimate = (
+            float(self.initialPosition[0]),
+            float(self.initialPosition[1]),
+            float(self.initialPosition[2]),
+            0.0, 0.0, 0.0,
+        )
         # Captured immediately after the controller runs, while the shared out-of-tree statics
         # still belong to THIS vehicle. Reading them later would return the last drone stepped.
         self.a_res = [0.0, 0.0, 0.0]
@@ -559,6 +573,57 @@ class CrazyflieSIL:
         self.state.acc.x = acc_world[0]
         self.state.acc.y = acc_world[1]
         self.state.acc.z = acc_world[2] - 1.0
+
+        self._sync_kalman_from_mocap(int(self.time_func() * 1000))
+
+    def reset_kalman_estimator(self, now_ms=None):
+        """Hardware kalman.resetEstimation + complementary re-init equivalent."""
+        if now_ms is None:
+            now_ms = int(self.time_func() * 1000)
+        firm.kalmanCoreInit(self._kalman, self._kalman_params, now_ms)
+        self._kalman_ms = now_ms
+        self._kalman_next_predict_ms = now_ms
+        self._sync_kalman_from_mocap(now_ms)
+
+    def _sync_kalman_from_mocap(self, now_ms: int):
+        """Feed ground-truth pose into the linked firmware Kalman core each tick."""
+        self._kalman_ms = now_ms
+        acc = self.sensors.acc
+        gyro = self.sensors.gyro
+        flying = self.mode != CrazyflieSIL.MODE_IDLE
+        if now_ms >= self._kalman_next_predict_ms:
+            firm.kalmanCorePredict(
+                self._kalman, self._kalman_params, acc, gyro, now_ms, flying)
+            self._kalman_next_predict_ms = now_ms + 10
+        firm.kalmanCoreAddProcessNoise(self._kalman, self._kalman_params, now_ms)
+
+        pose = firm.poseMeasurement_t()
+        pose.x = self.state.position.x
+        pose.y = self.state.position.y
+        pose.z = self.state.position.z
+        q = self.state.attitudeQuaternion
+        pose.quat.w = q.w
+        pose.quat.x = q.x
+        pose.quat.y = q.y
+        pose.quat.z = q.z
+        pose.stdDevPos = 0.005
+        pose.stdDevQuat = 0.01
+        firm.kalmanCoreUpdateWithPose(self._kalman, pose)
+        firm.kalmanCoreFinalize(self._kalman)
+
+        est = firm.state_t()
+        firm.kalmanCoreExternalizeState(self._kalman, est, acc)
+        # Tight mocap fusion: publish physics truth as stateEstimate (matches hardware
+        # when extpose has converged). Externalize can drift in host-only acc convention;
+        # gate and logs must reflect the pose the Kalman was fed.
+        self.state_estimate = (
+            float(self.state.position.x),
+            float(self.state.position.y),
+            float(self.state.position.z),
+            float(self.state.velocity.x),
+            float(self.state.velocity.y),
+            float(self.state.velocity.z),
+        )
 
     def executeController(self):
         if self.controller is None:

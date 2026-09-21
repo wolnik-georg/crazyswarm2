@@ -640,6 +640,7 @@ def main():
         # scenario library's time-varying curves) -- verify_formation_flight_sim.py
         # needs both: the window to check, and what "correct" means for each pair.
         t_start_sim = float(th.time())
+        run_tag = int(time.time())
         # 2026-09-12: a filesystem problem here (wrong path on a different machine) previously
         # propagated all the way up and aborted the flight BEFORE landing -- both drones were
         # left hovering with no autonomous recovery. Writing a sidecar file is not flight-
@@ -655,6 +656,7 @@ def main():
                     "targets": [list(map(float, t)) for t in targets],
                     "t_start_sim": t_start_sim, "duration": traj_dur,
                     "timescale": args.speed, "reps": args.reps,
+                    "usd_run_tag": run_tag,
                 }, fh, indent=2)
             print(f"[formation] t_start(sim) = {t_start_sim:.3f}s -> {sidecar.name}")
         except Exception as e:
@@ -674,6 +676,8 @@ def main():
         # logging period. A loop of individual setParam calls would stagger the starts by
         # tens of ms and destroy that. See tools/merge_usd_logs.py.
         try:
+            allcfs.setParam("usd.runTag", run_tag)
+            th.sleep(0.05)
             allcfs.setParam("usd.logging", 1)
             usd_start = time.monotonic()   # ROS-clock instant of the broadcast, for the merge
             print(f"[formation] uSD logging started (broadcast) at t={usd_start - log_t0:.3f}s")

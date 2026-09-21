@@ -11,9 +11,9 @@
 #   * cf_second enabled, placed 0.5 m directly ABOVE cf231_active (downwash geometry)
 #   * sim.backend = neuralswarm (Neural-Swarm2 learned interaction force)
 #
-# NOTE logging is NOT available in sim: the sim server publishes only
-# robot_description, not /cfXXX/state, so formation_flight will write empty CSVs.
-# Sim is for rehearsing flight logic; real data comes from the uSD deck in the lab.
+# NOTE: sim server publishes {name}/state and {name}/pose from ground-truth physics (same signal;
+# Kalman runs internally but ROS uses physics pos/vel — docs/38 in flying_robot_course). Radio CSV
+# still need active logging during flight; uSD remains the lab truth for C.1 training.
 # ══════════════════════════════════════════════════════════════════════════════
 
 # named list of all robots

@@ -51,6 +51,7 @@ The YAML vars list is defined by us, so the mapping below is authoritative.
 import argparse
 import csv
 import json
+import os
 import sys
 import time
 from datetime import datetime
@@ -71,7 +72,21 @@ from rcl_interfaces.srv import SetParameters
 
 DATA_DIR = Path(__file__).parent / "data"
 
-LOGS_DIR = Path("/home/flyingrobots/georg/flying_robot_course/Controls/logs")
+
+def _thesis_repo_root() -> Path:
+    """Resolve flying_robot_course without hardcoding one lab PC home directory."""
+    if env := os.environ.get("FLYING_ROBOT_COURSE_ROOT"):
+        return Path(env).expanduser().resolve()
+    for candidate in (
+        Path.home() / "Desktop" / "flying_robot_course",
+        Path("/home/flyingrobots/georg/flying_robot_course"),
+    ):
+        if (candidate / "docs").is_dir():
+            return candidate.resolve()
+    return (Path.home() / "Desktop" / "flying_robot_course").resolve()
+
+
+LOGS_DIR = _thesis_repo_root() / "Controls" / "logs"
 
 # ── Logging state (single-threaded — callbacks fire inside timeHelper.sleep) ──
 
@@ -1342,11 +1357,19 @@ def main():
             # point (mid-flight, which is where it originally sat from 2026-09-14 until
             # 2026-09-15) destroys the high-level commander's time base and crashes the
             # vehicle within one control tick.
+            run_tag = int(time.time())
+            try:
+                allcfs.setParam("usd.runTag", run_tag)
+                th.sleep(0.05)
+            except Exception:
+                run_tag = None
             for c in allcfs.crazyflies:
                 try:
                     c.setParam("usd.logging", 1)
                 except Exception:
                     pass  # uSD deck not present — skip silently
+            if run_tag is not None:
+                print(f"[flight] uSD run_tag={run_tag} (broadcast before logging)")
 
             for rep in range(args.reps):
                 if rep > 0:
