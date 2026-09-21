@@ -11,12 +11,12 @@ fileversion: 3
 #    note in all.firmware_logging. 8 topics x 100 Hz ~= 600 packets/s per drone and
 #    one Crazyradio carries ~1000 packets/s TOTAL. Detailed data should come from
 #    the uSD deck instead -- flying_drone_stack/tools/README_usd_thesis_logging.md.
-# 3. Gains in all.firmware_params go to EVERY enabled robot -- but as of 2026-09-13,
-#    only cf231_active is ever the "controller under study" (geometric/INDI/future
-#    NA-INDI/IL-NDI). cf_second is permanently pinned to stock Lee (controller: 5,
+# 3. Gains in all.firmware_params go to EVERY enabled robot -- but as of 2026-09-19,
+#    cf5 is the study drone (geometric/INDI/future NA-INDI/IL-NDI) with cf231_active
+#    bench-only. cf_second is permanently pinned to stock Lee (controller: 5,
 #    per-robot override below) regardless of platform, so all.firmware_params'
-#    indi_gains/pos_gains only ever matter for cf231_active in practice. This is what
-#    removes the whole cross-platform gain-sharing risk class found 2026-09-12 --
+#    indi_gains/pos_gains only ever matter for cf5 (per-robot overrides) in practice.
+#    This removes the whole cross-platform gain-sharing risk class found 2026-09-12 --
 #    not by fixing the sharing, but by only ever needing it for one drone.
 # ══════════════════════════════════════════════════════════════════════════════
 
@@ -79,17 +79,14 @@ robots:
                          # cf_second still disabled. controller=5 override removed, so this
                          # falls through to the shared all: controller=6.
         rpm_source: 1   # DShot bidirectional telemetry, not the optical deck
-    # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- it logs
-    # motor.m1_rpm..m4_rpm (DShot telemetry vars), which only cf231_active's firmware_app
-    # build exposes. cf_second runs stock, unmodified CF2.1 firmware with no DShot RPM
-    # logging support at all, so with cf_second re-enabled the global block broke its
-    # connect ("could not find motor m1 rpm") -- not a brushless issue, cf_second was never
-    # meant to log RPM (see the architecture note below cf_second's block).
-    firmware_logging:
-      custom_topics:
-        rpm:
-          frequency: 20 # Hz
-          vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
+    # 2026-09-18: rpm custom_topic moved here from the shared `all:` block -- DShot vars
+    # only exist on firmware_app builds. cf231_active is disabled; see cf5 for the live
+    # copy when cf5 is the study drone.
+    # firmware_logging:
+    #   custom_topics:
+    #     rpm:
+    #       frequency: 20
+    #       vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
     # firmware_params:
     #   kalman:
     #     pNAcc_xy: 1.0 # default 0.5
@@ -161,12 +158,9 @@ robots:
                                           # unrelated to this tracking change.
     firmware_params:
       stabilizer:
-        controller: 5   # 2026-09-19: back to the permanent stock-Lee pin -- its own solo
-                         # 3-controller diagnostic (checkpoint cfcb4af) is done. First A8 pass
-                         # uses stock Lee on both drones deliberately.
+        controller: 5   # permanent stock-Lee pin (formation top / downwash source only).
       indi_gains:
-        ctrl_mode: 3    # irrelevant while controller=5 override is active above -- full
-                         # INDI, same airframe, same solo config otherwise.
+        ctrl_mode: 3    # irrelevant while controller=5 -- stock Lee ignores indi_gains.
 
   cf5:
     enabled: true   # 2026-09-19: cf231_active repeated the SAME geometric failure a 2nd time
@@ -181,18 +175,20 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 3   # 2026-09-19: stock Bitcraze INDI (Two Ways to Build INDI card /
-                         # docs/07). Confirmed by reading controller_indi.c directly: uses
-                         # finite_difference_from_filter() on the filtered gyro signal for its
-                         # incremental estimate -- NO rpm_get_all()/rpm_source anywhere in the
-                         # file, no motorGetRPM call. Genuinely RPM-source-agnostic (neither
-                         # DShot nor the optical deck), unlike our own controller=6/7/8. cf5
-                         # stays the bottom/study drone; cf_second unchanged on stock Lee.
-    # firmware_logging:
-    #  custom_topics:
-    #    topic_name3:
-    #      frequency: 1
-    #      vars: ["acc.x", "acc.y", "acc.z"]
+        controller: 6   # 2026-09-21: C.1 / default study config -- our OOT geometric+INDI
+      indi_gains:
+        ctrl_mode: 0    # geometric SE(3) for residual collection (docs/25); override all:
+                         # ctrl_mode=3 so formation scripts log/push the mode cf5 actually flies.
+        rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
+      rnn:
+        en: 0           # predict/log only until C.2+ explicitly enables compensation
+    # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
+    # firmware_app-only; cf_second stock firmware must not inherit this topic.
+    firmware_logging:
+      custom_topics:
+        rpm:
+          frequency: 20 # Hz
+          vars: ["motor.m1_rpm", "motor.m2_rpm", "motor.m3_rpm", "motor.m4_rpm"]
     # reference_frame: "odom_cf5"
 
 # Definition of the various robot types
@@ -359,12 +355,10 @@ all:
       #   frequency: 100 # Hz
       #   vars: ["indi.alp_raw_x", "indi.alp_raw_y", "indi.alp_raw_z",
       #          "indi.alp_x",     "indi.alp_y",     "indi.alp_z"]
-      # /cf231/rpm — per-motor RPM (4 uint16 = 8 bytes)
-      # 2026-09-18: MOVED to robots.cf231_active.firmware_logging.custom_topics -- this
-      # topic logs DShot-only vars (motor.m1_rpm..m4_rpm) that cf_second's stock firmware
-      # doesn't expose; living under `all:` broke cf_second's connect once it was
-      # re-enabled for 2-drone flights ("could not find motor m1 rpm"). See that block for
-      # the full DShot-vs-deck history this comment used to carry.
+      # /cfXXX/rpm — per-motor RPM (4 uint16 = 8 bytes)
+      # 2026-09-18: MOVED off `all:` to the study drone only (cf5 as of 2026-09-21; was
+      # cf231_active). DShot vars (motor.m1_rpm..m4_rpm) are firmware_app-only; cf_second's
+      # stock firmware must not inherit this topic ("could not find motor m1 rpm" at connect).
   # firmware parameters for all drones (use robot_types/type_name to set per type, or
   # robots/drone_name to set per drone)
   firmware_params:
