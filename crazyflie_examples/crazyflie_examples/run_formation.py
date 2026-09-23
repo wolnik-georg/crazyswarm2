@@ -152,6 +152,30 @@ def make_limits(args) -> safety.Limits:
     return lim
 
 
+def apply_scenario_lab_defaults(args, sc: scenarios.Scenario) -> None:
+    """Hardware lab profiles: A7 must fit mocap z and pass extreme/dz checks without flags."""
+    if sc.sid != 'A7':
+        return
+    dz_start = float(sc.params.get('dz_start', 1.10))
+    z_lo, z_hi = safety.FLIGHT_SPACE['z']
+    max_base = z_hi - dz_start
+    if max_base < z_lo:
+        sys.exit(f'[formation] A7: geofence z_max {z_hi} m cannot fit dz_start {dz_start} m')
+    if args.height == 1.0:
+        args.height = round(max(z_lo, max_base - 0.02), 2)
+        print(f'[formation] A7: --height -> {args.height} m '
+              f'(top ≈ {args.height + dz_start:.2f} m; mocap geofence z≤{z_hi} m)')
+    elif args.height + dz_start > z_hi + 1e-6:
+        sys.exit(f'[formation] A7: height {args.height} + dz_start {dz_start} '
+                 f'→ {args.height + dz_start:.2f} m > geofence z_max {z_hi} m')
+    if args.z_floor is None:
+        args.z_floor = z_lo
+        print(f'[formation] A7: --z-floor -> {args.z_floor} m (low anchor; not the 0.30 m stack floor)')
+    if not args.allow_extreme:
+        args.allow_extreme = True
+        print('[formation] A7: --allow-extreme enabled (dz_end 0.10 m is extreme by design)')
+
+
 def compile_scenario(sc, base_height: float):
     """Compile every robot's curve and write it as a Poly4D CSV. Returns (paths, tables)."""
     paths, tables = [], []
@@ -271,6 +295,7 @@ def main():
         sc = scenarios.build(args.scenario, **scenario_params(args))
     except (ValueError, KeyError) as e:
         sys.exit(f'[formation] {str(e).strip(chr(39))}')
+    apply_scenario_lab_defaults(args, sc)
     lim = make_limits(args)
     spec_problems = scenarios.check_spec(sc)
     # Offline the anchor XY is unknown (it comes from drone 0's start position), so the
