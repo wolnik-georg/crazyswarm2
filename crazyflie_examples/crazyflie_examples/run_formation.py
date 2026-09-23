@@ -152,11 +152,17 @@ def make_limits(args) -> safety.Limits:
     return lim
 
 
-def apply_scenario_lab_defaults(args, sc: scenarios.Scenario) -> None:
-    """Hardware lab profiles: A7 must fit mocap z and pass extreme/dz checks without flags."""
-    if sc.sid != 'A7':
+def apply_a7_lab_defaults(args) -> None:
+    """A7 in this lab: low anchor, extreme dz, motion along y (room is 4 m x x 2 m y x 1.3 m z).
+
+    The scenario is authored as a +x shuttle (length 1.2 m). With x geofence ±1 m, --auto-center
+    parks the path against the x walls (anchor x ≈ ±0.6 m) and tracking/controller stress at the
+    mocap edge shows up as climb/runaway. Rotating 90° uses the long y axis (±2 m) with ~0.8 m
+    side clearance instead.
+    """
+    if (args.scenario or '').upper() != 'A7':
         return
-    dz_start = float(sc.params.get('dz_start', 1.10))
+    dz_start = float(args.dz_start if args.dz_start is not None else 1.10)
     z_lo, z_hi = safety.FLIGHT_SPACE['z']
     max_base = z_hi - dz_start
     if max_base < z_lo:
@@ -174,6 +180,9 @@ def apply_scenario_lab_defaults(args, sc: scenarios.Scenario) -> None:
     if not args.allow_extreme:
         args.allow_extreme = True
         print('[formation] A7: --allow-extreme enabled (dz_end 0.10 m is extreme by design)')
+    if args.rotate is None:
+        args.rotate = 90.0
+        print('[formation] A7: --rotate -> 90° (translate along y — x span is only ±1 m here)')
 
 
 def compile_scenario(sc, base_height: float):
@@ -291,11 +300,11 @@ def main():
 
     # A parameter that does not apply is a mistake worth stopping for, not a traceback:
     # it means the flight about to run is not the flight that was asked for.
+    apply_a7_lab_defaults(args)
     try:
         sc = scenarios.build(args.scenario, **scenario_params(args))
     except (ValueError, KeyError) as e:
         sys.exit(f'[formation] {str(e).strip(chr(39))}')
-    apply_scenario_lab_defaults(args, sc)
     lim = make_limits(args)
     spec_problems = scenarios.check_spec(sc)
     # Offline the anchor XY is unknown (it comes from drone 0's start position), so the
