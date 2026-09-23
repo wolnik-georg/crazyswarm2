@@ -190,6 +190,26 @@ def apply_a7_lab_defaults(args) -> None:
         print('[formation] A7: --rotate -> 90° (translate along y — x span is only ±1 m here)')
 
 
+def apply_a2_lab_defaults(args) -> None:
+    """A2 circle in this lab: default radius 0.75 m @ height 1 m hits x/z mocap limits."""
+    if (args.scenario or '').upper() != 'A2':
+        return
+    if (args.path or 'circle') != 'circle':
+        return
+    if args.height == 1.0:
+        args.height = 0.45
+        print('[formation] A2: --height -> 0.45 m (top ≈ 0.75 m with dz=0.30; was 1.0/1.3 m)')
+    if args.radius is None:
+        args.radius = 0.40
+        print('[formation] A2: --radius -> 0.40 m (was 0.75 m diameter 1.5 m)')
+    if args.z_floor is None:
+        args.z_floor = safety.FLIGHT_SPACE['z'][0]
+        print(f'[formation] A2: --z-floor -> {args.z_floor} m')
+    if args.rotate is None:
+        args.rotate = 90.0
+        print('[formation] A2: --rotate -> 90° (centre circle in y; x span ±1 m)')
+
+
 def compile_scenario(sc, base_height: float):
     """Compile every robot's curve and write it as a Poly4D CSV. Returns (paths, tables)."""
     paths, tables = [], []
@@ -306,6 +326,7 @@ def main():
     # A parameter that does not apply is a mistake worth stopping for, not a traceback:
     # it means the flight about to run is not the flight that was asked for.
     apply_a7_lab_defaults(args)
+    apply_a2_lab_defaults(args)
     try:
         sc = scenarios.build(args.scenario, **scenario_params(args))
     except (ValueError, KeyError) as e:
