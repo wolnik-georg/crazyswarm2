@@ -155,10 +155,10 @@ def make_limits(args) -> safety.Limits:
 def apply_a7_lab_defaults(args) -> None:
     """A7 in this lab: low anchor, extreme dz, motion along y (room is 4 m x x 2 m y x 1.3 m z).
 
-    The scenario is authored as a +x shuttle (length 1.2 m). With x geofence ±1 m, --auto-center
-    parks the path against the x walls (anchor x ≈ ±0.6 m) and tracking/controller stress at the
-    mocap edge shows up as climb/runaway. Rotating 90° uses the long y axis (±2 m) with ~0.8 m
-    side clearance instead.
+    The scenario is authored as a +x shuttle (default length 1.2 m). With x geofence ±1 m, an
+    unrotated run parks on the x walls; rotate 90° uses y. Lab mocap still loses track when the
+    top vehicle is high (≈1.25–1.3 m) or when the shuttle is long — shorten length and lower the
+    whole formation while keeping dz_start/dz_end (relative separation) unchanged.
     """
     if (args.scenario or '').upper() != 'A7':
         return
@@ -167,10 +167,15 @@ def apply_a7_lab_defaults(args) -> None:
     max_base = z_hi - dz_start
     if max_base < z_lo:
         sys.exit(f'[formation] A7: geofence z_max {z_hi} m cannot fit dz_start {dz_start} m')
+    # Shorter along-track leg → stay nearer volume centre (less time at mocap-soft edges).
+    if args.length is None:
+        args.length = 1.0
+        print('[formation] A7: --length -> 1.0 m (shorter shuttle; dz sweep unchanged)')
+    # Lower absolute altitude: same inter-drone dz, top peak ≈1.20 m not ≈1.28 m.
     if args.height == 1.0:
-        args.height = round(max(z_lo, max_base - 0.02), 2)
+        args.height = round(max(z_lo, max_base - 0.10), 2)
         print(f'[formation] A7: --height -> {args.height} m '
-              f'(top ≈ {args.height + dz_start:.2f} m; mocap geofence z≤{z_hi} m)')
+              f'(top ≈ {args.height + dz_start:.2f} m; dz_start/dz_end unchanged)')
     elif args.height + dz_start > z_hi + 1e-6:
         sys.exit(f'[formation] A7: height {args.height} + dz_start {dz_start} '
                  f'→ {args.height + dz_start:.2f} m > geofence z_max {z_hi} m')
