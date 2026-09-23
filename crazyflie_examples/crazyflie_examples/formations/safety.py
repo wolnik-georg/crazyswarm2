@@ -17,10 +17,10 @@ import numpy as np
 # Flight volume — TWO separate limits, deliberately.
 #
 # FLIGHT_SPACE is the PHYSICAL mocap-tracked volume: where the cameras can see the drones at
-# all. Tape-measured by the operator 2026-09-02 (4m x by 2m y, 1.7m z) -- matches the operator's
-# earlier 2026-08-23 statement and the independent 2026-07-27 one (x and z identical, y then
-# quoted as +-2.1) to within rounding. No longer a placeholder.
-FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.0, 1.70))
+# all. Tape-measured 2026-09-02 (x +-1 m, y +-2 m); z ceiling lowered 2026-09-23 after lab
+# flights showed tracking loss above ~1.5 m (nominal tape z was 1.7 m). z floor 0.1 m matches
+# the tracked volume floor; formation scenarios still use Z_FLOOR_DEFAULT unless overridden.
+FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.1, 1.50))
 
 # The floor we CHOOSE to fly above is a different question from where tracking works.
 #
