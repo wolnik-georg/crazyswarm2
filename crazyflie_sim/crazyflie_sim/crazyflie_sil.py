@@ -304,6 +304,50 @@ class CrazyflieSIL:
             self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
                        firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
             self.thrust_max = firm.oot_thrust_max()
+        elif controller_name == 'oot4':
+            # controller=9 (controller_omar_indi.c): a LITERAL C copy of the supervisor's own
+            # controller_lee.c (crazyflie-firmware-omar), not a reimplementation -- verified
+            # byte-for-byte against his compiled build, 6/6 test vectors match to d=0.00e+00
+            # (firmware_app/host/test_omar_indi_reference.py, docs/41_Pure_INDI_Implementation_
+            # Comparison.md §8). Like 'lee'/'mellinger', controllerOmarIndi() takes an explicit
+            # `self` struct -- no hidden static, so NO select_drone-style state-swap plumbing is
+            # needed at all (unlike 'oot'/'oot2'/'oot3'): each vehicle simply owns its own
+            # struct instance, the simplest of the four out-of-tree controllers wired into this
+            # SIL. `indi=3` engages both the position (bit0) and attitude (bit1) INDI branches
+            # -- the struct default is 0 (INDI off, geometric-only), which would silently test
+            # nothing. RPM read path differs from every other controller here too: his source
+            # calls logGetUint(logGetVarId("rpm","mN")), not rpm_get_all() -- but
+            # oot_host.c's host stub routes both through the SAME g_host_rpm[] array, so the
+            # existing firm.oot_set_rpm() injection below feeds this controller automatically,
+            # no separate mechanism required.
+            if not hasattr(firm, 'controllerOmarIndiInit'):
+                raise ValueError(
+                    "controller 'oot4' needs cffirmware built with controller_omar_indi.c "
+                    'linked in (added to bindings/setup.py fw_sources; see '
+                    'flying_drone_stack/firmware_app/host/LOCAL_MODIFICATIONS.md). Rebuild:\n'
+                    '  cd crazyflie-firmware && make bindings_python')
+            self.omar_indi_control = firm.controllerOmarIndi_t()
+            firm.controllerOmarIndiInit(self.omar_indi_control)
+            self.omar_indi_control.indi = 3
+            self.controller = firm.controllerOmarIndi
+            # 2026-09-23: was missing entirely -- self.kt stays None by default (see its
+            # declaration above), and pwm_to_rpm() falls back to a GENERIC IMRCLab polyfit
+            # thrust curve whenever self.kt is None, instead of exactly inverting THIS
+            # controller's own thrust model. That silently made the plant's PWM->RPM->force
+            # chain inconsistent with what controller_omar_indi.c assumes when it reads RPM
+            # back and reconstructs force via MOTORRPM2FORCE -- a real, confirmed cause of a
+            # reproducible steady-state height deficit (see docs/41 §8 update and
+            # omar_indi_reference_build_notes.md): a standalone closed-loop harness using the
+            # SAME plant class reached the commanded height exactly once self.kt was set here,
+            # under every gain/indi-mode config tried, where it plateaued short before this fix
+            # under all of them. oot_omar_kt_equiv() is the SAME conversion already used for the
+            # physics-dict sync in crazyflie_server.py's _setup_oot() -- one value, one source.
+            self.kt = [firm.oot_omar_kt_equiv()] * 4
+            # 2026-09-23: also missing -- pwm_to_force() needs self.thrust_max too (crashed
+            # the server outright on the first takeoff() call, TypeError: float * NoneType,
+            # caught immediately when actually testing this fix). Same THRUST_MAX platform
+            # macro 'oot' already reads via this same getter.
+            self.thrust_max = firm.oot_thrust_max()
         else:
             raise ValueError('Unknown controller {}'.format(controller_name))
 
@@ -715,6 +759,19 @@ class CrazyflieSIL:
         elif self.controller_name == 'lee':
             self.controller(
                 self.lee_control,
+                self.control,
+                self.setpoint,
+                self.sensors,
+                self.state,
+                tick)
+        elif self.controller_name == 'oot4':
+            # Same RPM injection as 'oot'/'oot2'/'oot3' above -- rpm_get_all() and this
+            # controller's logGetUint()-based read both draw from the SAME oot_host.c array
+            # (see the __init__ comment), so no separate injection call is needed.
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            self.controller(
+                self.omar_indi_control,
                 self.control,
                 self.setpoint,
                 self.sensors,

@@ -87,7 +87,8 @@ class CrazyflieServer(Node):
 
         # Configure the out-of-tree controller BEFORE the backend exists, because the
         # backend builds its vehicle model from these numbers.
-        self._oot_active = self._ros_parameters['sim'].get('controller') in ('oot', 'oot2', 'oot3')
+        self._oot_active = self._ros_parameters['sim'].get('controller') in (
+            'oot', 'oot2', 'oot3', 'oot4')
         if self._oot_active:
             self._setup_oot()
 
@@ -346,11 +347,13 @@ class CrazyflieServer(Node):
         else:
             # oot2/oot3 (naindi.rs / naindi_hybrid.rs) have no ctrl_mode concept -- the
             # control law is fixed by which Rust module is compiled in, not a runtime param.
+            # oot4 (controller_omar_indi.c) likewise has no ctrl_mode -- indi=3 is set once
+            # at Init in crazyflie_sil.py, not a per-run selector.
+            names = {'oot2': 'naindi.rs, use_nn=0', 'oot3': 'naindi_hybrid.rs, use_nn=1',
+                     'oot4': 'controller_omar_indi.c, indi=3 (literal C port, controller=9)'}
             self.get_logger().info(
                 'out-of-tree controller: %s (%s)' % (
-                    sim.get('controller'),
-                    'naindi.rs, use_nn=0' if sim.get('controller') == 'oot2'
-                    else 'naindi_hybrid.rs, use_nn=1'))
+                    sim.get('controller'), names.get(sim.get('controller'), '?')))
 
         # 2026-09-18: opt-in test of the mass/kt half of the reference-airframe hypothesis
         # for oot2/oot3 (docs/07 History, 2026-09-17 hover fix). _apply_oot_firmware_params
@@ -387,10 +390,25 @@ class CrazyflieServer(Node):
                 'plant snapshot')
 
         if 'physics' not in sim:
+            if sim.get('controller') == 'oot4':
+                # controller_omar_indi.c reads its own mass (CF_MASS) and thrust constant
+                # (MOTORRPM2FORCE) from platform_defaults_cf21bl.h -- NOT g_indi_mass/
+                # g_indi_kt1-4 (those are traj_iface.c globals this controller never touches).
+                # Building the physics dict from the wrong source here would silently give
+                # the plant a different airframe than the controller's internal model uses --
+                # exactly the class of mismatch this whole method exists to prevent. See
+                # oot_host.c's oot_omar_mass()/oot_omar_kt_equiv() for the unit conversion
+                # (his RPM-in-rad/s convention -> this project's RPM-in-rev/min convention).
+                mass = float(_firm.oot_omar_mass())
+                kt_equiv = float(_firm.oot_omar_kt_equiv())
+                kt = [kt_equiv, kt_equiv, kt_equiv, kt_equiv]
+            else:
+                mass = float(_firm.cvar.g_indi_mass)
+                kt = [float(_firm.cvar.g_indi_kt1), float(_firm.cvar.g_indi_kt2),
+                      float(_firm.cvar.g_indi_kt3), float(_firm.cvar.g_indi_kt4)]
             sim['physics'] = {
-                'mass': float(_firm.cvar.g_indi_mass),
-                'kt': [float(_firm.cvar.g_indi_kt1), float(_firm.cvar.g_indi_kt2),
-                       float(_firm.cvar.g_indi_kt3), float(_firm.cvar.g_indi_kt4)],
+                'mass': mass,
+                'kt': kt,
                 'arm_length': float(_firm.oot_arm_length()),
                 't2t': float(_firm.oot_thrust2torque()),
                 # First-order motor lag. This is a property of the PLANT, so unlike the
