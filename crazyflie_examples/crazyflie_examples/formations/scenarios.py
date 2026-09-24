@@ -148,10 +148,11 @@ def A1(dz: float = 0.50, hold: float = 12.0, **_):
 
 
 def A2(dz: float = 0.30, path: str = 'circle', speed: float = 0.4, length: float = 1.2,
-       radius: float = 0.75, period: float = 7.5, laps: float = 2.0, hold: float = 12.0, **_):
+       radius: float = 0.40, period: float = 7.5, laps: float = 2.0, hold: float = 12.0, **_):
     """A2 vertical stack tracking. dz in {0.20,0.30,0.40,0.50}; both follow the SAME path.
 
-    Line at 0.3-0.5 m/s, or a circle of diameter 1.5 m and period 7.5 s. Because both
+    Line at 0.3-0.5 m/s, or a circle (default r=0.40 m in this lab's mocap volume; was 0.75 m
+    in the original library spec). Because both
     vehicles fly identical curves from vertically stacked slots, the commanded separation
     is constant -- the wash is held on the lower vehicle for the whole flight while both
     are moving, which separates interaction from the trivial hover case.

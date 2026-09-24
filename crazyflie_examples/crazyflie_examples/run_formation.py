@@ -191,23 +191,35 @@ def apply_a7_lab_defaults(args) -> None:
 
 
 def apply_a2_lab_defaults(args) -> None:
-    """A2 circle in this lab: default radius 0.75 m @ height 1 m hits x/z mocap limits."""
+    """A2 circle in this lab: library default r=0.75 m @ h=1 m exceeds mocap FLIGHT_SPACE."""
     if (args.scenario or '').upper() != 'A2':
         return
     if (args.path or 'circle') != 'circle':
         return
-    if args.height == 1.0:
-        args.height = 0.45
-        print('[formation] A2: --height -> 0.45 m (top ≈ 0.75 m with dz=0.30; was 1.0/1.3 m)')
-    if args.radius is None:
-        args.radius = 0.40
-        print('[formation] A2: --radius -> 0.40 m (was 0.75 m diameter 1.5 m)')
+    # scenario_params() omits unset CLI flags; scenarios.A2() then defaults radius=0.75 —
+    # apply_a2 used to only patch args.radius when None, so a rebuild without re-running this
+    # hook still flew 0.75 m if anything passed radius through. Treat library defaults as
+    # "unset" and replace unless the operator explicitly chose a non-default radius.
+    _LIB_RADIUS = 0.75
+    _LAB_RADIUS = 0.40
+    _LAB_HEIGHT = 0.45
+    if args.height is None or args.height >= 0.99:
+        if args.height != _LAB_HEIGHT:
+            print(f'[formation] A2: --height -> {_LAB_HEIGHT} m '
+                  f'(top ≈ {_LAB_HEIGHT + float(args.dz or 0.30):.2f} m with dz; was {args.height} m)')
+        args.height = _LAB_HEIGHT
+    if args.radius is None or abs(args.radius - _LIB_RADIUS) < 1e-6:
+        if args.radius != _LAB_RADIUS:
+            print(f'[formation] A2: --radius -> {_LAB_RADIUS} m (library default {_LIB_RADIUS} m '
+                  f'→ diameter {2 * _LIB_RADIUS:.1f} m, loses mocap track)')
+        args.radius = _LAB_RADIUS
     if args.z_floor is None:
         args.z_floor = safety.FLIGHT_SPACE['z'][0]
         print(f'[formation] A2: --z-floor -> {args.z_floor} m')
-    if args.rotate is None:
+    if args.rotate is None or abs(args.rotate) < 1e-6:
+        if args.rotate != 90.0:
+            print('[formation] A2: --rotate -> 90° (centre circle in y; x span ±1 m)')
         args.rotate = 90.0
-        print('[formation] A2: --rotate -> 90° (centre circle in y; x span ±1 m)')
 
 
 def compile_scenario(sc, base_height: float):
