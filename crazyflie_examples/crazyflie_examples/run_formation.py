@@ -237,6 +237,33 @@ def apply_a2_lab_defaults(args) -> None:
         if args.rotate != 90.0:
             print('[formation] A2: --rotate -> 90° (centre circle in y; x span ±1 m)')
         args.rotate = 90.0
+    # Without centring, a drone parked near an x/y wall puts the circle outside ±1 m mocap.
+    if not args.auto_center:
+        args.auto_center = True
+        print('[formation] A2: --auto-center enabled (required for circle in this mocap box)')
+
+
+def _peak_commanded_z_extent(sc) -> float:
+    """Max z offset above the formation anchor from slots + curves (base height added separately)."""
+    _, pos = safety.sample_positions(sc, base=np.zeros(3))
+    return float(pos[:, :, 2].max())
+
+
+def clamp_height_for_mocap_z(args, sc) -> None:
+    """Lower --height only when the stack would exceed FLIGHT_SPACE z_max (do not touch passing flights)."""
+    z_lo, z_hi = safety.FLIGHT_SPACE['z']
+    peak = _peak_commanded_z_extent(sc)
+    margin = 0.03
+    top = float(args.height) + peak
+    if top <= z_hi + 1e-9:
+        return
+    old = args.height
+    args.height = round(max(safety.Z_FLOOR_DEFAULT, z_hi - peak - margin), 2)
+    print(f'[formation] {sc.sid}: --height {old} -> {args.height} m '
+          f'(commanded top {top:.2f} m > mocap z_max {z_hi} m; stack peak +{peak:.2f} m)')
+    if args.height + peak > z_hi + 1e-9:
+        sys.exit(f'[formation] {sc.sid}: cannot fit stack in mocap z — need z_max ≥ '
+                 f'{peak + safety.Z_FLOOR_DEFAULT + margin:.2f} m, have {z_hi} m')
 
 
 def compile_scenario(sc, base_height: float):
@@ -360,6 +387,7 @@ def main():
         sc = scenarios.build(args.scenario, **scenario_params(args))
     except (ValueError, KeyError) as e:
         sys.exit(f'[formation] {str(e).strip(chr(39))}')
+    clamp_height_for_mocap_z(args, sc)
     lim = make_limits(args)
     spec_problems = scenarios.check_spec(sc)
     # Offline the anchor XY is unknown (it comes from drone 0's start position), so the
