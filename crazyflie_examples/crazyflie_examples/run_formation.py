@@ -202,20 +202,37 @@ def apply_a2_lab_defaults(args) -> None:
     # "unset" and replace unless the operator explicitly chose a non-default radius.
     _LIB_RADIUS = 0.75
     _LAB_RADIUS = 0.40
-    _LAB_HEIGHT = 0.45
+    _LAB_HEIGHT_NOMINAL = 0.45
+    dz = float(args.dz or 0.30)
+    z_lo, z_hi = safety.FLIGHT_SPACE['z']
+    # Headroom under mocap z_max (same conservative cap as A7 / 2026-09-23 FLIGHT_SPACE).
+    _Z_HEADROOM = 0.05
+    max_base = z_hi - dz - _Z_HEADROOM
+    if max_base < safety.Z_FLOOR_DEFAULT:
+        sys.exit(f'[formation] A2: mocap z_max {z_hi} m cannot fit dz {dz} m above the '
+                 f'{safety.Z_FLOOR_DEFAULT} m operational floor (need z_max ≥ '
+                 f'{dz + safety.Z_FLOOR_DEFAULT + _Z_HEADROOM:.2f} m)')
+    lab_height = round(min(_LAB_HEIGHT_NOMINAL, max_base), 2)
+
     if args.height is None or args.height >= 0.99:
-        if args.height != _LAB_HEIGHT:
-            print(f'[formation] A2: --height -> {_LAB_HEIGHT} m '
-                  f'(top ≈ {_LAB_HEIGHT + float(args.dz or 0.30):.2f} m with dz; was {args.height} m)')
-        args.height = _LAB_HEIGHT
+        if args.height != lab_height:
+            print(f'[formation] A2: --height -> {lab_height} m '
+                  f'(top ≈ {lab_height + dz:.2f} m with dz; was {args.height} m; '
+                  f'mocap z_max {z_hi} m)')
+        args.height = lab_height
+    elif args.height + dz > z_hi - _Z_HEADROOM + 1e-6:
+        old = args.height
+        args.height = round(max(safety.Z_FLOOR_DEFAULT, max_base), 2)
+        print(f'[formation] A2: --height {old} -> {args.height} m '
+              f'(top would exceed mocap z_max {z_hi} m with dz={dz} m)')
     if args.radius is None or abs(args.radius - _LIB_RADIUS) < 1e-6:
         if args.radius != _LAB_RADIUS:
             print(f'[formation] A2: --radius -> {_LAB_RADIUS} m (library default {_LIB_RADIUS} m '
                   f'→ diameter {2 * _LIB_RADIUS:.1f} m, loses mocap track)')
         args.radius = _LAB_RADIUS
-    if args.z_floor is None:
-        args.z_floor = safety.FLIGHT_SPACE['z'][0]
-        print(f'[formation] A2: --z-floor -> {args.z_floor} m')
+    # Keep the default operational z_floor (0.30 m) — same as A1/A3/A4. Do not pull the
+    # physical mocap floor (0.1 m) in here; that broke the mental model and is unnecessary
+    # at lab_height ≥ 0.45 m.
     if args.rotate is None or abs(args.rotate) < 1e-6:
         if args.rotate != 90.0:
             print('[formation] A2: --rotate -> 90° (centre circle in y; x span ±1 m)')
