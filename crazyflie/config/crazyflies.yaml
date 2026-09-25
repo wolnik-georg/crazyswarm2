@@ -122,7 +122,8 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-19: re-enabled for the first A8 pass with cf5
+    enabled: false                       # 2026-09-25: OFF for solo cf5 hover — remove cf_second from mocap volume
+                                          # 2026-09-19: re-enabled for the first A8 pass with cf5
                                           # taking over cf231_active's role (set aside, hardware
                                           # fault). Back to its own permanent stock-Lee pin below.
                                           # 2026-09-19 (superseded for now): cf_second is in the
