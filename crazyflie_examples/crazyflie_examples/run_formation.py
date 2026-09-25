@@ -221,10 +221,11 @@ def apply_a2_lab_defaults(args) -> None:
                   f'mocap z_max {z_hi} m)')
         args.height = lab_height
     elif args.height + dz > z_hi - _Z_HEADROOM + 1e-6:
-        old = args.height
-        args.height = round(max(safety.Z_FLOOR_DEFAULT, max_base), 2)
-        print(f'[formation] A2: --height {old} -> {args.height} m '
-              f'(top would exceed mocap z_max {z_hi} m with dz={dz} m)')
+        # 2026-09-25: was a silent substitution (same pattern reverted in
+        # clamp_height_for_mocap_z, see that function's docstring) -- refuse instead.
+        sys.exit(f'[formation] A2: --height {args.height} + dz {dz} m exceeds mocap z_max {z_hi} m. '
+                 f'Pick --height <= {round(max(safety.Z_FLOOR_DEFAULT, max_base), 2)} m, or reduce '
+                 f'dz, and confirm it flies clean before trusting it for data.')
     if args.radius is None or abs(args.radius - _LIB_RADIUS) < 1e-6:
         if args.radius != _LAB_RADIUS:
             print(f'[formation] A2: --radius -> {_LAB_RADIUS} m (library default {_LIB_RADIUS} m '
@@ -250,20 +251,27 @@ def _peak_commanded_z_extent(sc) -> float:
 
 
 def clamp_height_for_mocap_z(args, sc) -> None:
-    """Lower --height only when the stack would exceed FLIGHT_SPACE z_max (do not touch passing flights)."""
+    """Refuse to launch if the stack would exceed FLIGHT_SPACE z_max. Never silently substitutes
+    a different height -- every height that flies is one the operator chose.
+
+    2026-09-25, reverted from an auto-substituting version (2026-09-24, e2f85e5/4d90e41): that
+    version silently picked a new --height whenever the commanded top exceeded the geofence, and
+    the one flight that exercised it (A1 @ dz=0.50 -> auto height 0.77m) showed real, IMU-
+    confirmed instability the next session, at a height nobody had ever flight-tested. Whether or
+    not that height was the actual root cause, silently flying an unvalidated altitude is exactly
+    the kind of decision this project's own convention says a human makes explicitly, not code.
+    See safety.FLIGHT_SPACE's comment and docs/07 History (52)/(53) in flying_robot_course.
+    """
     z_lo, z_hi = safety.FLIGHT_SPACE['z']
     peak = _peak_commanded_z_extent(sc)
     margin = 0.03
     top = float(args.height) + peak
     if top <= z_hi + 1e-9:
         return
-    old = args.height
-    args.height = round(max(safety.Z_FLOOR_DEFAULT, z_hi - peak - margin), 2)
-    print(f'[formation] {sc.sid}: --height {old} -> {args.height} m '
-          f'(commanded top {top:.2f} m > mocap z_max {z_hi} m; stack peak +{peak:.2f} m)')
-    if args.height + peak > z_hi + 1e-9:
-        sys.exit(f'[formation] {sc.sid}: cannot fit stack in mocap z — need z_max ≥ '
-                 f'{peak + safety.Z_FLOOR_DEFAULT + margin:.2f} m, have {z_hi} m')
+    max_height = round(max(safety.Z_FLOOR_DEFAULT, z_hi - peak - margin), 2)
+    sys.exit(f'[formation] {sc.sid}: commanded top {top:.2f} m > mocap z_max {z_hi} m '
+             f'(--height {args.height} + stack peak {peak:.2f} m). Pick --height <= {max_height} m, '
+             f'or reduce dz/offset, and confirm it flies clean before trusting it for data.')
 
 
 def compile_scenario(sc, base_height: float):

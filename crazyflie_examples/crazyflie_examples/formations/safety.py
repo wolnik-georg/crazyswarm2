@@ -17,12 +17,24 @@ import numpy as np
 # Flight volume — TWO separate limits, deliberately.
 #
 # FLIGHT_SPACE is the PHYSICAL mocap-tracked volume: where the cameras can see the drones at
-# all. Tape-measured 2026-09-02 (x +-1 m, y +-2 m). z ceiling tightened again 2026-09-23:
-# mocap drops the upper vehicle near the top of the volume (~1.5 m commanded) even when
-# mid-altitude tracking is fine — use a conservative COMMANDED cap well inside the tape max.
-# z floor 0.1 m is the tracked volume floor; formations still use Z_FLOOR_DEFAULT unless
-# overridden (C5 uses --z-floor).
-FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.1, 1.30))
+# all. Tape-measured 2026-09-02 (4m x by 2m y, 1.7m z) -- matches the operator's earlier
+# 2026-08-23 statement and the independent 2026-07-27 one (x and z identical, y then quoted as
+# +-2.1) to within rounding.
+#
+# REVERTED 2026-09-25: the 2026-09-23 tightening (1.70 -> 1.50 -> 1.30) was made to chase a
+# suspected mocap tracking-loss problem near the old ceiling, and a same-day auto-height-clamp
+# (clamp_height_for_mocap_z, see below) was added on top of it that SILENTLY substituted an
+# untested height whenever a scenario's commanded top exceeded the new cap. The 2026-09-24 A4/A1
+# session that flew under that combination showed real, IMU-confirmed instability (violent
+# attitude tumbles on one drone, EKF dead-reckoning-style drift on the other) at the exact height
+# the clamp silently picked (0.77m) -- a height nobody had ever flight-tested, versus 1.0m, which
+# is what the 2026-09-23 session actually proved clean. Root cause not fully confirmed, but the
+# untested-silent-substitution design is itself the problem regardless of the ultimate cause:
+# reverting to the tape-measured, actually-flown ceiling and turning the clamp into a hard
+# refuse-to-launch (see clamp_height_for_mocap_z) restores known-good geometry while keeping the
+# safety property (nothing is ever silently flown at an unvalidated height) without needing to
+# re-derive it. See docs/07_Thesis_Progress_Checklist.md History (52) in flying_robot_course.
+FLIGHT_SPACE = dict(x=(-1.0, 1.0), y=(-2.0, 2.0), z=(0.0, 1.70))
 
 # The floor we CHOOSE to fly above is a different question from where tracking works.
 #
