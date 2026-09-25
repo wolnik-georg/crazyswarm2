@@ -163,7 +163,8 @@ robots:
         ctrl_mode: 3    # irrelevant while controller=5 -- stock Lee ignores indi_gains.
 
   cf5:
-    enabled: true   # 2026-09-19: cf231_active repeated the SAME geometric failure a 2nd time
+    enabled: true   # 2026-09-25: re-enabled for 2-drone C.1 after solo debug; keep spare out of mocap volume if disabled.
+                    # 2026-09-19: cf231_active repeated the SAME geometric failure a 2nd time
                     # (2 clean airframes vs 1 repeatable failure -> real, isolated hardware
                     # fault, set aside for today, needs bench diagnosis not more flight
                     # attempts). cf5 takes over cf231_active's role as the study drone.
