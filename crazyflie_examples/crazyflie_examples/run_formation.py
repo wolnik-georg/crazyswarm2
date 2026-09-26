@@ -159,26 +159,38 @@ def apply_a7_lab_defaults(args) -> None:
     unrotated run parks on the x walls; rotate 90° uses y. Lab mocap still loses track when the
     top vehicle is high (≈1.25–1.3 m) or when the shuttle is long — shorten length and lower the
     whole formation while keeping dz_start/dz_end (relative separation) unchanged.
+
+    2026-09-26: this cap is scenario-specific and intentionally does NOT scale with
+    `safety.FLIGHT_SPACE['z']` (the general mocap-tracked volume, restored to its tape-measured
+    1.70 m ceiling after the 2026-09-25 fix -- see that constant's own comment). A7's actual
+    proven-safe top is ~1.28 m (the one flight that succeeded, 2026-09-23 19:11); deriving A7's
+    height from the *general* ceiling instead of this fixed number meant restoring that ceiling
+    to 1.70 silently pushed A7's computed top back up to 1.60 m -- higher than anything ever
+    flown for this scenario, straight into the range this docstring itself warns about. Keep
+    A7_TOP_MAX independent of whatever the general geofence is; only change it if A7 itself gets
+    a new proven-safe data point.
     """
     if (args.scenario or '').upper() != 'A7':
         return
     dz_start = float(args.dz_start if args.dz_start is not None else 1.10)
-    z_lo, z_hi = safety.FLIGHT_SPACE['z']
-    max_base = z_hi - dz_start
+    z_lo, _ = safety.FLIGHT_SPACE['z']
+    A7_TOP_MAX = 1.20  # scenario-specific, fixed -- see docstring; not derived from FLIGHT_SPACE
+    max_base = A7_TOP_MAX - dz_start
     if max_base < z_lo:
-        sys.exit(f'[formation] A7: geofence z_max {z_hi} m cannot fit dz_start {dz_start} m')
+        sys.exit(f'[formation] A7: A7_TOP_MAX {A7_TOP_MAX} m cannot fit dz_start {dz_start} m')
     # Shorter along-track leg → stay nearer volume centre (less time at mocap-soft edges).
     if args.length is None:
         args.length = 1.0
         print('[formation] A7: --length -> 1.0 m (shorter shuttle; dz sweep unchanged)')
     # Lower absolute altitude: same inter-drone dz, top peak ≈1.20 m not ≈1.28 m.
     if args.height == 1.0:
-        args.height = round(max(z_lo, max_base - 0.10), 2)
+        args.height = round(max(z_lo, max_base), 2)
         print(f'[formation] A7: --height -> {args.height} m '
-              f'(top ≈ {args.height + dz_start:.2f} m; dz_start/dz_end unchanged)')
-    elif args.height + dz_start > z_hi + 1e-6:
+              f'(top ≈ {args.height + dz_start:.2f} m; dz_start/dz_end unchanged; '
+              f'A7-specific cap {A7_TOP_MAX} m, independent of the general geofence)')
+    elif args.height + dz_start > A7_TOP_MAX + 1e-6:
         sys.exit(f'[formation] A7: height {args.height} + dz_start {dz_start} '
-                 f'→ {args.height + dz_start:.2f} m > geofence z_max {z_hi} m')
+                 f'→ {args.height + dz_start:.2f} m > A7_TOP_MAX {A7_TOP_MAX} m')
     if args.z_floor is None:
         args.z_floor = z_lo
         print(f'[formation] A7: --z-floor -> {args.z_floor} m (low anchor; not the 0.30 m stack floor)')
