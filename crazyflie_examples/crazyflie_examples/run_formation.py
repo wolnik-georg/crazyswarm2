@@ -618,6 +618,21 @@ def main():
               f'pos_gains kp_xy={e["pos"].get("kp_xy")} kv_xy={e["pos"].get("kv_xy")} '
               f'kp_z={e["pos"].get("kp_z")} kv_z={e["pos"].get("kv_z")}   [{src}]')
 
+    # 2026-09-28: formation_flight.py already had this (2026-09-12); run_formation.py did not.
+    # When the shared `all:` block targets our OOT controller (6) but every vehicle in this
+    # run is pinned to something else (cf5@9 + cf_second@5 is the alt-INDI shakedown case),
+    # apply('takeoff', _RAMP_CONTROLLER=6, ...) still meant "push the full shared indi_gains
+    # block to anyone without a per-key override". cf5's yaml pins controller/ctrl_mode/rnn
+    # only — not kr/kw/kt/mass — so it received ~15 useless Param writes immediately before
+    # arm/takeoff while already on controller 9 (Omar ignores them; meta already says
+    # gains_apply=0). On a single Crazyradio with two drones that is real headroom stolen
+    # from HL CRTP — the same failure class documented in crazyflies.yaml's bandwidth note.
+    # simple_flight --pin-controller avoids this for solo by pinning the ramp to 9; here we
+    # skip inert gain traffic whenever resolve() says that drone is not on controller 6.
+    def _gains_apply_to_drone(name, ctrl, mode_, pgains):
+        eff_ctrl, _, _ = resolve(name, ctrl, mode_, pgains)
+        return eff_ctrl == _RAMP_CONTROLLER
+
     def apply(phase, ctrl, mode_, gains=None, pgains=None):
         # 2026-09-15: the shared broadcast below and the per-robot override re-push used to
         # be two SEPARATE radio round-trips -- broadcast the shared value to everyone first,
@@ -638,18 +653,20 @@ def main():
             # geometric mode must not get the yaml's INDI-tuned pos_gains, whether that mode
             # came from the shared block or from its own pin.
             _, _, pg = resolve(name, ctrl, mode_, pgains)
+            push_gains = _gains_apply_to_drone(name, ctrl, mode_, pgains)
             if 'stabilizer.controller' not in overrides:
                 c.setParam('stabilizer.controller', ctrl)
             if 'indi_gains.ctrl_mode' not in overrides:
                 c.setParam('indi_gains.ctrl_mode', mode_)
-            for k, v in (gains or {}).items():
-                key = f'indi_gains.{k}'
-                if key not in overrides:
-                    c.setParam(key, float(v))
-            for k, v in (pg or {}).items():
-                key = f'pos_gains.{k}'
-                if key not in overrides:
-                    c.setParam(key, float(v))
+            if push_gains:
+                for k, v in (gains or {}).items():
+                    key = f'indi_gains.{k}'
+                    if key not in overrides:
+                        c.setParam(key, float(v))
+                for k, v in (pg or {}).items():
+                    key = f'pos_gains.{k}'
+                    if key not in overrides:
+                        c.setParam(key, float(v))
         # 2026-09-14: same fix as formation_flight.py's apply() (crazyswarm2 fdfc640,
         # 2026-09-12) -- any per-robot firmware_params override (e.g. cf_second's own
         # stock-Lee pin, or cf231_active's temporary ctrl_mode) must still be (re-)applied
@@ -760,6 +777,23 @@ def main():
             print('[formation] initial_position, and relaunch. NOT taking off.')
             return
 
+        # 2026-09-28: cf5 @ controller=9 A1 — radio CSV was all-zero state/attitude/thrust
+        # (DroneLogger /state empty payload) while cf_second logged normally. Do not arm if
+        # custom telemetry is already broken; also wastes HL bandwidth if we proceed blind.
+        log_bad = []
+        for lg in loggers:
+            if lg._short_state > 0:
+                log_bad.append(lg.name)
+            elif np.linalg.norm(lg.position()) < 1e-4:
+                log_bad.append(lg.name)
+        if log_bad:
+            print('\n[formation] *** ABORT: radio log telemetry not healthy ***')
+            for name in log_bad:
+                print(f'[formation]   {name}: /state empty or all-zero (see [logger] warning)')
+            print('[formation] Fix logging before arming — uSD may still be fine, but HL')
+            print('[formation] commands need a healthy link. NOT taking off.')
+            return
+
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
@@ -776,11 +810,13 @@ def main():
         print('[formation] stage 1: climbing to slot heights...')
         for c, s in zip(cfs, slots):
             c.takeoff(targetHeight=float(s[2]), duration=3.0)
+            th.sleep(0.15)  # spread HL CRTP; takeoff is call_async with no ack
         th.sleep(3.5)
 
         print('[formation] stage 2: converging to slots...')
         for c, s in zip(cfs, slots):
             c.goTo(s, 0, 3.0)
+            th.sleep(0.15)
         th.sleep(3.5)
 
         # Per-drone trajectories under a single id, started by one broadcast: each vehicle
