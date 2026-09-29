@@ -177,7 +177,13 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 9   # 2026-09-28: alt-INDI shakedown -- Omar's port (ControllerTypeOot4), cf5 solo/2-drone test. Restore to 6 after session.
+        controller: 6   # 2026-09-29: back to OUR geometric for a same-day, same-conditions A/B
+                         # against Omar's INDI (indi=3 run just flew 0.035-0.038m z-err RMS on
+                         # A1 dz=0.30; the 23-Sep our-geometric baseline of 0.178-0.201m is a
+                         # DIFFERENT day/conditions -- cf_second's own z-err differed ~5x between
+                         # the two days, so that comparison is confounded). This flight, same
+                         # session/mocap/calibration as the INDI run, is the fair comparison.
+                         # ctrlOmarIndi.indi below is inert under controller=6, left as-is.
       ctrlOmarIndi:
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
