@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-29: ON for 2-drone A1 with cf5 @ controller=9 (first-ever real thrust on this controller — prior "clean" solo runs were controller=6 per flight meta)
+    enabled: false                       # 2026-09-29 evening: OFF for cf5 controller=7 FIRST-EVER solo hover (naindi.rs, never flown). Re-enable for 2-drone once solo is confirmed clean.
                                           # 2026-09-19: re-enabled for the first A8 pass with cf5
                                           # taking over cf231_active's role (set aside, hardware
                                           # fault). Back to its own permanent stock-Lee pin below.
@@ -177,11 +177,13 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 9   # 2026-09-29 evening: back to Omar's INDI (ctrlOmarIndi.indi=3 below) for
-                         # A1 dz=0.20/0.50 data collection -- extends the same-day A1 dz=0.30
-                         # result (0.30m realized sep, 0.04m error, ~4-5x better than our
-                         # geometric's 0.17m error) to match the dz values already collected under
-                         # our geometric (A1 17-47-50 @ 0.20, 17-36-06/17-37-26 @ 0.50).
+        controller: 7   # 2026-09-29 evening: NA-INDI faithful Rust port (naindi.rs), FIRST EVER
+                         # hardware attempt. Checked before flying: no paramGetVarId/paramGetUint
+                         # calls anywhere in naindi.rs; its RPM read (rpm_get_all in traj_iface.c)
+                         # already validates the log id before reading and falls back to 0 instead
+                         # of asserting -- does NOT have controller=9's missing-param bug class.
+                         # Solo hover first, same first-flight discipline as controller=9.
+                         # ctrlOmarIndi.indi below is controller=9-specific, inert here.
       ctrlOmarIndi:
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
