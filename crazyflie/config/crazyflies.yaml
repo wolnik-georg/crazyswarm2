@@ -122,7 +122,8 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
+    enabled: false                       # 2026-09-29: OFF for solo C.0 tests (Z-integral @ c=6 and/or controller=10 retry).
+                                          # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
                                           # attempt (previous state) failed (cf5 never left the ground, single-motor-dominant
                                           # PWM pattern, root cause not confirmed -- docs/41 §13). Next attempt should be a
                                           # proper solo hover first, now that the lazy-init UB fix, the omega_des/omega_des_dot
@@ -183,23 +184,19 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # 2026-09-29 late evening: controller=10 (omar_indi_rust.rs), Rust
-                         # line-port of controller_omar_indi.c (the now-hardware-proven c=9),
-                         # FIRST EVER hardware attempt. Numerically verified 7/7 vs c=9 to
-                         # worst delta 7.15e-07; SIL single-drone clean. Deliberately paused
-                         # controller=7 debugging (ground flip, root cause unresolved, no
-                         # logs captured) to focus here instead, per operator direction --
-                         # c=7 is a port of a DIFFERENT reference (Briesewitz), unrelated to
-                         # this. Solo hover first, same first-flight discipline as c=7/c=9.
-                         # ctrlOmarIndi.indi below is controller=9-specific, inert here --
-                         # controller=10's own bitmask is ctrlOot5.indi.
+        controller: 6   # 2026-09-29 STAGED: Z-only position integral hardware test (docs/51 Task 5).
+                         # Geometric OOT6 + indi_gains.ctrl_mode=0 — persistent hover-height bias
+                         # correction (ki_z=16 in all.pos_gains), NOT downwash / A1 stack test.
+                         # Supersedes paused controller=10 solo retry (was controller: 10 @ 99e6b33).
+                         # Revert to c=10: set controller: 10 here; restore ctrlOot5/ctrlOmarIndi
+                         # comments from git show 99e6b33:crazyflie/config/crazyflies.yaml (cf5 block).
+                         # Requires local ENABLE_Z_INTEGRAL=true in lib.rs before make cload (flag
+                         # stays false in git — same convention as ENABLE_POSITION_INTEGRAL).
       ctrlOot5:
-        # Required for c=10 to actually run INDI, not plain geometric -- see docs/41 §12's
-        # "pre-flight gap found and fixed" note: the initial Oot5 build had NO yaml-settable
-        # indi param at all (would have silently shipped indi=0, repeating c=9's own two-day
-        # bug). Firmware default is now 3 (fixed 2026-09-29), this is belt-and-suspenders.
+        # Dormant while controller=6 — Oot5 slot not selected. Left for easy c=10 restore (99e6b33).
         indi: 3
       ctrlOmarIndi:
+        # Dormant while controller=6 — Omar C slot not selected. Left for easy c=9/c=10 restore.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
         #   line 179  if (self->indi && rpm_deck_available)
@@ -799,6 +796,10 @@ all:
       kp_z:  48.0
       kv_xy: 5.0
       kv_z:  7.0
+      # 2026-09-29: Z-only position integral (lib.rs ENABLE_Z_INTEGRAL + docs/51 Task 5).
+      # Inert until firmware is built with the compile flag true — see lab session close-out.
+      ki_z: 16.0
+      ki_z_limit: 1.5
     locSrv:
       extPosStdDev: 1e-3
       extQuatStdDev: 0.5e-1
