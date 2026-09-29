@@ -178,9 +178,25 @@ robots:
     firmware_params:
       stabilizer:
         controller: 9   # 2026-09-28: alt-INDI shakedown -- Omar's port (ControllerTypeOot4), cf5 solo/2-drone test. Restore to 6 after session.
+      ctrlOmarIndi:
+        # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
+        # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
+        #   line 179  if (self->indi && rpm_deck_available)
+        #   line 231  if ((self->indi & 1) && rpm_deck_available)   <- position INDI
+        #   line 365  if ((self->indi & 2) && rpm_deck_available)   <- attitude INDI
+        # Without this the controller=9 slot flies his plain Lee GEOMETRIC, not his INDI --
+        # which is exactly what the 29 Sep A1 flights did (z err 0.611 m vs our own geometric's
+        # 0.178-0.201 m at the same dz=0.30). The CS2 SIL has always set indi=3 at init
+        # (crazyflie_sil.py, see LOCAL_MODIFICATIONS.md), so sim and hardware were NOT testing
+        # the same thing until now.
+        # 3 = bit0 (position INDI) | bit1 (attitude INDI) = full INDI, matching the SIL config.
+        # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
+        # terms stay off silently even with this set.
+        indi: 3
       indi_gains:
         ctrl_mode: 0    # geometric SE(3) for residual collection (docs/25); override all:
                          # ctrl_mode=3 so formation scripts log/push the mode cf5 actually flies.
+                         # NOTE: ignored by controller=9 -- it reads ctrlOmarIndi.indi above.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
       rnn:
         en: 0           # predict/log only until C.2+ explicitly enables compensation
