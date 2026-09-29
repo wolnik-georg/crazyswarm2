@@ -1,6 +1,8 @@
+#include <chrono>
 #include <memory>
-#include <vector>
 #include <regex>
+#include <thread>
+#include <vector>
 
 #include <crazyflie_cpp/Crazyflie.h>
 
@@ -366,10 +368,18 @@ public:
       // check robots/<robot_name>/firmware_params
       update_map(set_param_map, "robots." + name_ + ".firmware_params");
 
-      // Update parameters
-      for (const auto&i : set_param_map) {
-        std::string paramName = name + ".params." + std::regex_replace(i.first, std::regex("\\."), ".");
-        change_parameter(rclcpp::Parameter(paramName, i.second));
+      // Update parameters (paced — unpaced bursts overflow STM32 syslink RX queue, 8 slots)
+      {
+        const auto pace = std::chrono::milliseconds(150);
+        size_t n = 0;
+        for (const auto&i : set_param_map) {
+          std::string paramName = name + ".params." + std::regex_replace(i.first, std::regex("\\."), ".");
+          change_parameter(rclcpp::Parameter(paramName, i.second));
+          ++n;
+          if (n < set_param_map.size()) {
+            std::this_thread::sleep_for(pace);
+          }
+        }
       }
     }
 
