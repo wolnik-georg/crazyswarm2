@@ -89,6 +89,7 @@ class CrazyflieSIL:
     # oot_select_drone -- these counters assign each vehicle its slot index (self._naindi_index),
     # same pattern as _oot_index below.
     _oot2_count = 0
+    _oot5_count = 0
     _oot3_count = 0
 
     MODE_IDLE = 0
@@ -347,6 +348,22 @@ class CrazyflieSIL:
             # the server outright on the first takeoff() call, TypeError: float * NoneType,
             # caught immediately when actually testing this fix). Same THRUST_MAX platform
             # macro 'oot' already reads via this same getter.
+            self.thrust_max = firm.oot_thrust_max()
+        elif controller_name == 'oot5':
+            # controller=10 (omar_indi_rust.rs): Rust port of controller_omar_indi.c, numerically
+            # verified vs the C reference (host/test_omar_indi_rust_vs_c.py). Static state in
+            # Rust -- oot5_select_drone() mirrors oot2/oot3 per-vehicle swap pools.
+            if not hasattr(firm, 'controllerOutOfTree5Init'):
+                raise ValueError(
+                    "controller 'oot5' needs cffirmware built with controllerOutOfTree5 linked "
+                    'from omar_indi_rust.rs. Rebuild bindings_python after cargo build.')
+            self._oot5_index = CrazyflieSIL._oot5_count
+            CrazyflieSIL._oot5_count += 1
+            firm.oot5_select_drone(self._oot5_index)
+            firm.controllerOutOfTree5Init()
+            firm.omar_indi_rust_set_indi(3)
+            self.controller = firm.controllerOutOfTree5
+            self.kt = [firm.oot_omar_kt_equiv()] * 4
             self.thrust_max = firm.oot_thrust_max()
         else:
             raise ValueError('Unknown controller {}'.format(controller_name))
@@ -772,6 +789,16 @@ class CrazyflieSIL:
             firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
             self.controller(
                 self.omar_indi_control,
+                self.control,
+                self.setpoint,
+                self.sensors,
+                self.state,
+                tick)
+        elif self.controller_name == 'oot5':
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            firm.oot5_select_drone(self._oot5_index)
+            self.controller(
                 self.control,
                 self.setpoint,
                 self.sensors,

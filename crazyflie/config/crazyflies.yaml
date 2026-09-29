@@ -177,13 +177,22 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 7   # 2026-09-29 evening: NA-INDI faithful Rust port (naindi.rs), FIRST EVER
-                         # hardware attempt. Checked before flying: no paramGetVarId/paramGetUint
-                         # calls anywhere in naindi.rs; its RPM read (rpm_get_all in traj_iface.c)
-                         # already validates the log id before reading and falls back to 0 instead
-                         # of asserting -- does NOT have controller=9's missing-param bug class.
-                         # Solo hover first, same first-flight discipline as controller=9.
-                         # ctrlOmarIndi.indi below is controller=9-specific, inert here.
+        controller: 10  # 2026-09-29 late evening: controller=10 (omar_indi_rust.rs), Rust
+                         # line-port of controller_omar_indi.c (the now-hardware-proven c=9),
+                         # FIRST EVER hardware attempt. Numerically verified 7/7 vs c=9 to
+                         # worst delta 7.15e-07; SIL single-drone clean. Deliberately paused
+                         # controller=7 debugging (ground flip, root cause unresolved, no
+                         # logs captured) to focus here instead, per operator direction --
+                         # c=7 is a port of a DIFFERENT reference (Briesewitz), unrelated to
+                         # this. Solo hover first, same first-flight discipline as c=7/c=9.
+                         # ctrlOmarIndi.indi below is controller=9-specific, inert here --
+                         # controller=10's own bitmask is ctrlOot5.indi.
+      ctrlOot5:
+        # Required for c=10 to actually run INDI, not plain geometric -- see docs/41 §12's
+        # "pre-flight gap found and fixed" note: the initial Oot5 build had NO yaml-settable
+        # indi param at all (would have silently shipped indi=0, repeating c=9's own two-day
+        # bug). Firmware default is now 3 (fixed 2026-09-29), this is belt-and-suspenders.
+        indi: 3
       ctrlOmarIndi:
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:

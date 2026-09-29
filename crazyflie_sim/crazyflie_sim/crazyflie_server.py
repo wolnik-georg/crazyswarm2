@@ -88,7 +88,7 @@ class CrazyflieServer(Node):
         # Configure the out-of-tree controller BEFORE the backend exists, because the
         # backend builds its vehicle model from these numbers.
         self._oot_active = self._ros_parameters['sim'].get('controller') in (
-            'oot', 'oot2', 'oot3', 'oot4')
+            'oot', 'oot2', 'oot3', 'oot4', 'oot5')
         if self._oot_active:
             self._setup_oot()
 
@@ -350,7 +350,8 @@ class CrazyflieServer(Node):
             # oot4 (controller_omar_indi.c) likewise has no ctrl_mode -- indi=3 is set once
             # at Init in crazyflie_sil.py, not a per-run selector.
             names = {'oot2': 'naindi.rs, use_nn=0', 'oot3': 'naindi_hybrid.rs, use_nn=1',
-                     'oot4': 'controller_omar_indi.c, indi=3 (literal C port, controller=9)'}
+                     'oot4': 'controller_omar_indi.c, indi=3 (literal C port, controller=9)',
+                     'oot5': 'omar_indi_rust.rs, indi=3 (Rust port, controller=10)'}
             self.get_logger().info(
                 'out-of-tree controller: %s (%s)' % (
                     sim.get('controller'), names.get(sim.get('controller'), '?')))
@@ -390,7 +391,7 @@ class CrazyflieServer(Node):
                 'plant snapshot')
 
         if 'physics' not in sim:
-            if sim.get('controller') == 'oot4':
+            if sim.get('controller') in ('oot4', 'oot5'):
                 # controller_omar_indi.c reads its own mass (CF_MASS) and thrust constant
                 # (MOTORRPM2FORCE) from platform_defaults_cf21bl.h -- NOT g_indi_mass/
                 # g_indi_kt1-4 (those are traj_iface.c globals this controller never touches).
