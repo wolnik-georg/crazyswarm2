@@ -122,11 +122,13 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-29 late evening: back ON for cf5 controller=10 (omar_indi_rust.rs) A1, direct
-                                          # to 2-drone per operator decision -- skipping the usual solo-first step. controller=10
-                                          # has had ZERO real hardware time before this (sim-clean + numerically verified only,
-                                          # unlike controller=9 which had a confirmed working solo/basic flight before its own
-                                          # first A1). controller=5 (stock Lee) as always, unaffected by any of this.
+    enabled: false                       # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
+                                          # attempt (previous state) failed (cf5 never left the ground, single-motor-dominant
+                                          # PWM pattern, root cause not confirmed -- docs/41 §13). Next attempt should be a
+                                          # proper solo hover first, now that the lazy-init UB fix, the omega_des/omega_des_dot
+                                          # guard, and real tau/a_res/e_r telemetry are all in (commits f4e9256e, ae973f20,
+                                          # cec255f9). See docs/lab_sessions/2026-09-28_alt_indi_shakedown.md close-out.
+                                          # controller=5 (stock Lee) as always, unaffected by any of this.
                                           # 2026-09-19: re-enabled for the first A8 pass with cf5
                                           # taking over cf231_active's role (set aside, hardware
                                           # fault). Back to its own permanent stock-Lee pin below.
