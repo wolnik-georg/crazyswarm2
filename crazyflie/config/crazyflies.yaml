@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-09-28: back on for 2-drone A1 — hover+figure8 solo clean on cf5/controller=9
+    enabled: false                       # 2026-09-29: OFF for cf5 controller=9 FIRST-EVER solo hover (prior "clean" solo runs were controller=6 per flight meta). Re-enable for 2-drone A1 once solo is confirmed.
                                           # 2026-09-19: re-enabled for the first A8 pass with cf5
                                           # taking over cf231_active's role (set aside, hardware
                                           # fault). Back to its own permanent stock-Lee pin below.
