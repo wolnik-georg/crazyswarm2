@@ -46,6 +46,10 @@ using std_srvs::srv::Empty;
 using motion_capture_tracking_interfaces::msg::NamedPoseArray;
 using crazyflie_interfaces::msg::FullState;
 
+// Log grep target: confirms connect-time firmware_params pacing is in the running binary.
+static constexpr const char kConnectParamPacingMarker[] =
+    "CS2_CONNECT_PARAM_PACE_V1 connect-param pacing: ENABLED (150ms per firmware_params write on connect)";
+
 #ifdef ROS_DISTRO_HUMBLE
 inline auto get_service_qos() { return rmw_qos_profile_services_default; }
 #else
@@ -371,15 +375,30 @@ public:
       // Update parameters (paced — unpaced bursts overflow STM32 syslink RX queue, 8 slots)
       {
         const auto pace = std::chrono::milliseconds(150);
+        const size_t n_params = set_param_map.size();
+        RCLCPP_INFO(
+          logger_,
+          "[%s] connect-param pacing: ENABLED (150ms) applying %zu firmware_params from yaml",
+          name_.c_str(),
+          n_params);
+        auto pace_start = std::chrono::steady_clock::now();
         size_t n = 0;
         for (const auto&i : set_param_map) {
           std::string paramName = name + ".params." + std::regex_replace(i.first, std::regex("\\."), ".");
           change_parameter(rclcpp::Parameter(paramName, i.second));
           ++n;
-          if (n < set_param_map.size()) {
+          if (n < n_params) {
             std::this_thread::sleep_for(pace);
           }
         }
+        std::chrono::duration<double> pace_elapsed =
+            std::chrono::steady_clock::now() - pace_start;
+        RCLCPP_INFO(
+          logger_,
+          "[%s] connect-param pacing: finished %zu writes in %.2f s",
+          name_.c_str(),
+          n_params,
+          pace_elapsed.count());
       }
     }
 
@@ -1153,6 +1172,8 @@ public:
     broadcasts_num_repeats_ = this->get_parameter("all.broadcasts.num_repeats").get_parameter_value().get<int>();
     broadcasts_delay_between_repeats_ms_ = this->get_parameter("all.broadcasts.delay_between_repeats_ms").get_parameter_value().get<int>();
     mocap_enabled_ = false;
+
+    RCLCPP_INFO(logger_, "%s", kConnectParamPacingMarker);
 
     this->declare_parameter("robot_description", "");
 
