@@ -393,14 +393,20 @@ all:
     #   solidGreen: 0 # if set to solid color
     #   solidRed: 0 # if set to solid color
     #   headlightEnable: 0
-    deck:
-      bcRpm: 1  # RPM deck force-enable. REQUIRED: driver has vid/pid=0x00 (no 1-wire id),
-                # so it never auto-detects and rpm.* stays 0 without this. Needed on the
-                # brushless too while testing the optical deck. (Comment out to return to DShot.)
+    # 2026-09-29: `deck: bcRpm: 1` REMOVED. It never did anything -- the param did not exist
+    # in this firmware at all (every connect logged "Could not find param deck/bcRpm"), yet RPM
+    # collection has always worked, because the real force-enable is compile-time:
+    # CONFIG_DECK_FORCE="bcRpm" in firmware_app/app-config{,-bl,-std}. The comment here used to
+    # claim this line was REQUIRED; it was not. As of today `deck.bcRpm` DOES exist in our
+    # firmware (backported from NA-INDI-firmware's rpm.c so controller=9 stops asserting on it --
+    # see LOCAL_MODIFICATIONS.md), but it is PARAM_RONLY: a read-only "deck initialised?" flag.
+    # Writing it would just return EACCES. To return to DShot, drop CONFIG_DECK_FORCE in the
+    # app-config, not anything here.
     # ════════════════════════════════════════════════════════════════════════════
     # CF2.1 STANDARD MOTORS — locked Jul 2 2026
     # Final: Geom RMSE 2.0 cm (kt=0.05), speed limit kt=0.15 (5.32 s/lap).
-    # To reactivate: uncomment this block and deck.bcRpm above, comment out active block below.
+    # To reactivate: uncomment this block, comment out active block below. (The old "and
+    # deck.bcRpm above" instruction is obsolete — see the 2026-09-29 note above.)
     # ════════════════════════════════════════════════════════════════════════════
     # indi_gains:
     #   ctrl_mode: 0
