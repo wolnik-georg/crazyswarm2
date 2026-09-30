@@ -505,12 +505,25 @@ def main():
                     f'[simple_flight] WARN: z={z_end:.2f} m -- disarming anyway, the vehicle '
                     'WILL drop. Check the land()/notify_setpoints_stop handover.'
                 )
+        # Stop uSD before disarm (matches run_formation.py / formation_flight.py).
+        # Without this, usddeck never runs f_close — FAT entry stays 0 bytes and
+        # copy_usd_log.py skips the file (picks an older thesisNN).
+        try:
+            allcfs.setParam('usd.logging', 0)
+        except Exception:
+            pass
+        th.sleep(0.2)
+
         _f._logging_active = False
         for c in allcfs.crazyflies:
             c.arm(False)
 
     finally:
         _f._logging_active = False
+        try:
+            allcfs.setParam('usd.logging', 0)
+        except Exception:
+            pass
         try:
             _f._firmware_idle_reset(cf, th)
             print('[simple_flight] Cleanup done — ready for another run.')
