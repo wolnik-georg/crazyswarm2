@@ -184,17 +184,19 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # 2026-09-30: back to controller=10 solo-hover retry (docs/41 §12-13).
-                         # Real tau/a_res telemetry now wired; aliasing UB + omega_des guard
-                         # fixed since last attempt. Z-integral test (docs/51) staged separately,
-                         # was on controller: 6 -- switch back here to resume that instead.
-                         # Requires ENABLE_Z_INTEGRAL=false in lib.rs (should already be, revert
-                         # if you'd locally flipped it true for the other test).
+        controller: 6   # 2026-09-30: switched back for Z-only position integral hardware test
+                         # (docs/51 Task 5, docs/41 §18). Controller=10 succeeded tonight (first
+                         # real flight, bindgen enum-size fix -- see docs/41 §18) and is parked
+                         # here, not abandoned; revert by setting controller: 10 again.
+                         # Requires local ENABLE_Z_INTEGRAL=true in lib.rs before make cload --
+                         # flag stays false in the committed tree (same convention as
+                         # ENABLE_POSITION_INTEGRAL). pos_gains.ki_z=16.0/ki_z_limit=1.5 already
+                         # staged in the shared `all:` block below -- inert until the flag flips.
       ctrlOot5:
-        # Active again under controller=10.
+        # Dormant while controller=6 -- Oot5 slot not selected. Left ready for c=10 restore.
         indi: 3
       ctrlOmarIndi:
-        # Dormant while controller=10 (Rust port slot) — Omar C (c=9) slot not selected.
+        # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
         #   line 179  if (self->indi && rpm_deck_available)
