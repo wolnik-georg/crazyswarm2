@@ -184,19 +184,17 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 6   # 2026-09-29 STAGED: Z-only position integral hardware test (docs/51 Task 5).
-                         # Geometric OOT6 + indi_gains.ctrl_mode=0 — persistent hover-height bias
-                         # correction (ki_z=16 in all.pos_gains), NOT downwash / A1 stack test.
-                         # Supersedes paused controller=10 solo retry (was controller: 10 @ 99e6b33).
-                         # Revert to c=10: set controller: 10 here; restore ctrlOot5/ctrlOmarIndi
-                         # comments from git show 99e6b33:crazyflie/config/crazyflies.yaml (cf5 block).
-                         # Requires local ENABLE_Z_INTEGRAL=true in lib.rs before make cload (flag
-                         # stays false in git — same convention as ENABLE_POSITION_INTEGRAL).
+        controller: 10  # 2026-09-30: back to controller=10 solo-hover retry (docs/41 §12-13).
+                         # Real tau/a_res telemetry now wired; aliasing UB + omega_des guard
+                         # fixed since last attempt. Z-integral test (docs/51) staged separately,
+                         # was on controller: 6 -- switch back here to resume that instead.
+                         # Requires ENABLE_Z_INTEGRAL=false in lib.rs (should already be, revert
+                         # if you'd locally flipped it true for the other test).
       ctrlOot5:
-        # Dormant while controller=6 — Oot5 slot not selected. Left for easy c=10 restore (99e6b33).
+        # Active again under controller=10.
         indi: 3
       ctrlOmarIndi:
-        # Dormant while controller=6 — Omar C slot not selected. Left for easy c=9/c=10 restore.
+        # Dormant while controller=10 (Rust port slot) — Omar C (c=9) slot not selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
         # `.indi = 0` in controller_omar_indi.c (line 76) and gates EVERY INDI term behind it:
         #   line 179  if (self->indi && rpm_deck_available)
