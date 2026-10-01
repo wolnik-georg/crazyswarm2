@@ -4,7 +4,8 @@
     ros2 run crazyflie_examples upload_residual_weights -- --weights w.npz --cf cf231 --enable
 
 Reads the `.npz` written by `flying_drone_stack/tools/residual/train.py` and pushes the 19297
-floats through the `rnn.*` parameter protocol, then verifies `rnn.ready` came back as 1.
+floats through the `rnn.*` parameter protocol, then verifies `rnn.ready` and `rnn.n` read back
+correctly before reporting success or honoring `--enable`.
 
 **Uploading does not switch anything on.** `rnn.en` stays at 0 unless `--enable` is passed, and
 even then nothing in the current flight code consumes the prediction -- it is computed and logged
@@ -74,6 +75,22 @@ def upload(cf, th, w, delay):
     return time.monotonic() - t0
 
 
+def _read_finite_param(cf, th, name, timeout_s=1.0, poll_s=0.1):
+    """Poll ``getParam`` until a finite numeric value or timeout (post-upload cache race)."""
+    deadline = time.monotonic() + timeout_s
+    while time.monotonic() < deadline:
+        try:
+            val = cf.getParam(name)
+            if val is not None:
+                fv = float(val)
+                if np.isfinite(fv):
+                    return fv
+        except Exception:
+            pass
+        th.sleep(poll_s)
+    return None
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -119,23 +136,36 @@ def main():
         print(f"  {name}: uploading {len(w)} weights...")
         dt = upload(cf, th, w, args.delay)
 
-        ready = None
-        try:
-            ready = cf.getParam("rnn.ready")
-        except Exception:
-            pass
+        # 2026-10-01 lab: rnn.ready alone can look clean while weights never loaded (rnn_pred_* all 0).
+        expected_n = len(w)
+        ready = _read_finite_param(cf, th, "rnn.ready")
         if ready is None:
-            print(f"  {name}: uploaded in {dt:.1f}s. Could not read rnn.ready back -- check the "
-                  f"rnn_pred log topic is non-zero before trusting it.")
-        elif int(ready) == 1:
-            print(f"  {name}: uploaded in {dt:.1f}s, rnn.ready=1")
-        else:
+            print(f"  {name}: uploaded in {dt:.1f}s. Could not confirm rnn.ready "
+                  f"(timeout or non-finite readback) -- re-upload; do not enable.")
+            ok = False
+            continue
+        if int(ready) != 1:
             # The firmware refuses a partial set outright, so this is a dropped write, not a
             # degraded model. Re-uploading is the fix; flying it is not.
-            print(f"  {name}: REJECTED (rnn.ready=0) -- weights dropped in transit. "
+            print(f"  {name}: REJECTED (rnn.ready={int(ready)}) -- weights dropped in transit. "
                   f"Re-run, and raise --delay if it repeats.")
             ok = False
             continue
+
+        n_read = _read_finite_param(cf, th, "rnn.n")
+        if n_read is None:
+            print(f"  {name}: rnn.ready=1 but could not confirm rnn.n readback -- re-upload; "
+                  f"do not enable.")
+            ok = False
+            continue
+        n_read_int = int(n_read)
+        if n_read_int != expected_n:
+            print(f"  {name}: REJECTED -- rnn.ready=1 but rnn.n={n_read_int} "
+                  f"(expected {expected_n}). Weights may not be loaded; re-upload.")
+            ok = False
+            continue
+
+        print(f"  {name}: uploaded in {dt:.1f}s, verified rnn.ready=1, rnn.n={expected_n}")
 
         if args.enable:
             _set_sync(cf, th, "rnn.en", 1)
