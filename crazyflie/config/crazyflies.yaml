@@ -122,7 +122,9 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                       # 2026-09-29: OFF for solo C.0 tests (Z-integral @ c=6 and/or controller=10 retry).
+    enabled: true                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md
+                                          # Checklist E) -- these are 2-drone scenarios, cf_second must be registered, not just present
+                                          # (documented failure mode below: PRESENT BUT DISABLED -> fails). Was OFF for solo C.0 tests:
                                           # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
                                           # attempt (previous state) failed (cf5 never left the ground, single-motor-dominant
                                           # PWM pattern, root cause not confirmed -- docs/41 §13). Next attempt should be a
