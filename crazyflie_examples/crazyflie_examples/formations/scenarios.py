@@ -215,13 +215,18 @@ def A4(dz: float = 0.60, offset: float = 0.10, axis: str = 'y', motion: str = 'l
         notes='Partial wash overlap: the lower vehicle crosses the wash edge repeatedly.')
 
 
-def A5(dz: float = 0.50, radius: float = 0.75, period: float = 7.5, laps: float = 2.0, **_):
-    """A5 reverse-circle stack. Both on a 1.5 m circle, period 7.5 s, opposite directions.
+def A5(dz: float = 0.50, radius: float = 0.40, period: float = 7.5, laps: float = 2.0, **_):
+    """A5 reverse-circle stack. Both on a circle, period 7.5 s, opposite directions.
 
     dz = 0.50 m. Because the senses of rotation oppose, the horizontal offset sweeps from
     zero to a full diameter and back twice per lap: one scenario covers the whole range
     from perfectly stacked to fully separated, at constant speed and constant height
     difference. Alignment happens at the start point and at the antipode.
+
+    Default radius 0.40 m in this lab's mocap volume (was 0.75 m in the original library
+    spec -- same reduction already applied to A2's circle path, see its docstring). The
+    first A5 flight (2026-10-01) lost mocap tracking on the top drone as the circle swept
+    toward the room's X boundary at the original 0.75 m radius / 1.0-1.5 m height.
     """
     return Scenario(
         'A5', f'Reverse-circle stack, dz={dz:.2f} m, d={2 * radius:.2f} m, T={period:.1f} s',
