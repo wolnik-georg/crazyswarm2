@@ -195,14 +195,15 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 9   # 2026-10-02: switched to Omar's pure INDI (C port) for an A8 3-way
-                         # INDI comparison (ours ctrl_mode=3 / Omar C=9 / Omar Rust=10), decided
-                         # live in the lab. ctrlOmarIndi.indi=3 below is already staged correctly.
+        controller: 10  # 2026-10-02: switched to Omar's pure INDI, Rust port (Oot5), for the
+                         # A8/A1 3-way INDI comparison (ours ctrl_mode=3 / Omar C=9, done / Omar
+                         # Rust=10, this). ctrlOot5.indi=3 below already staged correctly.
+                         # FIRST-EVER 2-drone / crossing-scenario attempt on this controller --
+                         # only flown solo (hover+figure8) before. Watch closely on first A8.
                          # Revert to controller: 6 (geometric, Z-integral test) when done --
                          # that still requires local ENABLE_Z_INTEGRAL=true in lib.rs before
                          # make cload (flag stays false in the committed tree).
       ctrlOot5:
-        # Dormant while controller=6 -- Oot5 slot not selected. Left ready for c=10 restore.
         indi: 3
       ctrlOmarIndi:
         # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
