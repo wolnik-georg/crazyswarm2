@@ -175,14 +175,11 @@ robots:
                          # to controller: 5 to restore the standing stock-Lee pin when done.
       indi_gains:
         ctrl_mode: 0    # plain geometric (not full INDI) -- now live since controller=6.
-      pos_gains:
-        # cf_second is brushless (confirmed 09-18), same platform as cf5, so it inherits the
-        # shared all: block's kp_xy/kp_z/kv_xy/kv_z (64/48/5/7) correctly. Only ki_z needs an
-        # override: the Z-only integral (ENABLE_Z_INTEGRAL, firmware-wide compile flag) was
-        # staged and validated for cf5 as the bottom/study drone specifically -- cf_second as
-        # the top/downwash-source drone should NOT pick up ki_z=16 from the shared block.
-        ki_z: 0.0
-        ki_z_limit: 1.5
+      # No pos_gains override: ki_z=16 is a general fix for our geometric controller's z-tracking
+      # (operator's explicit correction 2026-10-02 -- not tied to bottom/top formation role), so
+      # cf_second correctly inherits kp_xy/kp_z/kv_xy/kv_z/ki_z/ki_z_limit (64/48/5/7/16/1.5) from
+      # the shared all: block, same as cf5. cf_second is brushless (confirmed 09-18), same
+      # platform as cf5, so these gains are appropriate for it too.
 
   cf5:
     enabled: true   # 2026-09-25: re-enabled for 2-drone C.1 after solo debug; keep spare out of mocap volume if disabled.
