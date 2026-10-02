@@ -195,14 +195,11 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # 2026-10-02: switched to Omar's pure INDI, Rust port (Oot5), for the
-                         # A8/A1 3-way INDI comparison (ours ctrl_mode=3 / Omar C=9, done / Omar
-                         # Rust=10, this). ctrlOot5.indi=3 below already staged correctly.
-                         # FIRST-EVER 2-drone / crossing-scenario attempt on this controller --
-                         # only flown solo (hover+figure8) before. Watch closely on first A8.
-                         # Revert to controller: 6 (geometric, Z-integral test) when done --
-                         # that still requires local ENABLE_Z_INTEGRAL=true in lib.rs before
-                         # make cload (flag stays false in the committed tree).
+        controller: 6   # 2026-10-02: switched to our own full INDI (ctrl_mode=3 below) for the
+                         # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
+                         # done, ours now). accumulate_z_integral() runs inside controller_step(),
+                         # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
+                         # here same as it did for cf_second's plain geometric, confirmed in code.
       ctrlOot5:
         indi: 3
       ctrlOmarIndi:
@@ -222,9 +219,9 @@ robots:
         # terms stay off silently even with this set.
         indi: 3
       indi_gains:
-        ctrl_mode: 0    # geometric SE(3) for residual collection (docs/25); override all:
-                         # ctrl_mode=3 so formation scripts log/push the mode cf5 actually flies.
-                         # NOTE: ignored by controller=9 -- it reads ctrlOmarIndi.indi above.
+        ctrl_mode: 3    # 2026-10-02: full INDI (both position and attitude INDI terms) for the
+                         # comparison's "ours" leg. Needs deck.bcRpm==1 / rpm_source=1 (below) for
+                         # a real RPM source, same requirement as Omar's INDI variants.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
       rnn:
         en: 0           # predict/log only until C.2+ explicitly enables compensation
