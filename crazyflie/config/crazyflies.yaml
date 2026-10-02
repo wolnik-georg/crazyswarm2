@@ -223,6 +223,17 @@ robots:
                          # comparison's "ours" leg. Needs deck.bcRpm==1 / rpm_source=1 (below) for
                          # a real RPM source, same requirement as Omar's INDI variants.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
+      pos_gains:
+        # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
+        # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6
+        # tumble under ctrl_mode=0, but full INDI itself passed the A8 gate clean on 2026-09-18,
+        # BEFORE the Z-integral existed (added 2026-09-29). Neither SIL sweep (kv_z/ki_z) ever
+        # tested g_controller_mode != 0, so the Z-integral x full-INDI interaction was never
+        # validated. ki_z=0 here isolates that: if the tumble goes away, ki_z is implicated
+        # specifically for ctrl_mode=3, not a general controller=6 problem. kp_xy/kp_z/kv_xy/kv_z
+        # still inherit from all: (64/48/5/7) -- only the integral term is disabled.
+        ki_z: 0.0
+        ki_z_limit: 1.5
       rnn:
         en: 0           # predict/log only until C.2+ explicitly enables compensation
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
