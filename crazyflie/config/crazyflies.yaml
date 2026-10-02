@@ -186,14 +186,12 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 6   # 2026-09-30: switched back for Z-only position integral hardware test
-                         # (docs/51 Task 5, docs/41 §18). Controller=10 succeeded tonight (first
-                         # real flight, bindgen enum-size fix -- see docs/41 §18) and is parked
-                         # here, not abandoned; revert by setting controller: 10 again.
-                         # Requires local ENABLE_Z_INTEGRAL=true in lib.rs before make cload --
-                         # flag stays false in the committed tree (same convention as
-                         # ENABLE_POSITION_INTEGRAL). pos_gains.ki_z=16.0/ki_z_limit=1.5 already
-                         # staged in the shared `all:` block below -- inert until the flag flips.
+        controller: 9   # 2026-10-02: switched to Omar's pure INDI (C port) for an A8 3-way
+                         # INDI comparison (ours ctrl_mode=3 / Omar C=9 / Omar Rust=10), decided
+                         # live in the lab. ctrlOmarIndi.indi=3 below is already staged correctly.
+                         # Revert to controller: 6 (geometric, Z-integral test) when done --
+                         # that still requires local ENABLE_Z_INTEGRAL=true in lib.rs before
+                         # make cload (flag stays false in the committed tree).
       ctrlOot5:
         # Dormant while controller=6 -- Oot5 slot not selected. Left ready for c=10 restore.
         indi: 3
