@@ -219,9 +219,9 @@ robots:
         # terms stay off silently even with this set.
         indi: 3
       indi_gains:
-        ctrl_mode: 3    # 2026-10-02: full INDI (both position and attitude INDI terms) for the
-                         # comparison's "ours" leg. Needs deck.bcRpm==1 / rpm_source=1 (below) for
-                         # a real RPM source, same requirement as Omar's INDI variants.
+        ctrl_mode: 0    # 2026-10-03: back to plain GEOMETRIC for NS2 (Strategy 2 = geometric + NN;
+                         # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
+                         # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
       pos_gains:
         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
@@ -232,10 +232,11 @@ robots:
         # validated. ki_z=0 here isolates that: if the tumble goes away, ki_z is implicated
         # specifically for ctrl_mode=3, not a general controller=6 problem. kp_xy/kp_z/kv_xy/kv_z
         # still inherit from all: (64/48/5/7) -- only the integral term is disabled.
-        ki_z: 0.0
+        ki_z: 16.0      # 2026-10-03: geometric -> Z-integral ON (ki_z=0 was ONLY for ctrl_mode=3,
+                         # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 0           # predict/log only until C.2+ explicitly enables compensation
+        en: 0           # predict/log only; NN still evaluated + logged (rnn_pred_*). Set 1 only for Checklist G
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
