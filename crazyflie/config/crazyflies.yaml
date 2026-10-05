@@ -236,7 +236,7 @@ robots:
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 0           # 2026-10-05: reverted to 0 after rnn.en=1 A8 flights (2 of 3 crashed on cf5 pose jump); discriminating rnn.en=0 repeats first
+        en: 1           # 2026-10-05: Checklist G on A1 (no crossings; A8 crashes were mocap pose swaps, see rosbag). Back to 0 afterwards
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
