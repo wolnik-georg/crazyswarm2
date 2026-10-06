@@ -223,6 +223,7 @@ robots:
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
                          # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
+        res_sign: -1    # 2026-10-06: NS2 sign test. Under ctrl_mode=0 a_indi is zero, so this flips ONLY the network term (lib.rs f_d: a_nn*res_sign). Network-on crossing dips were -10.9 cm at +1 vs -5.9 cm network-off. Set back to 1 after the session.
       pos_gains:
         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
         # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6
