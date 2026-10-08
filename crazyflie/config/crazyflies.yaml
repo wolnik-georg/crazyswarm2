@@ -202,7 +202,7 @@ robots:
                          # here same as it did for cf_second's plain geometric, confirmed in code.
       ctrlOot5:
         indi: 3
-        kpos_iz: 1.5    # 2026-10-08 Omar+Iz: z-only position integral (0 = Omar exact). A8 flights: 1.0 done (2 clean), now 1.5
+        kpos_iz: 2.0    # 2026-10-08 Omar+Iz: z-only position integral (0 = Omar exact). A8: 1.0 and 1.5 done; now 2.0 (above the SIL-validated 1.5, watch z ringing, abort if it appears)
       ctrlOmarIndi:
         # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
