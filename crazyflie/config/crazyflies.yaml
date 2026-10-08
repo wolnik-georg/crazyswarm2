@@ -195,7 +195,7 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # 2026-10-02: switched to our own full INDI (ctrl_mode=3 below) for the  # 2026-10-08 Omar+Iz block: Omar Rust. Back to 6 for NS2/geometric
+        controller: 9   # 2026-10-02: switched to our own full INDI (ctrl_mode=3 below) for the  # 2026-10-08 Omar+Iz block: Omar Rust. Back to 6 for NS2/geometric
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
@@ -219,6 +219,7 @@ robots:
         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
         # terms stay off silently even with this set.
         indi: 3
+        Kpos_Iz: 1.5    # 2026-10-08 Omar C + z integral (0 = Omar exact). Same firmware binary as Rust (cf21bl_omar_iz_sentinel.bin). Needs deck.bcRpm==1
       indi_gains:
         ctrl_mode: 0    # 2026-10-03: back to plain GEOMETRIC for NS2 (Strategy 2 = geometric + NN;
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
