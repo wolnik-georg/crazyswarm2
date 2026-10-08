@@ -237,7 +237,7 @@ robots:
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 0           # 2026-10-08 Block 2/3 baselines (network off). Set to 1 for the A1 network-on flight; res_sign stays -1 in this session
+        en: 1           # 2026-10-08 Block 4: A1 network on with res_sign=-1 (ONE flight, abort ready). Back to 0 afterwards
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
