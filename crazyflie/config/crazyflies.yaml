@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md
+    enabled: false                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
                                           # Checklist E) -- these are 2-drone scenarios, cf_second must be registered, not just present
                                           # (documented failure mode below: PRESENT BUT DISABLED -> fails). Was OFF for solo C.0 tests:
                                           # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
@@ -195,7 +195,7 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 6   # 2026-10-02: switched to our own full INDI (ctrl_mode=3 below) for the
+        controller: 10  # 2026-10-02: switched to our own full INDI (ctrl_mode=3 below) for the  # 2026-10-08 Omar+Iz block: Omar Rust. Back to 6 for NS2/geometric
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
