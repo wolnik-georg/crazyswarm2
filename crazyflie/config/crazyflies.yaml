@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: false                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
+    enabled: true                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
                                           # Checklist E) -- these are 2-drone scenarios, cf_second must be registered, not just present
                                           # (documented failure mode below: PRESENT BUT DISABLED -> fails). Was OFF for solo C.0 tests:
                                           # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
@@ -202,6 +202,7 @@ robots:
                          # here same as it did for cf_second's plain geometric, confirmed in code.
       ctrlOot5:
         indi: 3
+        kpos_iz: 1.0    # 2026-10-08 Omar+Iz: z-only position integral (0 = Omar exact). A8 flight 1 = 1.0; flight 2 = 1.5 if flight 1 is clean
       ctrlOmarIndi:
         # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
