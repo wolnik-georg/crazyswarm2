@@ -219,7 +219,7 @@ robots:
         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
         # terms stay off silently even with this set.
         indi: 3
-        Kpos_Iz: 1.0    # 2026-10-08 Omar C + z integral (0 = Omar exact). Ladder: 1.0 x2 (this yaml), then 1.5 x2, 2.0 x2 via runtime ros2 param set (do NOT relaunch between: relaunch re-applies this yaml value). Needs deck.bcRpm==1
+        Kpos_Iz: 1.5    # 2026-10-08 Omar C + z integral (0 = Omar exact). Ladder: 1.0 x2 done, now 1.5 x2 (yaml), then 2.0 x2. Needs deck.bcRpm==1
       indi_gains:
         ctrl_mode: 0    # 2026-10-03: back to plain GEOMETRIC for NS2 (Strategy 2 = geometric + NN;
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
