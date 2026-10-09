@@ -195,14 +195,13 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # 2026-10-09 lab block C3: Omar Rust + z integral 1.5 (study configuration). Default is 6 (geometric)
+        controller: 9   # 2026-10-09 lab block C4: Omar C + z integral 1.5 (study configuration, needs deck.bcRpm 1). Default is 6 (geometric)
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
                          # here same as it did for cf_second's plain geometric, confirmed in code.
       ctrlOot5:
         indi: 3
-        kpos_iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
       ctrlOmarIndi:
         # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
@@ -219,6 +218,7 @@ robots:
         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
         # terms stay off silently even with this set.
         indi: 3
+        Kpos_Iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
       indi_gains:
         ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
