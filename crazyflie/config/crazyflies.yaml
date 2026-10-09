@@ -219,11 +219,11 @@ robots:
         # terms stay off silently even with this set.
         indi: 3
       indi_gains:
-        ctrl_mode: 0    # DEFAULT geometric (+NS2). Our full INDI = ctrl_mode 3 ONLY together with ki_z 0 and res_sign 1 (docs/study_parameter_decisions.md, docs/lab_session_pack_rpm_filter.md)
+        ctrl_mode: 3    # TEMP (RPM-filter check, ours full INDI)
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
                          # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
-        res_sign: -1    # PERMANENT for ctrl_mode=0 (geometric + NS2 network): verified on hardware 2026-10-08 (A8 dip: -1 -> -3.15 cm, off -6.10, +1 -10.4). ONLY valid for ctrl_mode=0; for full INDI (ctrl_mode=3) keep +1 (-1 diverged 2026-09-09). Rule: docs/study_parameter_decisions.md
+        res_sign: 1     # TEMP with ctrl_mode 3
       pos_gains:
         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
         # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6
@@ -233,11 +233,11 @@ robots:
         # validated. ki_z=0 here isolates that: if the tumble goes away, ki_z is implicated
         # specifically for ctrl_mode=3, not a general controller=6 problem. kp_xy/kp_z/kv_xy/kv_z
         # still inherit from all: (64/48/5/7) -- only the integral term is disabled.
-        ki_z: 16.0      # geometric Z-integral ON; NEVER with ctrl_mode=3 (liftoff tumble)
+        ki_z: 0.0       # TEMP, never 16 with ctrl_mode 3
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 1           # 2026-10-09 lab: NS2 sanity flight on the unified firmware (res_sign -1, ctrl_mode 0). Set 0 for every non-NS2 block (docs/lab_sessions/2026-10-09.md)
+        en: 0           # TEMP: network off for non-NS2 blocks
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
