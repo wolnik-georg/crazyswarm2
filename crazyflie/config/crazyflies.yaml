@@ -237,7 +237,7 @@ robots:
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 0           # default OFF (baseline). Set 1 for NS2 network flights (needs the rnn firmware build, cf21bl_rnn_100hz.bin)
+        en: 1           # 2026-10-09 lab: NS2 sanity flight on the unified firmware (res_sign -1, ctrl_mode 0). Set 0 for every non-NS2 block (docs/lab_sessions/2026-10-09.md)
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
