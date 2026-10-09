@@ -195,7 +195,7 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 6   # DEFAULT = geometric (+NS2 network). Study variants (docs/study_parameter_decisions.md): Omar Rust = controller 10 + ctrlOot5.kpos_iz 1.5; Omar C = controller 9 + ctrlOmarIndi.Kpos_Iz 1.5; both need firmware cf21bl_omar_iz_sentinel.bin (kpos_iz does not exist in the 10-03 rnn/default builds).
+        controller: 10  # 2026-10-09 lab block C1: Omar Rust exact (kpos_iz default 0). Default is 6 (geometric)
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
@@ -219,11 +219,11 @@ robots:
         # terms stay off silently even with this set.
         indi: 3
       indi_gains:
-        ctrl_mode: 3    # TEMP (RPM-filter check, ours full INDI)
+        ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
                          # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
-        res_sign: 1     # TEMP with ctrl_mode 3
+        res_sign: -1    # PERMANENT for ctrl_mode=0 (geometric + NS2); irrelevant for Omar. Rule: docs/study_parameter_decisions.md
       pos_gains:
         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
         # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6
@@ -233,7 +233,7 @@ robots:
         # validated. ki_z=0 here isolates that: if the tumble goes away, ki_z is implicated
         # specifically for ctrl_mode=3, not a general controller=6 problem. kp_xy/kp_z/kv_xy/kv_z
         # still inherit from all: (64/48/5/7) -- only the integral term is disabled.
-        ki_z: 0.0       # TEMP, never 16 with ctrl_mode 3
+        ki_z: 16.0      # geometric Z-integral ON; NEVER with ctrl_mode=3 (irrelevant for Omar)
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
