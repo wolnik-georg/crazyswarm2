@@ -23,6 +23,7 @@
     "stabilizer.controller": 6,
     "indi_gains.ctrl_mode": 3,
     "indi_gains.res_sign": 1,
-    "rnn.en": 0
+    "rnn.en": 0,
+    "pos_gains.ki_z": 0
   }
 }

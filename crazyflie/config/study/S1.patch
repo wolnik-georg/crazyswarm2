@@ -1,0 +1,12 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -195,7 +195,7 @@ robots:
+     type: cf21_active  # 4-marker active_deck, confirmed mounted
+     firmware_params:
+       stabilizer:
+-        controller: 6   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
++        controller: 9   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
+                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
+                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
+                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies

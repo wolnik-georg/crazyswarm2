@@ -88,6 +88,7 @@ def build_parser():
     g.add_argument('--laps', type=float, help='circle / lemniscate laps')
     g.add_argument('--passes', type=int, help='shuttle passes')
     g.add_argument('--span', type=float, help='swap span [m]')
+    g.add_argument('--duration', type=float, help='A8: duration of one swap pass [s] (sets the peak speed; default 6.0 s = 0.37 m/s)')
     g.add_argument('--sep', type=float, help='lateral separation, C1 [m]')
     g.add_argument('--gap', type=float, help='along-track gap, C2 [m]')
     g.add_argument('--r', type=float, help='V-stack lateral offset [m]')
@@ -133,7 +134,7 @@ def build_parser():
 
 def scenario_params(args) -> dict:
     keys = ('rotate_deg', 'dz', 'dz1', 'dz2', 'dz_start', 'dz_end', 'path', 'motion', 'offset', 'axis',
-            'speed', 'length', 'radius', 'period', 'laps', 'passes', 'span', 'sep', 'gap',
+            'speed', 'length', 'radius', 'period', 'laps', 'passes', 'span', 'duration', 'sep', 'gap',
             'r', 'hold', 'n')
     out = {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
     if args.rotate is not None:
