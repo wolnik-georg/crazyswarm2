@@ -1,0 +1,28 @@
+{
+  "_documentation": "Frozen cf5 blocks for --study validation. Keys that apply() never writes (rnn.*, ctrlOmarIndi.*, ctrlOot5.*, deck.*) are checked from the readback BEFORE takeoff; controller/ctrl_mode/gains/res_sign are checked against the script's intended config BEFORE takeoff and against the readback AFTER apply('scenario') (safe landing on mismatch). Source: docs/comparative_study_protocol.md section 2.",
+  "S0": {
+    "stabilizer.controller": 6,
+    "indi_gains.ctrl_mode": 0,
+    "pos_gains.ki_z": 16,
+    "rnn.en": 0
+  },
+  "S1": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "ctrlOmarIndi.indi": 3,
+    "deck.bcRpm": 1
+  },
+  "S2": {
+    "stabilizer.controller": 6,
+    "indi_gains.ctrl_mode": 0,
+    "pos_gains.ki_z": 16,
+    "rnn.en": 1,
+    "indi_gains.res_sign": -1
+  },
+  "ours": {
+    "stabilizer.controller": 6,
+    "indi_gains.ctrl_mode": 3,
+    "indi_gains.res_sign": 1,
+    "rnn.en": 0
+  }
+}

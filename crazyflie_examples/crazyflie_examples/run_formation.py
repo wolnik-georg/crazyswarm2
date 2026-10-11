@@ -40,6 +40,7 @@ DATA_DIR = Path(__file__).parent / 'data' / 'formations'
 # LOG_DIR (itself flight.py's LOGS_DIR, the one absolute path already confirmed correct
 # on the lab PC) rather than guessing a second hardcoded machine-specific path.
 LOG_DIR = None
+REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _RAMP_CONTROLLER = 6      # geometric SE(3) for takeoff/landing, as formation_flight does
 _RAMP_CTRL_MODE = 0
@@ -121,6 +122,12 @@ def build_parser():
     s.add_argument('--yes', action='store_true', help='skip the confirmation prompt')
     s.add_argument('--timescale', type=float, default=1.0,
                    help='HLC timescale; >1 slows the trajectory down')
+    s.add_argument('--study', action='store_true',
+                   help='comparative study mode: manifest + readback gate (refuses takeoff on mismatch)')
+    s.add_argument('--strategy', choices=('S0', 'S1', 'S2', 'ours'), default=None,
+                   help='study strategy id (required with --study)')
+    s.add_argument('--session', default=None,
+                   help='study session id (default: YYYY-MM-DD)')
     return p
 
 
@@ -398,6 +405,16 @@ def main():
 
     if not args.scenario:
         sys.exit('[formation] --scenario is required (use --list to see them)')
+
+    if args.study:
+        from .study_config import MANIFEST, load_json, manifest_ok
+        if not args.strategy:
+            sys.exit('[formation] --study requires --strategy S0|S1|S2|ours')
+        ok, why = manifest_ok(load_json(MANIFEST))
+        if not ok:
+            sys.exit(f'[formation] --study refused: {why}')
+        if args.session is None:
+            args.session = time.strftime('%Y-%m-%d')
 
     # A parameter that does not apply is a mistake worth stopping for, not a traceback:
     # it means the flight about to run is not the flight that was asked for.
@@ -689,8 +706,67 @@ def main():
             eff_ctrl, eff_mode, _ = resolve(name, ctrl, mode_, pgains)
             print(f'[formation] {phase}: {name} controller={eff_ctrl} ctrl_mode={eff_mode}')
 
+    def _land_all():
+        """Controlled landing of every drone (spreads stacked robots first). Used at the end of a flight and when the
+        --study check fails in the air."""
+        print('[formation] done, landing...')
+        apply('landing', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
+        try:
+            allcfs.setParam('usd.logging', 0)
+        except Exception:
+            pass
+        # A pure vertical stack (A1/A2/A5/A7/B1/C4) has two or more robots sharing the same
+        # (x, y) for the whole flight, differing only in z. Matching their descent RATE
+        # (below) keeps their SEPARATION constant only until the lowest robot reaches the
+        # ground and stops -- every robot still above it then continues straight down
+        # through that EXACT SAME (x, y), i.e. through the parked robot's position. Rate
+        # alone cannot fix this; only giving them distinct (x, y) can. So: while they are
+        # still at their very different flight heights (safe -- far apart in z), spread any
+        # XY-overlapping robots onto a small circle around their shared point, then begin
+        # the vertical descent once everyone has their own column of air.
+        LAND_XY_MARGIN = 0.30  # m -- robots closer than this in XY are treated as "stacked"
+        LAND_XY_RADIUS = 0.35  # m -- how far each is moved from the shared centre
+        cur = [np.array(c.get_position()) for c in cfs]
+        overlap = any(
+            np.linalg.norm(cur[i][:2] - cur[j][:2]) < LAND_XY_MARGIN
+            for i in range(len(cfs)) for j in range(i + 1, len(cfs))
+        )
+        if overlap:
+            print('[formation] landing XY overlap detected -- spreading robots sideways first')
+            center = np.mean([p[:2] for p in cur], axis=0)
+            n = len(cfs)
+            for k, c in enumerate(cfs):
+                ang = 2 * np.pi * k / n
+                xy = center + LAND_XY_RADIUS * np.array([np.cos(ang), np.sin(ang)])
+                c.goTo(np.array([xy[0], xy[1], cur[k][2]]), 0, 3.0)
+            # Extra margin past the goTo's own duration: starting the vertical descent
+            # while lateral velocity from this move hasn't fully damped out couples a
+            # sideways disturbance into the landing, which showed up as an attitude
+            # wiggle that got worse across back-to-back runs (no disarm between them
+            # to reset the position-integral term via the controller's thrust<0.05 gate).
+            th.sleep(4.0)
+
+        # Per-robot, not a single broadcast: a broadcast land() gives every robot the SAME
+        # duration regardless of its own height, so a higher robot descends FASTER than a
+        # lower one, closing their separation LINEARLY TO ZERO by construction. Scaling
+        # duration by each robot's own live height instead keeps their descent RATE equal,
+        # so commanded separation is preserved all the way to the ground.
+        target_h = 0.06
+        descent_rate = 0.25  # m/s -- same for every robot, so relative dz stays constant
+        land_durations = []
+        for c in cfs:
+            h = c.get_position()[2]
+            dur = max(3.0, (h - target_h) / descent_rate)
+            land_durations.append(dur)
+            c.land(targetHeight=target_h, duration=dur)
+        th.sleep(max(land_durations) + 1.0)
+        for c in cfs:
+            c.arm(False)
+
     usd_start = None
     end_of_flight_poses = latest
+    study_readback = {}
+    study_identity = {}
     try:
         # ── usec.reset MUST happen HERE, ON THE GROUND, BEFORE TAKEOFF ──────────────
         # 2026-09-15: this broadcast was originally placed mid-flight, right before
@@ -794,6 +870,29 @@ def main():
             print('[formation] commands need a healthy link. NOT taking off.')
             return
 
+        if args.study:
+            # Everything that can be checked on the ground is checked BEFORE arming: stale manifest hash, the config the
+            # script is about to push (effective), and the yaml-only params (rnn/ctrlOmarIndi/deck) read back from the drones.
+            from .study_config import (check_firmware_disk, load_json, MANIFEST, read_drone_block,
+                                       validate_intended, validate_readback)
+            fw_problems, fw_info = check_firmware_disk(load_json(MANIFEST))
+            study_identity.update(fw_info)
+            pre_problems = list(fw_problems)
+            pre_problems += validate_intended(args.strategy, effective.get('cf5', {}))
+            study_pre = {}
+            for c in cfs:
+                name = c.prefix.lstrip('/')
+                study_pre[name] = read_drone_block(c, name)
+            pre_problems += [f'readback before takeoff: {p}' for p in
+                             validate_readback(args.strategy, study_pre.get('cf5', {}), static_only=True)]
+            study_readback['_before_takeoff'] = study_pre
+            if pre_problems:
+                print('\n[formation] *** ABORT: --study configuration check failed ***')
+                for p in pre_problems:
+                    print(f'[formation]   {p}')
+                print('[formation] NOT taking off.')
+                return
+
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
@@ -827,6 +926,46 @@ def main():
         th.sleep(0.5)
 
         apply('scenario', controller, traj_ctrl_mode, indi_gains, pos_gains)
+
+        if args.study:
+            from .study_config import (STRATEGIES, git_identity, keys_for_airborne_check, load_json, MANIFEST,
+                                       read_drone_block, validate_readback)
+            study_identity.update({
+                'git': git_identity(),
+                'strategies_file': str(STRATEGIES),
+                'manifest_file': str(MANIFEST),
+                'session_id': args.session,
+                'strategy': args.strategy,
+            })
+            manifest = load_json(MANIFEST)
+            air_keys = keys_for_airborne_check(args.strategy)
+            for c in cfs:
+                name = c.prefix.lstrip('/')
+                study_readback[name] = read_drone_block(c, name, keys=air_keys)
+                mf = manifest.get(name, {})
+                study_identity[f'{name}_firmware_sha256_manifest'] = mf.get('firmware_sha256')
+                study_identity[f'{name}_weights_sha256_manifest'] = mf.get('weights_sha256')
+            problems = validate_readback(args.strategy, study_readback.get('cf5', {}))
+            if problems:
+                print('\n[formation] *** ABORT (airborne): cf5 readback does not match the frozen strategy ***')
+                for p in problems:
+                    print(f'[formation] --study BLOCK: {p}')
+                print('[formation] landing both drones, trajectory NOT started.')
+                end_of_flight_poses = [p_.copy() for p_ in latest]
+                _land_all()
+                sys.exit('[formation] --study refused after landing: readback does not match the frozen strategy')
+            print('\n[formation] === STUDY CONFIG (paste into lab doc) ===')
+            print(f'  session={args.session}  strategy={args.strategy}  scenario={sc.sid}')
+            print(f'  git={study_identity["git"]}')
+            for name, block in study_readback.items():
+                if name.startswith('_'):
+                    continue
+                print(f'  cfg_{name} (airborne): {json.dumps(block, sort_keys=True)}')
+            for name, block in study_readback.get('_before_takeoff', {}).items():
+                print(f'  cfg_{name} (before takeoff, full): {json.dumps(block, sort_keys=True)}')
+            print(f'  manifest_hashes: '
+                  f'{ {k: v for k, v in study_identity.items() if "sha256" in k} }')
+            print('[formation] === END STUDY CONFIG ===\n')
 
         # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
         # takeoff -- see the long comment at the top of this try block. Sending it at this
@@ -868,7 +1007,9 @@ def main():
                            # what each vehicle actually flew rather than only the shared
                            # block. Drones may run the same controller or different ones;
                            # either way this is the authoritative record for the flight.
-                           'per_drone': effective}, fh, indent=2)
+                           'per_drone': effective,
+                           'study': study_identity if args.study else None,
+                           'study_readback': study_readback if args.study else None}, fh, indent=2)
             print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
         except Exception as e:
             print(f'[formation] WARNING: metadata sidecar not written ({e}) -- '
@@ -886,59 +1027,7 @@ def main():
         # flight regardless of whether it actually tracked the formation correctly.
         end_of_flight_poses = [p.copy() for p in latest]
 
-        print('[formation] done, landing...')
-        apply('landing', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
-        try:
-            allcfs.setParam('usd.logging', 0)
-        except Exception:
-            pass
-        # A pure vertical stack (A1/A2/A5/A7/B1/C4) has two or more robots sharing the same
-        # (x, y) for the whole flight, differing only in z. Matching their descent RATE
-        # (below) keeps their SEPARATION constant only until the lowest robot reaches the
-        # ground and stops -- every robot still above it then continues straight down
-        # through that EXACT SAME (x, y), i.e. through the parked robot's position. Rate
-        # alone cannot fix this; only giving them distinct (x, y) can. So: while they are
-        # still at their very different flight heights (safe -- far apart in z), spread any
-        # XY-overlapping robots onto a small circle around their shared point, then begin
-        # the vertical descent once everyone has their own column of air.
-        LAND_XY_MARGIN = 0.30  # m -- robots closer than this in XY are treated as "stacked"
-        LAND_XY_RADIUS = 0.35  # m -- how far each is moved from the shared centre
-        cur = [np.array(c.get_position()) for c in cfs]
-        overlap = any(
-            np.linalg.norm(cur[i][:2] - cur[j][:2]) < LAND_XY_MARGIN
-            for i in range(len(cfs)) for j in range(i + 1, len(cfs))
-        )
-        if overlap:
-            print('[formation] landing XY overlap detected -- spreading robots sideways first')
-            center = np.mean([p[:2] for p in cur], axis=0)
-            n = len(cfs)
-            for k, c in enumerate(cfs):
-                ang = 2 * np.pi * k / n
-                xy = center + LAND_XY_RADIUS * np.array([np.cos(ang), np.sin(ang)])
-                c.goTo(np.array([xy[0], xy[1], cur[k][2]]), 0, 3.0)
-            # Extra margin past the goTo's own duration: starting the vertical descent
-            # while lateral velocity from this move hasn't fully damped out couples a
-            # sideways disturbance into the landing, which showed up as an attitude
-            # wiggle that got worse across back-to-back runs (no disarm between them
-            # to reset the position-integral term via the controller's thrust<0.05 gate).
-            th.sleep(4.0)
-
-        # Per-robot, not a single broadcast: a broadcast land() gives every robot the SAME
-        # duration regardless of its own height, so a higher robot descends FASTER than a
-        # lower one, closing their separation LINEARLY TO ZERO by construction. Scaling
-        # duration by each robot's own live height instead keeps their descent RATE equal,
-        # so commanded separation is preserved all the way to the ground.
-        target_h = 0.06
-        descent_rate = 0.25  # m/s -- same for every robot, so relative dz stays constant
-        land_durations = []
-        for c in cfs:
-            h = c.get_position()[2]
-            dur = max(3.0, (h - target_h) / descent_rate)
-            land_durations.append(dur)
-            c.land(targetHeight=target_h, duration=dur)
-        th.sleep(max(land_durations) + 1.0)
-        for c in cfs:
-            c.arm(False)
+        _land_all()
     finally:
         for lg in loggers:
             lg.active = False

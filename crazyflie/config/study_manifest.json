@@ -1,0 +1,18 @@
+{
+  "_documentation": "Hand-maintained identity for comparative study flights. firmware_file is relative to the crazyswarm2 crazyflie/ directory or absolute; if the file exists on this machine its sha256 is compared with firmware_sha256 (mismatch refuses takeoff), otherwise it is recorded as unverified (the hash of the flashed image cannot be read from the drone). Fill cf_second and UPDATE cf5 firmware_sha256 to the image actually flashed (candidate with the 96-variable uSD cap: cf21bl_study_usd96_rnn_iz_sentinel_ON.bin, sha256 14575bacacccc8e50fbcab0d01aa789adaae4966033bf7397b3cff167db4be3c \u2014 built 2026-10-11, not flashed) at the shakedown flash.",
+  "study_yaml_tags": {
+    "S0": "study-S0",
+    "S1": "study-S1",
+    "S2": "study-S2"
+  },
+  "cf5": {
+    "firmware_file": "firmware/cf21bl_study_rnn_iz_sentinel_ON.bin",
+    "firmware_sha256": "989e5150f4d68690d319fa9320c1f947e36f7996caca329db669a512d3079121",
+    "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
+  },
+  "cf_second": {
+    "firmware_file": "",
+    "firmware_sha256": "",
+    "weights_sha256": ""
+  }
+}
