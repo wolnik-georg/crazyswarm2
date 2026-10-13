@@ -195,7 +195,7 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 12   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
+        estimator: 2   # 2026-10-13: per-robot controller override REMOVED for the handover test (takeoff on geometric via the ramp, switch to the shared controller 12 at altitude).  # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
@@ -455,7 +455,7 @@ all:
       # This value (6) is left over from that crashed test, not a considered choice for next
       # session -- decide fresh rather than assume it's safe to just re-fly. Plan is to
       # reflash cf_second to brushless before any further 2-drone geometric attempt anyway.
-      controller: 6 # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
+      controller: 12 # 2026-10-13 TEMP shared value for the Tal & Karaman handover test (revert to 6) # 1: PID, 2: mellinger, 5: Lee (stock), 6: geometric SE(3) (OOT)
     # ring:
     #   effect: 16 # 6: double spinner, 7: solid color, 16: packetRate
     #   solidBlue: 255 # if set to solid color
