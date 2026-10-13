@@ -1,0 +1,43 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index 888cbc9..f830037 100644
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -195,11 +195,25 @@ robots:
+     type: cf21_active  # 4-marker active_deck, confirmed mounted
+     firmware_params:
+       stabilizer:
+-        controller: 6   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
++        controller: 11   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
+                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
+                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
+                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
+                          # here same as it did for cf_second's plain geometric, confirmed in code.
++      ctrlTk:          # Tal & Karaman INDI with Omar's values (docs/76): position gains 7/4, no acceleration feedback, torque-equivalent attitude gains for the controller's own inertia
++        kx_xy: 7.0
++        kx_z: 7.0
++        kv_xy: 4.0
++        kv_z: 4.0
++        ka_xy: 0.0
++        ka_z: 0.0
++        kxi_xy: 292.3
++        kxi_z: 247.3
++        kom_xy: 48.0
++        kom_z: 61.8
++        fc: 30.0
++        jrz: 0.0
++        yaw_lit: 1
+       ctrlOot5:
+         indi: 3
+       ctrlOmarIndi:
+@@ -225,6 +239,11 @@ robots:
+                          # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
+         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
+         res_sign: -1    # PERMANENT for ctrl_mode=0 (geometric + NS2); irrelevant for Omar. Rule: docs/study_parameter_decisions.md
++        mass: 0.0427            # Tal & Karaman reads g_indi_mass and k_t from here; Omar's values
++        kt1: 4.2899e-10
++        kt2: 4.2899e-10
++        kt3: 4.2899e-10
++        kt4: 4.2899e-10
+       pos_gains:
+         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
+         # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6

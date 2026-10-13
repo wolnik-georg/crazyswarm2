@@ -1,0 +1,45 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index 888cbc9..d92e0f7 100644
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -220,11 +220,24 @@ robots:
+         indi: 3
+         Kpos_Iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
+       indi_gains:
+-        ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
++        ctrl_mode: 3    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
+                          # residual data must not be contaminated by INDI's RPM feedback, docs/13 s7).
+                          # Full INDI was ctrl_mode: 3 for the 2026-10-02 comparison.
+         rpm_source: 1   # DShot for control + a_res (deck still logged on uSD)
+         res_sign: -1    # PERMANENT for ctrl_mode=0 (geometric + NS2); irrelevant for Omar. Rule: docs/study_parameter_decisions.md
++        mass: 0.0427            # Omar's mass
++        kt1: 4.2899e-10            # Omar's k_t equivalent, all four motors
++        kt2: 4.2899e-10
++        kt3: 4.2899e-10
++        kt4: 4.2899e-10
++        kr: 421.3               # Omar K_R 0.007 N m / his J, torque-equivalent (docs/76)
++        kw: 69.2                # Omar K_w 0.00115 / his J
++        kr_z: 273.4
++        kw_z: 68.3
++        j_scale: 0.693          # his J / our J on x,y
++        fc_bw: 30.0             # Omar 30 Hz Butterworth
++        res_fc: 30.0
++        filt_order: 0           # rate differenced, then filtered (Omar order)
+       pos_gains:
+         # 2026-10-02: DIRECT TEST of the operator's hypothesis -- full INDI (ctrl_mode=3) crashed
+         # on A8 tonight with the exact same 0.65s-post-liftoff tumble signature as every A1/A6
+@@ -234,9 +247,13 @@ robots:
+         # validated. ki_z=0 here isolates that: if the tumble goes away, ki_z is implicated
+         # specifically for ctrl_mode=3, not a general controller=6 problem. kp_xy/kp_z/kv_xy/kv_z
+         # still inherit from all: (64/48/5/7) -- only the integral term is disabled.
+-        ki_z: 16.0      # geometric Z-integral ON; NEVER with ctrl_mode=3 (irrelevant for Omar)
++        ki_z: 0.0      # geometric Z-integral ON; NEVER with ctrl_mode=3 (irrelevant for Omar)
+                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
+         ki_z_limit: 1.5
++        kp_xy: 7.0              # Omar K_pos_P
++        kp_z: 7.0
++        kv_xy: 4.0              # Omar K_pos_D
++        kv_z: 4.0
+       rnn:
+         en: 0           # TEMP: network off for non-NS2 blocks
+     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
