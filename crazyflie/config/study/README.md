@@ -6,3 +6,5 @@ to pass the frozen-block check (`study_strategies.json`) with `lab_preflight.py 
 
 `make_tags.sh` creates the tags `study-S0/S1/S2/ours` (dry run by default) — run it after the NS2 and Pure-INDI decisions, then `git push origin --tags`.
 Use in the lab: `git fetch --tags && git checkout study-S1 -- crazyflie/config/crazyflies.yaml`, relaunch, `lab_preflight.py --study S1`, `run_formation --study --strategy S1 …`.
+
+`TK.patch` / `TKC.patch` (2026-10-13): Tal & Karaman INDI, `controller` 11 (Rust) / 12 (C) with the explicit `ctrlTk` block (paper defaults, `docs/74` §6); frozen blocks `TK` / `TKC` in `study_strategies.json`; need the `…_rpmf_…_tk.bin` image. Use like the others: `git apply crazyflie/config/study/TK.patch` (or the tag `study-TK` after `make_tags.sh --execute`), `run_formation --study --strategy TK …`.

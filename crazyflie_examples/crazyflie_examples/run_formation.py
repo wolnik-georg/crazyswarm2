@@ -125,7 +125,7 @@ def build_parser():
                    help='HLC timescale; >1 slows the trajectory down')
     s.add_argument('--study', action='store_true',
                    help='comparative study mode: manifest + readback gate (refuses takeoff on mismatch)')
-    s.add_argument('--strategy', choices=('S0', 'S1', 'S2', 'ours'), default=None,
+    s.add_argument('--strategy', choices=('S0', 'S1', 'S2', 'ours', 'TK', 'TKC'), default=None,
                    help='study strategy id (required with --study)')
     s.add_argument('--session', default=None,
                    help='study session id (default: YYYY-MM-DD)')

@@ -25,5 +25,29 @@
     "indi_gains.res_sign": 1,
     "rnn.en": 0,
     "pos_gains.ki_z": 0
+  },
+  "TK": {
+    "stabilizer.controller": 11,
+    "rnn.en": 0,
+    "ctrlTk.kx_xy": 18.0,
+    "ctrlTk.kx_z": 13.5,
+    "ctrlTk.kv_xy": 7.8,
+    "ctrlTk.kv_z": 5.9,
+    "ctrlTk.kxi_xy": 175.0,
+    "ctrlTk.kom_xy": 19.5,
+    "ctrlTk.fc": 30.0,
+    "ctrlTk.jrz": 2.5e-08
+  },
+  "TKC": {
+    "stabilizer.controller": 12,
+    "rnn.en": 0,
+    "ctrlTk.kx_xy": 18.0,
+    "ctrlTk.kx_z": 13.5,
+    "ctrlTk.kv_xy": 7.8,
+    "ctrlTk.kv_z": 5.9,
+    "ctrlTk.kxi_xy": 175.0,
+    "ctrlTk.kom_xy": 19.5,
+    "ctrlTk.fc": 30.0,
+    "ctrlTk.jrz": 2.5e-08
   }
 }
