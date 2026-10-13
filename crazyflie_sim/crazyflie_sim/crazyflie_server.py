@@ -88,7 +88,7 @@ class CrazyflieServer(Node):
         # Configure the out-of-tree controller BEFORE the backend exists, because the
         # backend builds its vehicle model from these numbers.
         self._oot_active = self._ros_parameters['sim'].get('controller') in (
-            'oot', 'oot2', 'oot3', 'oot4', 'oot5')
+            'oot', 'oot2', 'oot3', 'oot4', 'oot5', 'oot6', 'oot7')
         if self._oot_active:
             self._setup_oot()
 
@@ -351,7 +351,9 @@ class CrazyflieServer(Node):
             # at Init in crazyflie_sil.py, not a per-run selector.
             names = {'oot2': 'naindi.rs, use_nn=0', 'oot3': 'naindi_hybrid.rs, use_nn=1',
                      'oot4': 'controller_omar_indi.c, indi=3 (literal C port, controller=9)',
-                     'oot5': 'omar_indi_rust.rs, indi=3 (Rust port, controller=10)'}
+                     'oot5': 'omar_indi_rust.rs, indi=3 (Rust port, controller=10)',
+                     'oot6': 'tk_indi.rs (Tal & Karaman INDI, controller=11)',
+                     'oot7': 'controller_tk_indi.c (Tal & Karaman INDI in C, controller=12)'}
             self.get_logger().info(
                 'out-of-tree controller: %s (%s)' % (
                     sim.get('controller'), names.get(sim.get('controller'), '?')))

@@ -90,6 +90,8 @@ class CrazyflieSIL:
     # same pattern as _oot_index below.
     _oot2_count = 0
     _oot5_count = 0
+    _oot6_count = 0
+    _oot7_count = 0
     _oot3_count = 0
 
     MODE_IDLE = 0
@@ -348,6 +350,33 @@ class CrazyflieSIL:
             # the server outright on the first takeoff() call, TypeError: float * NoneType,
             # caught immediately when actually testing this fix). Same THRUST_MAX platform
             # macro 'oot' already reads via this same getter.
+            self.thrust_max = firm.oot_thrust_max()
+        elif controller_name == 'oot7':
+            # controller=12 (controller_tk_indi.c): the C version of the same Tal & Karaman INDI.
+            if not hasattr(firm, 'controllerOutOfTree7Init'):
+                raise ValueError("controller 'oot7' needs cffirmware built with controller_tk_indi.c")
+            self._oot7_index = CrazyflieSIL._oot7_count
+            CrazyflieSIL._oot7_count += 1
+            firm.oot7_select_drone(self._oot7_index)
+            firm.controllerOutOfTree7Init()
+            self.controller = firm.controllerOutOfTree7
+            self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
+                       firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
+            self.thrust_max = firm.oot_thrust_max()
+        elif controller_name == 'oot6':
+            # controller=11 (tk_indi.rs): Tal & Karaman INDI, literal. Reads g_indi_mass and
+            # g_indi_kt1-4 like 'oot' (so the plant is built from the firmware's own constants).
+            if not hasattr(firm, 'controllerOutOfTree6Init'):
+                raise ValueError(
+                    "controller 'oot6' needs cffirmware built with controllerOutOfTree6 linked "
+                    'from tk_indi.rs. Rebuild bindings_python after cargo build.')
+            self._oot6_index = CrazyflieSIL._oot6_count
+            CrazyflieSIL._oot6_count += 1
+            firm.oot6_select_drone(self._oot6_index)
+            firm.controllerOutOfTree6Init()
+            self.controller = firm.controllerOutOfTree6
+            self.kt = [firm.cvar.g_indi_kt1, firm.cvar.g_indi_kt2,
+                       firm.cvar.g_indi_kt3, firm.cvar.g_indi_kt4]
             self.thrust_max = firm.oot_thrust_max()
         elif controller_name == 'oot5':
             # controller=10 (omar_indi_rust.rs): Rust port of controller_omar_indi.c, numerically
@@ -789,6 +818,26 @@ class CrazyflieSIL:
             firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
             self.controller(
                 self.omar_indi_control,
+                self.control,
+                self.setpoint,
+                self.sensors,
+                self.state,
+                tick)
+        elif self.controller_name == 'oot7':
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            firm.oot7_select_drone(self._oot7_index)
+            self.controller(
+                self.control,
+                self.setpoint,
+                self.sensors,
+                self.state,
+                tick)
+        elif self.controller_name == 'oot6':
+            r = self.motors_rpm_meas or getattr(self, 'motors_rpm', [0, 0, 0, 0])
+            firm.oot_set_rpm(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
+            firm.oot6_select_drone(self._oot6_index)
+            self.controller(
                 self.control,
                 self.setpoint,
                 self.sensors,
