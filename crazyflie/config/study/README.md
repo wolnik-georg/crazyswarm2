@@ -8,3 +8,5 @@ to pass the frozen-block check (`study_strategies.json`) with `lab_preflight.py 
 Use in the lab: `git fetch --tags && git checkout study-S1 -- crazyflie/config/crazyflies.yaml`, relaunch, `lab_preflight.py --study S1`, `run_formation --study --strategy S1 …`.
 
 `TK.patch` / `TKC.patch` (2026-10-13): Tal & Karaman INDI, `controller` 11 (Rust) / 12 (C) with the explicit `ctrlTk` block (paper defaults, `docs/74` §6); frozen blocks `TK` / `TKC` in `study_strategies.json`; need the `…_rpmf_…_tk.bin` image. Use like the others: `git apply crazyflie/config/study/TK.patch` (or the tag `study-TK` after `make_tags.sh --execute`), `run_formation --study --strategy TK …`.
+
+`tk_variants/` (2026-10-13): one-parameter-group variants of the Tal & Karaman gains for the diagnostic hovers (apply on top of the committed yaml with controller 11 or 12): `outer_half.patch` (kx_xy, kv_xy, ka_xy x 0.5), `attitude_half.patch` (kxi_xy, kom_xy x 0.5), `fc_60.patch` (filter 30 -> 60 Hz). Use: `git checkout crazyflie/config/crazyflies.yaml && git apply crazyflie/config/study/tk_variants/<name>.patch`, relaunch CS2.

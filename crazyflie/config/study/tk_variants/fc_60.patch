@@ -1,0 +1,13 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index 63b087a..fd5f57d 100644
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -213,7 +213,7 @@ robots:
+         kxi_z: 82.0
+         kom_xy: 19.5
+         kom_z: 19.2
+-        fc: 30.0
++        fc: 60.0
+         jrz: 2.5e-08
+         yaw_lit: 1
+       ctrlOmarIndi:

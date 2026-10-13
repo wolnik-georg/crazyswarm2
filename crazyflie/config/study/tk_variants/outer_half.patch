@@ -1,0 +1,19 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index 63b087a..3f2107c 100644
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -203,11 +203,11 @@ robots:
+       ctrlOot5:
+         indi: 3
+       ctrlTk:          # Tal & Karaman INDI (controller 11 Rust / 12 C), paper defaults (docs/74 s6); dormant unless controller = 11 or 12
+-        kx_xy: 18.0
++        kx_xy: 9.0
+         kx_z: 13.5
+-        kv_xy: 7.8
++        kv_xy: 3.9
+         kv_z: 5.9
+-        ka_xy: 0.5
++        ka_xy: 0.25
+         ka_z: 0.3
+         kxi_xy: 175.0
+         kxi_z: 82.0
