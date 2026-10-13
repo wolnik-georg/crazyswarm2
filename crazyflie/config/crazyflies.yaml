@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
+    enabled: false                       # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
                                           # Checklist E) -- these are 2-drone scenarios, cf_second must be registered, not just present
                                           # (documented failure mode below: PRESENT BUT DISABLED -> fails). Was OFF for solo C.0 tests:
                                           # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
@@ -195,13 +195,27 @@ robots:
     type: cf21_active  # 4-marker active_deck, confirmed mounted
     firmware_params:
       stabilizer:
-        controller: 10  # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
+        controller: 11   # DEFAULT = geometric (+NS2). Omar INDI of the study = controller 9 with ctrlOmarIndi.Kpos_Iz 1.5 (below, dormant while controller=6); needs deck.bcRpm 1 and firmware cf21bl_study_rnn_iz_sentinel_ON.bin. Our INDI = ctrl_mode 3 + ki_z 0 + res_sign 1 (docs/study_parameter_decisions.md)
                          # final leg of the A8/A1 3-way comparison (Omar C=9 done, Omar Rust=10
                          # done, ours now). accumulate_z_integral() runs inside controller_step(),
                          # shared by all ctrl_mode values -- ki_z=16 (inherited from all:) applies
                          # here same as it did for cf_second's plain geometric, confirmed in code.
       ctrlOot5:
         indi: 3
+      ctrlTk:          # Tal & Karaman INDI (controller 11 Rust / 12 C), paper defaults (docs/74 s6); dormant unless controller = 11 or 12
+        kx_xy: 18.0
+        kx_z: 13.5
+        kv_xy: 7.8
+        kv_z: 5.9
+        ka_xy: 0.5
+        ka_z: 0.3
+        kxi_xy: 175.0
+        kxi_z: 82.0
+        kom_xy: 19.5
+        kom_z: 19.2
+        fc: 30.0
+        jrz: 2.5e-08
+        yaw_lit: 1
       ctrlOmarIndi:
         # Dormant while controller=6 — neither Omar C (c=9) nor the Rust port (c=10) selected.
         # 2026-09-29: REQUIRED to actually get Omar's INDI. His controller defaults
