@@ -6,13 +6,13 @@
     "S2": "study-S2"
   },
   "cf5": {
-    "firmware_file": "firmware/cf21bl_study_rnn_iz_sentinel_ON.bin",
-    "firmware_sha256": "989e5150f4d68690d319fa9320c1f947e36f7996caca329db669a512d3079121",
+    "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/cf21bl_study_usd96_rpmf_rnn_iz_sentinel_ON_tk.bin",
+    "firmware_sha256": "cb38f3f4981d8fa6b9c85c9e26d5645b5535040328d4ef99926a1c267037f8ca",
     "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
   },
   "cf_second": {
-    "firmware_file": "",
-    "firmware_sha256": "",
-    "weights_sha256": ""
+    "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/cf21bl_study_usd96_rpmf_rnn_iz_sentinel_ON_tk.bin",
+    "firmware_sha256": "cb38f3f4981d8fa6b9c85c9e26d5645b5535040328d4ef99926a1c267037f8ca",
+    "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
   }
 }
