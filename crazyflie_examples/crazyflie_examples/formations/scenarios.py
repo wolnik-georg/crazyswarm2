@@ -461,18 +461,77 @@ def C5(z: float = 0.15, speed: float = 0.25, length: float = 1.2, passes: int = 
         notes='Single robot. Characterises ground effect so it can be told from downwash.')
 
 
+
+# ── Data collection -- randomised (NS2 training data, 2026-10-14) ────────────
+
+def R1(seed: int = 0, total: float = 30.0, box_x: float = 0.6, box_y: float = 0.8, z_span: float = 0.30,
+       dz_min: float = 0.25, dz_max: float = 0.75, v_min: float = 0.10, v_max: float = 0.50,
+       bias: float = 0.7, offset_sd: float = 0.08, top_rel_max: float = 0.90, **_):
+    """R1 random-waypoint two-robot flight, planned offline (NS2 training data, not a literature scenario).
+
+    Both vehicles fly the same sequence of rest-to-rest legs (degree-7 smoothstep, like every other curve here) between
+    random waypoints and return to their slots at the end. Planned offline instead of reacting online (the IMRCLab
+    random_flight.py uses the firmware's buffered-Voronoi avoidance): the whole trajectory is checked by safety.check()
+    before it is uploaded, is exactly reproducible from `seed`, and the top vehicle is above the bottom one by at least
+    `dz_min` at every waypoint, so with simultaneous legs it is above it at every instant (no crossings: A8 covers those).
+
+    Bottom waypoints are uniform in x in [-box_x, box_x], y in [-box_y, box_y], z in [0, z_span] above the base height.
+    With probability `bias` a top waypoint is placed above the bottom one with a lateral offset ~ N(0, offset_sd) clipped
+    to +-0.18 m (inside the NS2 gate |dx|,|dy| < 0.2 m), otherwise uniformly in the box (>= 0.30 m away). The vertical gap
+    is uniform in [dz_min, dz_max], the top waypoint height is capped at `top_rel_max` above the base. Leg peak speed is
+    uniform in [v_min, v_max]; legs last >= 2 s and are lengthened so the peak acceleration stays <= 2.0 m/s^2.
+    """
+    rng = np.random.default_rng(int(seed))
+    dz0 = 0.5                                   # top slot offset (the vehicles start stacked, like A1 at 0.5 m)
+    wb = [np.zeros(3)]
+    wt = [np.zeros(3)]                          # offsets from the slots; slot_top.z = dz0
+    legs_t: list[float] = []
+    clock = 0.0
+    while clock < total:
+        zb = float(rng.uniform(0.0, z_span))
+        xb = float(rng.uniform(-box_x, box_x))
+        yb = float(rng.uniform(-box_y, box_y))
+        dz_hi = min(dz_max, top_rel_max - zb)
+        dzk = float(rng.uniform(dz_min, max(dz_min, dz_hi)))
+        if rng.uniform() < bias:
+            ox, oy = np.clip(rng.normal(0.0, offset_sd, 2), -0.18, 0.18)
+            xt, yt = xb + float(ox), yb + float(oy)
+        else:
+            for _try in range(50):
+                xt, yt = float(rng.uniform(-box_x, box_x)), float(rng.uniform(-box_y, box_y))
+                if np.linalg.norm([xt - xb, yt - yb, dzk]) >= 0.30:
+                    break
+        b = np.array([xb, yb, zb])
+        t = np.array([xt, yt, zb + dzk - dz0])
+        L = max(float(np.linalg.norm(b - wb[-1])), float(np.linalg.norm(t - wt[-1])), 1e-3)
+        v = float(rng.uniform(v_min, v_max))
+        T = max(L * (35.0 / 16.0) / v, 2.0, float(np.sqrt(8.0 * L / 2.0)))
+        wb.append(b); wt.append(t); legs_t.append(T); clock += T
+    wb.append(np.zeros(3)); wt.append(np.zeros(3))      # back to the slots, at rest
+    L = max(float(np.linalg.norm(wb[-1] - wb[-2])), float(np.linalg.norm(wt[-1] - wt[-2])), 1e-3)
+    legs_t.append(max(L * (35.0 / 16.0) / 0.3, 2.0, float(np.sqrt(8.0 * L / 2.0))))
+    cb = C.Then(*[C.Line(list(wb[k + 1] - wb[k]), legs_t[k]) for k in range(len(legs_t))])
+    ct = C.Then(*[C.Line(list(wt[k + 1] - wt[k]), legs_t[k]) for k in range(len(legs_t))])
+    return Scenario(
+        'R1', f'Random waypoints (2 robots), seed={seed}, {sum(legs_t):.0f} s, {len(legs_t) - 1} legs',
+        [RobotPlan('bottom', _v(0, 0, 0), cb), RobotPlan('top', _v(0, 0, dz0), ct)],
+        tags=['random', 'data_collection'],
+        params=dict(seed=seed, total=total),
+        notes='Training-data flight: stack-biased random waypoints, simultaneous rest-to-rest legs, top always >= dz_min above.')
+
 # ── Registry ────────────────────────────────────────────────────────────────
 
 BUILDERS = {
     'A1': A1, 'A2': A2, 'A3': A3, 'A4': A4, 'A5': A5, 'A6': A6, 'A7': A7, 'A8': A8,
     'B1': B1, 'B2': B2, 'B3': B3,
     'C1': C1, 'C2': C2, 'C3': C3, 'C4': C4, 'C5': C5,
+    'R1': R1,
 }
 
 # n_robots per scenario, so the runner can refuse a mismatched roster before flying.
 N_ROBOTS = {'A1': 2, 'A2': 2, 'A3': 2, 'A4': 2, 'A5': 2, 'A6': 2, 'A7': 2, 'A8': 2,
             'B1': 3, 'B2': 3, 'B3': 3,
-            'C1': 3, 'C2': 3, 'C3': 3, 'C4': 2, 'C5': 1}
+            'C1': 3, 'C2': 3, 'C3': 3, 'C4': 2, 'C5': 1, 'R1': 2}
 
 
 def rotate_scenario(sc: Scenario, deg: float) -> Scenario:
@@ -731,6 +790,14 @@ def check_spec(scenario: Scenario, tol: float = 2e-3) -> list[str]:
         if np.abs(d[-1, :2]).max() > tol:
             bad.append('C4: should end directly beneath the upper vehicle')
 
+    elif sid == 'R1':
+        d = rel(1, 0)
+        if d[:, 2].min() < p.get('dz_min', 0.25) - 1e-6:
+            bad.append(f'R1: top must stay >= dz_min above the bottom, got {d[:, 2].min():.3f}')
+        end = np.array([np.asarray(r.curve(scenario.duration))[:3] for r in scenario.robots])
+        if np.abs(end).max() > 1e-6:
+            bad.append('R1: both vehicles must return to their slots')
+
     # Universal invariants -- every curve must be rest-to-rest at its own origin,
     # otherwise the vehicle steps when the trajectory starts.
     for k, r in enumerate(scenario.robots):
@@ -757,6 +824,7 @@ def _self_test() -> int:
         *[('B2', dict(dz2=v, r=0.10)) for v in (0.30, 0.40)],
         ('B3', dict(dz=0.20)), ('B3', dict(dz=0.25)),
         ('C1', {}), ('C2', {}), ('C3', {}), ('C4', {}), ('C5', {}),
+        ('R1', dict(seed=1)), ('R1', dict(seed=2)), ('R1', dict(seed=3, bias=0.0)),
     ]
     lim = safety.Limits(allow_extreme=True)
     fails = 0

@@ -94,6 +94,9 @@ def build_parser():
     g.add_argument('--r', type=float, help='V-stack lateral offset [m]')
     g.add_argument('--hold', type=float, help='hover duration [s]')
     g.add_argument('--n', type=int, help='robot count where the scenario allows it')
+    g.add_argument('--seed', type=int, help='R1 random-waypoint flight: random seed (the flight is exactly reproducible from it)')
+    g.add_argument('--total', type=float, help='R1: random-waypoint flight time before the return leg [s]')
+    g.add_argument('--bias', type=float, help='R1: probability that a top waypoint is placed above the bottom one (inside the NS2 gate)')
     g.add_argument('--rotate', type=float, default=None,
                    help='turn the whole formation about the vertical axis [deg]. Rigid, so '
                         'no inter-robot distance changes -- use it to lay a translating '
@@ -135,7 +138,7 @@ def build_parser():
 def scenario_params(args) -> dict:
     keys = ('rotate_deg', 'dz', 'dz1', 'dz2', 'dz_start', 'dz_end', 'path', 'motion', 'offset', 'axis',
             'speed', 'length', 'radius', 'period', 'laps', 'passes', 'span', 'duration', 'sep', 'gap',
-            'r', 'hold', 'n')
+            'r', 'hold', 'n', 'seed', 'total', 'bias')
     out = {k: getattr(args, k) for k in keys if getattr(args, k, None) is not None}
     if args.rotate is not None:
         out['rotate_deg'] = args.rotate
