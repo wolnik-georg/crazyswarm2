@@ -1,18 +1,46 @@
 {
-  "_documentation": "Frozen cf5 blocks for --study validation. Keys that apply() never writes (rnn.*, ctrlOmarIndi.*, ctrlOot5.*, deck.*) are checked from the readback BEFORE takeoff; controller/ctrl_mode/gains/res_sign are checked against the script's intended config BEFORE takeoff and against the readback AFTER apply('scenario') (safe landing on mismatch). Source: docs/comparative_study_protocol.md section 2.",
+  "_documentation": "Frozen cf5 blocks for --study validation. Keys that apply() never writes (rnn.*, ctrlOmarIndi.*, ctrlOot5.*, deck.*) are checked from the readback BEFORE takeoff; controller/ctrl_mode/gains/res_sign are checked against the script's intended config BEFORE takeoff and against the readback AFTER apply('scenario') (safe landing on mismatch). Source: docs/comparative_study_protocol.md section 2. 2026-10-14: S0-S3 are the Omar C controller tree (controller 9; indi 0/3 x NS2 off/on, NS2 in C with flash weights ns2_v1; study yaml patches study/tree_S*.patch); the previous controller-6 blocks are kept as L0-L2 (legacy, for the meta of earlier flights).",
   "S0": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.indi": 0,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "rnn.en": 0,
+    "deck.bcRpm": 1
+  },
+  "S1": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.indi": 3,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "rnn.en": 0,
+    "deck.bcRpm": 1
+  },
+  "S2": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.indi": 0,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "rnn.en": 1,
+    "deck.bcRpm": 1
+  },
+  "S3": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.indi": 3,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "rnn.en": 1,
+    "deck.bcRpm": 1
+  },
+  "L0": {
     "stabilizer.controller": 6,
     "indi_gains.ctrl_mode": 0,
     "pos_gains.ki_z": 16,
     "rnn.en": 0
   },
-  "S1": {
+  "L1": {
     "stabilizer.controller": 9,
     "ctrlOmarIndi.Kpos_Iz": 1.5,
     "ctrlOmarIndi.indi": 3,
     "deck.bcRpm": 1
   },
-  "S2": {
+  "L2": {
     "stabilizer.controller": 6,
     "indi_gains.ctrl_mode": 0,
     "pos_gains.ki_z": 16,
