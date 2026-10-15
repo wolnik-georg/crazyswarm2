@@ -122,7 +122,7 @@ robots:
   # drop the per-topic frequencies for 2-drone runs, or put the second drone on its own
   # dongle (radio://1/...) / a different channel.
   cf_second:
-    enabled: true                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
+    enabled: false                        # 2026-10-01: ON for A5/A6/C4 C.1 fly-prep (docs/lab_sessions/2026-09-28_alt_indi_shakedown.md  # 2026-10-08 SOLO hover ladder (Omar+Iz); set back to true for A8/A1
                                           # Checklist E) -- these are 2-drone scenarios, cf_second must be registered, not just present
                                           # (documented failure mode below: PRESENT BUT DISABLED -> fails). Was OFF for solo C.0 tests:
                                           # 2026-09-29 close-out: OFF again for controller=10's NEXT attempt -- the direct-to-A1
@@ -222,7 +222,7 @@ robots:
         # 3 = bit0 (position INDI) | bit1 (attitude INDI) = full INDI, matching the SIL config.
         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
         # terms stay off silently even with this set.
-        indi: 0         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
+        indi: 3         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
         Kpos_Iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
       indi_gains:
         ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
@@ -243,7 +243,7 @@ robots:
                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
         ki_z_limit: 1.5
       rnn:
-        en: 1           # 2026-10-14 tree strategy: 1 = NS2 (C, flash weights ns2_v1) on top of Omar
+        en: 0           # 2026-10-14 tree strategy: 1 = NS2 (C, flash weights ns2_v1) on top of Omar
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
