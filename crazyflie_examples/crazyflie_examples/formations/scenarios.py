@@ -558,6 +558,21 @@ def build(sid: str, rotate_deg: float = 0.0, **params) -> Scenario:
     if sid not in BUILDERS:
         raise KeyError(f'unknown scenario {sid!r}; known: {", ".join(sorted(BUILDERS))}')
     params = {k: v for k, v in params.items() if v is not None}
+    # A8 / A5: the peak speed can be requested directly (2026-10-15). It is converted here to the exact duration / period, so
+    # the lab commands carry a speed instead of a rounded duration; the sidecar records the resulting duration / period, so
+    # a replay is exact. Rest-to-rest septic pass: peak = 35/16 * span / duration; circle: peak = 2*pi*radius / period.
+    if sid in ('A8', 'A5') and params.get('speed') is not None:
+        v = float(params.pop('speed'))
+        if v <= 0:
+            raise ValueError(f'{sid}: speed must be > 0')
+        if sid == 'A8':
+            if 'duration' in params:
+                raise ValueError('A8: give --speed or --duration, not both')
+            params['duration'] = round(35.0 / 16.0 * float(params.get('span', 1.0)) / v, 4)
+        else:
+            if 'period' in params:
+                raise ValueError('A5: give --speed or --period, not both')
+            params['period'] = round(2.0 * np.pi * float(params.get('radius', 0.40)) / v, 4)
     sig = inspect.signature(BUILDERS[sid])
 
     # Record the FULL effective parameter set, defaults included, rather than trusting
