@@ -111,6 +111,11 @@ def strategy_expect(strategy: str) -> dict:
 def _key_ok(v, got) -> str | None:
     if got is None:
         return "missing readback (null)"
+    try:
+        if got != got:   # NaN: crazyflie_py.getParam returns NaN when the server has no such parameter
+            return "missing readback (NaN: parameter not available from the server)"
+    except Exception:
+        return "missing readback (unreadable)"
     if isinstance(v, float):
         return None if abs(float(got) - v) <= 1e-3 else f"got {got} expected {v}"
     return None if int(float(got)) == int(v) else f"got {got} expected {v}"
