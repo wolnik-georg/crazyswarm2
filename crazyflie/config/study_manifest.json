@@ -1,18 +1,19 @@
 {
-  "_documentation": "Hand-maintained identity for comparative study flights. firmware_file is relative to the crazyswarm2 crazyflie/ directory or absolute; if the file exists on this machine its sha256 is compared with firmware_sha256 (mismatch refuses takeoff), otherwise it is recorded as unverified (the hash of the flashed image cannot be read from the drone). Fill cf_second and UPDATE cf5 firmware_sha256 to the image actually flashed (candidate with the 96-variable uSD cap: cf21bl_study_usd96_rnn_iz_sentinel_ON.bin, sha256 14575bacacccc8e50fbcab0d01aa789adaae4966033bf7397b3cff167db4be3c \u2014 built 2026-10-11, not flashed) at the shakedown flash.",
-  "study_yaml_tags": {
-    "S0": "study-S0",
-    "S1": "study-S1",
-    "S2": "study-S2"
-  },
-  "cf5": {
-    "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/cf21bl_study_usd96_rpmf_rnn_iz_sentinel_ON_tk.bin",
-    "firmware_sha256": "cb38f3f4981d8fa6b9c85c9e26d5645b5535040328d4ef99926a1c267037f8ca",
-    "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
-  },
-  "cf_second": {
-    "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/cf21bl_study_usd96_rpmf_rnn_iz_sentinel_ON_tk.bin",
-    "firmware_sha256": "cb38f3f4981d8fa6b9c85c9e26d5645b5535040328d4ef99926a1c267037f8ca",
-    "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
-  }
+ "_documentation": "Hand-maintained identity for comparative study flights. firmware_file is relative to the crazyswarm2 crazyflie/ directory or absolute; if the file exists on this machine its sha256 is compared with firmware_sha256 (mismatch refuses takeoff), otherwise it is recorded as unverified (the hash of the flashed image cannot be read from the drone). Fill cf_second and UPDATE cf5 firmware_sha256 to the image actually flashed (candidate with the 96-variable uSD cap: cf21bl_study_usd96_rnn_iz_sentinel_ON.bin, sha256 14575bacacccc8e50fbcab0d01aa789adaae4966033bf7397b3cff167db4be3c \u2014 built 2026-10-11, not flashed) at the shakedown flash. 2026-10-15: both drones flashed with study_tree_v1.bin (Omar C tree + NS2 in C, flash weights ns2_v1); previous image cf21bl_study_usd96_rpmf_rnn_iz_sentinel_ON_tk.bin sha256 cb38f3f4981d8fa6b9c85c9e26d5645b5535040328d4ef99926a1c267037f8ca.",
+ "study_yaml_tags": {
+  "S0": "study-S0",
+  "S1": "study-S1",
+  "S2": "study-S2",
+  "S3": "study-S3"
+ },
+ "cf5": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v1.bin",
+  "firmware_sha256": "dfac761a16d115c9a20ef29e320f7d9ff5a76300b85e475548b285fac24fc2d5",
+  "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
+ },
+ "cf_second": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v1.bin",
+  "firmware_sha256": "dfac761a16d115c9a20ef29e320f7d9ff5a76300b85e475548b285fac24fc2d5",
+  "weights_sha256": "8a43b5b54d0e2023f475a4314f64fe81120a38413d9f6cb6817b2bab6afc7b43"
+ }
 }
