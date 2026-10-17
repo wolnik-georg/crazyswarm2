@@ -519,19 +519,58 @@ def R1(seed: int = 0, total: float = 30.0, box_x: float = 0.6, box_y: float = 0.
         params=dict(seed=seed, total=total),
         notes='Training-data flight: stack-biased random waypoints, simultaneous rest-to-rest legs, top always >= dz_min above.')
 
+# 2026-10-17: A9 = the nine A4 offset-step flights (dz 0.75 / 0.5 / 0.25 x lateral offset 0 / 0.1 / 0.15 m, 0.3 m/s line)
+# chained in ONE flight. New scenario id; A4 and every other scenario are untouched. Order: dz only ever decreases (0.75 -> 0.5 ->
+# 0.25) so every dz change INCREASES the downwash on the lower vehicle (it is pushed down, not released upward), and the offset at the
+# end of one section is the offset at the start of the next, so each transition changes only one of the two.
+A9_SEQUENCE = ((0.75, 0.00), (0.75, 0.10), (0.75, 0.15),
+               (0.50, 0.15), (0.50, 0.10), (0.50, 0.00),
+               (0.25, 0.00), (0.25, 0.10), (0.25, 0.15))
+
+
+def A9(speed: float = 0.3, length: float = 1.2, passes: int = 2, move_time: float = 5.0, **_):
+    """A9 combined offset steps: the nine A4 settings (A9_SEQUENCE) in one flight.
+
+    Each section is an A4 line (the lower vehicle shuttles `length` m along x at `speed`, `passes` one-way legs, out and back for
+    passes=2) at one (dz, lateral offset y). Between sections the top vehicle moves vertically and/or the lower vehicle moves
+    sideways (rest-to-rest, `move_time` s, simultaneously), then the next line starts. Lateral offset is along y in the scenario
+    frame like A4, so `--rotate 90` lays the line along y and the offset along x.
+    """
+    if int(passes) % 2:
+        raise ValueError('A9: passes must be even (out and back); an odd number would leave the lower vehicle displaced between sections')
+    leg = _line_time(length, speed)
+    dz0, off0 = A9_SEQUENCE[0]
+    bottom, top = [], []
+    for k, (dz, off) in enumerate(A9_SEQUENCE):
+        if k > 0:
+            d_dz, d_off = dz - A9_SEQUENCE[k - 1][0], off - A9_SEQUENCE[k - 1][1]
+            bottom.append(C.Line([0.0, d_off, 0.0], move_time))
+            top.append(C.Line([0.0, 0.0, d_dz], move_time))
+        sh = C.Shuttle([length, 0.0, 0.0], leg, passes=passes)
+        bottom.append(sh)
+        top.append(C.Hover(sh.duration))
+    return Scenario(
+        'A9', f'Combined offset steps (9 x A4: dz 0.75/0.5/0.25 x offset 0/0.1/0.15 m), {passes} passes at {speed:.2f} m/s',
+        [RobotPlan('bottom', _v(0, off0, 0), C.Then(*bottom)),
+         RobotPlan('top', _v(0, 0, dz0), C.Then(*top))],
+        tags=['tracking', 'data_collection'],
+        params=dict(speed=speed, length=length, passes=passes, move_time=move_time),
+        notes='Nine A4 settings chained; dz only decreases; partial wash overlap along the line at each (dz, offset).')
+
+
 # ── Registry ────────────────────────────────────────────────────────────────
 
 BUILDERS = {
     'A1': A1, 'A2': A2, 'A3': A3, 'A4': A4, 'A5': A5, 'A6': A6, 'A7': A7, 'A8': A8,
     'B1': B1, 'B2': B2, 'B3': B3,
     'C1': C1, 'C2': C2, 'C3': C3, 'C4': C4, 'C5': C5,
-    'R1': R1,
+    'R1': R1, 'A9': A9,
 }
 
 # n_robots per scenario, so the runner can refuse a mismatched roster before flying.
 N_ROBOTS = {'A1': 2, 'A2': 2, 'A3': 2, 'A4': 2, 'A5': 2, 'A6': 2, 'A7': 2, 'A8': 2,
             'B1': 3, 'B2': 3, 'B3': 3,
-            'C1': 3, 'C2': 3, 'C3': 3, 'C4': 2, 'C5': 1, 'R1': 2}
+            'C1': 3, 'C2': 3, 'C3': 3, 'C4': 2, 'C5': 1, 'R1': 2, 'A9': 2}
 
 
 def rotate_scenario(sc: Scenario, deg: float) -> Scenario:
@@ -740,6 +779,14 @@ def check_spec(scenario: Scenario, tol: float = 2e-3) -> list[str]:
         if abs(abs(d[0, ax]) - p['offset']) > tol:
             bad.append(f'A4: initial lateral offset should be {p["offset"]}, '
                        f'got {abs(d[0, ax]):.4f}')
+    elif sid == 'A9':
+        d = rel(1, 0)
+        dzs = [x[0] for x in A9_SEQUENCE]
+        offs = [x[1] for x in A9_SEQUENCE]
+        if d[:, 2].min() < min(dzs) - tol or d[:, 2].max() > max(dzs) + tol:
+            bad.append(f'A9: dz should stay within {min(dzs)}..{max(dzs)}, got {d[:, 2].min():.3f}..{d[:, 2].max():.3f}')
+        if np.abs(d[:, 1]).max() > max(offs) + tol:
+            bad.append(f'A9: lateral offset (y) should stay within {max(offs)}, got {np.abs(d[:, 1]).max():.3f}')
     elif sid == 'A5':
         d = rel(1, 0)
         if abs(d[:, 2].mean() - p['dz']) > tol or np.ptp(d[:, 2]) > tol:
