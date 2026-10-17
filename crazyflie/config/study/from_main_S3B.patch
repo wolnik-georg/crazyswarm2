@@ -1,0 +1,23 @@
+diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index 8460239..f0f5fa3 100644
+--- a/crazyflie/config/crazyflies.yaml
++++ b/crazyflie/config/crazyflies.yaml
+@@ -222,7 +222,8 @@ robots:
+         # 3 = bit0 (position INDI) | bit1 (attitude INDI) = full INDI, matching the SIL config.
+         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
+         # terms stay off silently even with this set.
+-        indi: 0         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
++        indi: 3         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
++        ns2_mode: 1    # 2026-10-17 Version B: INDI works only on what NS2 left over (0 = Version A, plain sum, default)
+         Kpos_Iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
+       indi_gains:
+         ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
+@@ -243,7 +244,7 @@ robots:
+                          # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
+         ki_z_limit: 1.5
+       rnn:
+-        en: 0           # S0: NS2 off (training-data collection, geometric)
++        en: 1           # S3: NS2 on (C, flash weights) on top of INDI
+     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
+     # firmware_app-only; cf_second stock firmware must not inherit this topic.
+     firmware_logging:
