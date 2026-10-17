@@ -19,6 +19,7 @@ Use in the lab: `git fetch --tags && git checkout study-S1 -- crazyflie/config/c
 
 ## 2026-10-17: S3 variants applied on the CURRENT main yaml (= S0)
 The older `tree_S*.patch` files do not apply to `main` any more (the yaml on `main` is the S0 variant since commit 4b65435). These two do:
+- `from_main_S1.patch` — S1 = INDI only (`indi 3`, `rnn.en 0`); `from_main_S2.patch` — S2 = geometric + NS2 (`indi 0`, `rnn.en 1`); S0 is the yaml on main.
 - `from_main_S3A.patch` — S3 = INDI + NS2, Version A (plain sum, what was flown on 2026-10-15): cf5 `ctrlOmarIndi.indi 3`, `rnn.en 1`.
 - `from_main_S3B.patch` — S3B = the same plus `ctrlOmarIndi.ns2_mode 1` (Version B: INDI works only on what NS2 left over). **Needs the firmware with the `ns2_mode` parameter** (built from `controller_omar_indi.{c,h}.patch` of 2026-10-17); on an older image the parameter does not exist.
 Use: `git checkout crazyflie/config/crazyflies.yaml && git apply crazyflie/config/study/from_main_S3B.patch`, relaunch CS2. `ns2_mode` default is 0 in the firmware, so every other yaml behaves exactly as before.
