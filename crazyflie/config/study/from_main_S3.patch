@@ -1,5 +1,5 @@
 diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
-index 8460239..b9f9081 100644
+index fd8d748..2267ba5 100644
 --- a/crazyflie/config/crazyflies.yaml
 +++ b/crazyflie/config/crazyflies.yaml
 @@ -222,7 +222,7 @@ robots:
@@ -15,8 +15,8 @@ index 8460239..b9f9081 100644
                           # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
          ki_z_limit: 1.5
        rnn:
--        en: 0           # S0: NS2 off (training-data collection, geometric)
-+        en: 1           # S3: NS2 on (C, flash weights) on top of INDI
+-        en: 0           # S0: NS2 off (geometric)
++        en: 1           # S3: NS2 on (C, flash weights) together with full INDI (two plain switches)
      # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
      # firmware_app-only; cf_second stock firmware must not inherit this topic.
      firmware_logging:

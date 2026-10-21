@@ -1,20 +1,11 @@
 diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
 --- a/crazyflie/config/crazyflies.yaml
 +++ b/crazyflie/config/crazyflies.yaml
-@@ -222,7 +222,7 @@
-         # 3 = bit0 (position INDI) | bit1 (attitude INDI) = full INDI, matching the SIL config.
-         # Also needs deck.bcRpm==1 (rpm_deck_available) -- verify before flying, or the INDI
-         # terms stay off silently even with this set.
--        indi: 3         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
-+        indi: 0         # 2026-10-14 tree strategy: 0 = Omar geometric, 3 = Omar full INDI
-         Kpos_Iz: 1.5    # study value (docs/study_parameter_decisions.md); 0 = Omar exact
-       indi_gains:
-         ctrl_mode: 0    # DEFAULT geometric (+NS2); irrelevant for Omar. Our full INDI = ctrl_mode 3 ONLY with ki_z 0 and res_sign 1
 @@ -243,7 +243,10 @@
                           # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
          ki_z_limit: 1.5
        rnn:
--        en: 1           # S3: NS2 on (C, flash weights) together with full INDI (two plain switches)
+-        en: 0           # S0: NS2 off (geometric)
 +        en: 0           # FBL (S4): NS2 off
 +      ctrlFbl:
 +        en: 1           # FBL (S4): learned feedback linearization above 0.15 m, Omar controller below / on a fault
