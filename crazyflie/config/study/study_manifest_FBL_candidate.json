@@ -1,0 +1,20 @@
+{
+ "_documentation": "TEMPLATE for the FBL lab session (2026-10-21, desk-prepared, not flashed yet): both drones carry the FBL candidate image (FBL is off by default and on only for cf5 via the yaml patch study/from_main_FBL.patch; NS2 weights ns2_v2). Copy over study_manifest.json AFTER flashing, then run_formation --study --strategy FBL checks the frozen FBL block. Image rebuild recipe: docs/fbl/PROGRESS_AND_RESUME.md section 6.",
+ "study_yaml_tags": {
+  "S0": "study-S0",
+  "S1": "study-S1",
+  "S2": "study-S2",
+  "S3": "study-S3",
+  "FBL": "study-FBL"
+ },
+ "cf5": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_candidate_presets.bin",
+  "firmware_sha256": "956479a76b1064a51b256ed143d86da550dd902fabd5716d132bab60a5486057",
+  "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
+ },
+ "cf_second": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_candidate_presets.bin",
+  "firmware_sha256": "956479a76b1064a51b256ed143d86da550dd902fabd5716d132bab60a5486057",
+  "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
+ }
+}

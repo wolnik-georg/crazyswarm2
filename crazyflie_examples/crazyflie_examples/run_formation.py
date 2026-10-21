@@ -128,7 +128,7 @@ def build_parser():
                    help='HLC timescale; >1 slows the trajectory down')
     s.add_argument('--study', action='store_true',
                    help='comparative study mode: manifest + readback gate (refuses takeoff on mismatch)')
-    s.add_argument('--strategy', choices=('S0', 'S1', 'S2', 'S3', 'L0', 'L1', 'L2', 'ours', 'TK', 'TKC'), default=None,
+    s.add_argument('--strategy', choices=('S0', 'S1', 'S2', 'S3', 'FBL', 'L0', 'L1', 'L2', 'ours', 'TK', 'TKC'), default=None,
                    help='study strategy id (required with --study)')
     s.add_argument('--session', default=None,
                    help='study session id (default: YYYY-MM-DD)')
@@ -413,7 +413,7 @@ def main():
     if args.study:
         from .study_config import MANIFEST, load_json, manifest_ok
         if not args.strategy:
-            sys.exit('[formation] --study requires --strategy S0|S1|S2|S3|ours')
+            sys.exit('[formation] --study requires --strategy S0|S1|S2|S3|FBL|ours')
         ok, why = manifest_ok(load_json(MANIFEST))
         if not ok:
             sys.exit(f'[formation] --study refused: {why}')

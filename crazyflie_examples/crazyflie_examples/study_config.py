@@ -28,12 +28,12 @@ _OMAR = ['KR_x', 'KR_y', 'KR_z', 'KI_x', 'KI_y', 'KI_z', 'Kw_x', 'Kw_y', 'Kw_z',
 READBACK_KEYS = (['stabilizer.controller']
                  + [f'indi_gains.{k}' for k in _INDI_GAINS] + [f'pos_gains.{k}' for k in _POS_GAINS]
                  + [f'rnn.{k}' for k in _RNN] + [f'ctrlOot5.{k}' for k in _OOT5]
-                 + [f'ctrlOmarIndi.{k}' for k in _OMAR] + ['deck.bcRpm', 'usd.canLog', 'usd.logging'])
+                 + [f'ctrlOmarIndi.{k}' for k in _OMAR] + ['ctrlFbl.en', 'ctrlFbl.preset', 'ctrlFbl.cd', 'ctrlFbl.ki_z'] + ['deck.bcRpm', 'usd.canLog', 'usd.logging'])
 
 # Frozen-block keys that apply() never writes (they come from the yaml firmware_params at connect time), so they can be
 # verified BEFORE takeoff. Everything else (controller, ctrl_mode, gains, res_sign) is set by apply('scenario') after takeoff
 # and is verified after it, with a safe landing on mismatch.
-STATIC_PREFIXES = ('rnn.', 'ctrlOmarIndi.', 'ctrlOot5.', 'deck.')
+STATIC_PREFIXES = ('rnn.', 'ctrlOmarIndi.', 'ctrlOot5.', 'ctrlFbl.', 'deck.')
 
 
 def load_json(path: Path) -> dict:

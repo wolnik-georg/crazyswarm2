@@ -28,6 +28,15 @@
     "rnn.en": 1,
     "deck.bcRpm": 1
   },
+  "FBL": {
+    "stabilizer.controller": 9,
+    "ctrlOmarIndi.indi": 0,
+    "ctrlOmarIndi.Kpos_Iz": 1.5,
+    "rnn.en": 0,
+    "ctrlFbl.en": 1,
+    "ctrlFbl.preset": 1,
+    "deck.bcRpm": 1
+  },
   "L0": {
     "stabilizer.controller": 6,
     "indi_gains.ctrl_mode": 0,
