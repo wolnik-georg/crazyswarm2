@@ -1,7 +1,8 @@
 diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
+index fd8d748..10fe810 100644
 --- a/crazyflie/config/crazyflies.yaml
 +++ b/crazyflie/config/crazyflies.yaml
-@@ -243,7 +243,10 @@
+@@ -243,7 +243,11 @@ robots:
                           # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
          ki_z_limit: 1.5
        rnn:
@@ -10,6 +11,7 @@ diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
 +      ctrlFbl:
 +        en: 1           # FBL (S4): learned feedback linearization above 0.15 m, Omar controller below / on a fault
 +        preset: 1       # 1 = our tuned gains (default), 0 = the authors' gains (docs/fbl/GAIN_TUNING_2026-10-20.md)
++        cd: 0.55        # downwash strength of the ROM; first FBL flights 0.55 (KNODE on our logs, decided 2026-10-22); firmware default 0.43, bracket 0.43 / 0.65
      # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
      # firmware_app-only; cf_second stock firmware must not inherit this topic.
      firmware_logging:

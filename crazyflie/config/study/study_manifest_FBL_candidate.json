@@ -1,5 +1,5 @@
 {
- "_documentation": "TEMPLATE for the FBL lab session (2026-10-21, desk-prepared, not flashed yet): both drones carry the FBL candidate image (FBL is off by default and on only for cf5 via the yaml patch study/from_main_FBL.patch; NS2 weights ns2_v2). Copy over study_manifest.json AFTER flashing, then run_formation --study --strategy FBL checks the frozen FBL block. Image rebuild recipe: docs/fbl/PROGRESS_AND_RESUME.md section 6.",
+ "_documentation": "FBL lab session manifest (updated 2026-10-23): both drones carry study_tree_v2_fbl_estlog_candidate.bin (flashed 2026-10-23, sha 4fa0a130\u2026; FBL inert at ctrlFbl.en 0, on only for cf5 via the branch study_FBL = main + study/from_main_FBL.patch with ctrlFbl.cd 0.55; NS2 weights ns2_v2). Copy over study_manifest.json, then run_formation --study --strategy FBL checks the frozen FBL block.",
  "study_yaml_tags": {
   "S0": "study-S0",
   "S1": "study-S1",
@@ -8,13 +8,13 @@
   "FBL": "study-FBL"
  },
  "cf5": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_candidate_presets.bin",
-  "firmware_sha256": "956479a76b1064a51b256ed143d86da550dd902fabd5716d132bab60a5486057",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_estlog_candidate.bin",
+  "firmware_sha256": "4fa0a130c698f217728d8b5dcf7464cb84a0b5bd4196b3ac4123a8100bad012b",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  },
  "cf_second": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_candidate_presets.bin",
-  "firmware_sha256": "956479a76b1064a51b256ed143d86da550dd902fabd5716d132bab60a5486057",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_estlog_candidate.bin",
+  "firmware_sha256": "4fa0a130c698f217728d8b5dcf7464cb84a0b5bd4196b3ac4123a8100bad012b",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  }
 }
