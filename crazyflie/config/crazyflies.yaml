@@ -246,7 +246,10 @@ robots:
         en: 0           # FBL (S4): NS2 off
       ctrlFbl:
         en: 1           # FBL (S4): learned feedback linearization above 0.15 m, Omar controller below / on a fault
-        preset: 1       # 1 = our tuned gains (default), 0 = the authors' gains (docs/fbl/GAIN_TUNING_2026-10-20.md)
+        # preset NOT set here: the preset write (alphabetically after the gains) would reload preset 1 over the gains below; firmware default preset is 1
+        kp_xy: 9.8      # xy position loop x0.7 (tested fallback, docs/fbl/ROBUSTNESS_2026-10-21.md section 7)
+        kv_xy: 6.65
+        ki_xy: 8.4
         cd: 0.55        # downwash strength of the ROM; first FBL flights 0.55 (KNODE on our logs, decided 2026-10-22); firmware default 0.43, bracket 0.43 / 0.65
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
