@@ -1,5 +1,5 @@
 {
- "_documentation": "FBL lab session manifest (updated 2026-10-23): both drones carry study_tree_v2_fbl_estlog_candidate.bin (flashed 2026-10-23, sha 4fa0a130\u2026; FBL inert at ctrlFbl.en 0, on only for cf5 via the branch study_FBL = main + study/from_main_FBL.patch with ctrlFbl.cd 0.55; NS2 weights ns2_v2). Copy over study_manifest.json, then run_formation --study --strategy FBL checks the frozen FBL block.",
+ "_documentation": "FBL lab session manifest (2026-10-24): both drones carry study_tree_v2_fbl_initfix_candidate.bin (v2 weights, estimate logged under every strategy, FBL config survives the controller init; control byte-identical to the estlog image with FBL off). FBL on only for cf5 via branch study_FBL. Copy over study_manifest.json, then run_formation --study --strategy FBL checks the frozen FBL block.",
  "study_yaml_tags": {
   "S0": "study-S0",
   "S1": "study-S1",
@@ -8,13 +8,13 @@
   "FBL": "study-FBL"
  },
  "cf5": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_estlog_candidate.bin",
-  "firmware_sha256": "4fa0a130c698f217728d8b5dcf7464cb84a0b5bd4196b3ac4123a8100bad012b",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_initfix_candidate.bin",
+  "firmware_sha256": "27e0e100af93b085204707e9e94b700633925ee626173dbc23b9f3592c8db68a",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  },
  "cf_second": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_estlog_candidate.bin",
-  "firmware_sha256": "4fa0a130c698f217728d8b5dcf7464cb84a0b5bd4196b3ac4123a8100bad012b",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_initfix_candidate.bin",
+  "firmware_sha256": "27e0e100af93b085204707e9e94b700633925ee626173dbc23b9f3592c8db68a",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  }
 }
