@@ -1,0 +1,21 @@
+{
+ "_documentation": "TEMPLATE for the FBL stock-inner-loop session (2026-10-24, desk-prepared, NOT flashed): both drones carry the stock-inner image; FBL on only for cf5 with ctrlFbl.inner 1 via study/from_main_FBL_stock.patch (branch study_FBL_stock; preset 1 gains = firmware default, cd 0.55; NS2 weights ns2_v2 unchanged). Copy over study_manifest.json AFTER flashing. Docs: flying_robot_course docs/fbl/STOCK_INNER_LOOP_2026-10-24.md, docs/fbl/LAB_PLAN.md section NEXT. Image rebuild recipe: docs/fbl/PROGRESS_AND_RESUME.md section 6.",
+ "study_yaml_tags": {
+  "S0": "study-S0",
+  "S1": "study-S1",
+  "S2": "study-S2",
+  "S3": "study-S3",
+  "FBL": "study-FBL",
+  "FBL_stock": "study-FBL_stock"
+ },
+ "cf5": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_candidate.bin",
+  "firmware_sha256": "5b20fe3a112066996ca44be7c6131531afb296217cd55c9a887f86886e4f4f7b",
+  "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
+ },
+ "cf_second": {
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_candidate.bin",
+  "firmware_sha256": "5b20fe3a112066996ca44be7c6131531afb296217cd55c9a887f86886e4f4f7b",
+  "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
+ }
+}
