@@ -1,8 +1,8 @@
 diff --git a/crazyflie/config/crazyflies.yaml b/crazyflie/config/crazyflies.yaml
-index fd8d748..3a4057d 100644
+index fd8d748..593f8f4 100644
 --- a/crazyflie/config/crazyflies.yaml
 +++ b/crazyflie/config/crazyflies.yaml
-@@ -243,7 +243,12 @@ robots:
+@@ -243,7 +243,13 @@ robots:
                           # where ki_z=16 caused the liftoff tumble). Never pair 16 with ctrl_mode=3.
          ki_z_limit: 1.5
        rnn:
@@ -11,6 +11,7 @@ index fd8d748..3a4057d 100644
 +      ctrlFbl:
 +        en: 1           # FBL (S4): learned feedback linearization above 0.15 m, Omar controller below / on a fault
 +        inner: 1        # stock rate-PID inner loop (paper hardware, docs/fbl/STOCK_INNER_LOOP_2026-10-24.md); 0 = Eq. 19 P-only as flown 2026-10-24
++        nn_en: 1        # ROM + trained 4-neuron force network (paper hardware residual; KNODE on our flights, C_D 0.55); 0 = ROM only
 +        # gains and preset NOT set: firmware default preset 1 (position loop 0.25x of the authors'); the rate gains of preset 1 are unused with inner 1
 +        cd: 0.55        # ROM downwash strength (KNODE on our logs, decided 2026-10-22)
      # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
