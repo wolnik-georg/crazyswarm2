@@ -1,5 +1,5 @@
 {
- "_documentation": "TEMPLATE for the FBL stock-inner-loop session (2026-10-25: image with the trained 4-neuron network linked, defaults inner 1 / nn_en 1, desk-prepared, NOT flashed): both drones carry the stock-inner image; FBL on only for cf5 with ctrlFbl.inner 1 via study/from_main_FBL_stock.patch (branch study_FBL_stock; preset 1 gains = firmware default, cd 0.55; NS2 weights ns2_v2 unchanged). Copy over study_manifest.json AFTER flashing. Docs: flying_robot_course docs/fbl/STOCK_INNER_LOOP_2026-10-24.md, docs/fbl/LAB_PLAN.md section NEXT. Image rebuild recipe: docs/fbl/PROGRESS_AND_RESUME.md section 6.",
+ "_documentation": "TEMPLATE for the FBL stock-inner-loop session (2026-10-25: image with the trained 4-neuron network linked, defaults inner 1 / nn_en 1, FBL from takeoff to landing (no handover), no tilt latch / rate limit, desk-prepared, NOT flashed): both drones carry the stock-inner image; FBL on only for cf5 with ctrlFbl.inner 1 via study/from_main_FBL_stock.patch (branch study_FBL_stock; preset 1 gains = firmware default, cd 0.55; NS2 weights ns2_v2 unchanged). Copy over study_manifest.json AFTER flashing. Docs: flying_robot_course docs/fbl/STOCK_INNER_LOOP_2026-10-24.md, docs/fbl/LAB_PLAN.md section NEXT. Image rebuild recipe: docs/fbl/PROGRESS_AND_RESUME.md section 6.",
  "study_yaml_tags": {
   "S0": "study-S0",
   "S1": "study-S1",
@@ -9,13 +9,13 @@
   "FBL_stock": "study-FBL_stock"
  },
  "cf5": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_nn4_candidate.bin",
-  "firmware_sha256": "b13bf8ecc21ed58311621a5a74671892877963316e80e4558888588ff9463125",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_nn4_full_candidate.bin",
+  "firmware_sha256": "e3593a6f39a42a61789c5631784ae691d2ecb964f3a6d88bf14d02af6b673a09",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  },
  "cf_second": {
-  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_nn4_candidate.bin",
-  "firmware_sha256": "b13bf8ecc21ed58311621a5a74671892877963316e80e4558888588ff9463125",
+  "firmware_file": "/home/georg/Desktop/flying_robot_course/flying_drone_stack/firmware_app/build_artifacts/study_tree_v2_fbl_stockinner_nn4_full_candidate.bin",
+  "firmware_sha256": "e3593a6f39a42a61789c5631784ae691d2ecb964f3a6d88bf14d02af6b673a09",
   "weights_sha256": "9450131abb06a7199c78107c08ae9d8e508ca9b297d15960dbcd009871fc2d97"
  }
 }
