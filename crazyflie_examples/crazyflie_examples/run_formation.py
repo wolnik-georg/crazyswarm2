@@ -897,6 +897,21 @@ def main():
                 print('[formation] NOT taking off.')
                 return
 
+        # 2026-10-25: controller-variant record for every flight (values as the server holds them now = yaml + any live
+        # `ros2 param set`; NaN = parameter not in this image), plus the crazyswarm2 branch / commit. Written into meta.json.
+        controller_variant = {}
+        try:
+            from .study_config import VARIANT_KEYS, git_branch, git_identity, read_drone_block
+            controller_variant = {'branch': git_branch(), 'git': git_identity()}
+            for c in cfs:
+                controller_variant[c.prefix.lstrip('/')] = read_drone_block(c, c.prefix, keys=VARIANT_KEYS)
+            cv5 = controller_variant.get('cf5', {})
+            print(f"[formation] controller variant: branch {controller_variant['branch']}, cf5 ctrlFbl en {cv5.get('ctrlFbl_en')} "
+                  f"inner {cv5.get('ctrlFbl_inner')} nn_en {cv5.get('ctrlFbl_nn_en')} preset {cv5.get('ctrlFbl_preset')} cd {cv5.get('ctrlFbl_cd')}")
+        except Exception as e:
+            controller_variant = {'_error': str(e)}
+            print(f'[formation] WARNING: controller variant not recorded ({e})')
+
         apply('takeoff', _RAMP_CONTROLLER, _RAMP_CTRL_MODE, indi_gains, pos_gains)
         # 2026-09-14: was gated behind --brushless, same bug formation_flight.py already
         # fixed (2026-09-12) -- standard CF2.1 auto-arms by default, so an explicit arm(True)
@@ -1013,7 +1028,8 @@ def main():
                            # either way this is the authoritative record for the flight.
                            'per_drone': effective,
                            'study': study_identity if args.study else None,
-                           'study_readback': study_readback if args.study else None}, fh, indent=2)
+                           'study_readback': study_readback if args.study else None,
+                           'controller_variant': controller_variant}, fh, indent=2)
             print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
         except Exception as e:
             print(f'[formation] WARNING: metadata sidecar not written ({e}) -- '
