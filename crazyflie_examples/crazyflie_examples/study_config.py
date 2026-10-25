@@ -75,6 +75,21 @@ def manifest_ok(manifest: dict | None = None) -> tuple[bool, str]:
     return True, "ok"
 
 
+# 2026-10-25: controller-variant record written into EVERY flight's meta.json (run_formation), not only --study flights:
+# tells flights of different FBL settings (inner loop, preset, network, C_D, gains) and strategies apart from the sidecar alone.
+VARIANT_KEYS = ["stabilizer.controller", "ctrlOmarIndi.indi", "rnn.en",
+                "ctrlFbl.en", "ctrlFbl.inner", "ctrlFbl.nn_en", "ctrlFbl.abg_on_new", "ctrlFbl.preset", "ctrlFbl.cd",
+                "ctrlFbl.kp_xy", "ctrlFbl.kv_xy", "ctrlFbl.ki_xy", "ctrlFbl.kp_z", "ctrlFbl.kv_z", "ctrlFbl.ki_z",
+                "ctrlFbl.kr_xy", "ctrlFbl.kr_z", "ctrlFbl.z_on"]
+
+
+def git_branch() -> str | None:
+    try:
+        return subprocess.check_output(["git", "-C", str(REPO), "rev-parse", "--abbrev-ref", "HEAD"], text=True).strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
 def read_param_safe(cf, name: str, timeout: float = 0.5):
     try:
         val = cf.getParam(name)
