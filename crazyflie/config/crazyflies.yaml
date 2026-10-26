@@ -245,8 +245,8 @@ robots:
       rnn:
         en: 0           # FBL (S4): NS2 off
       ctrlFbl:
-        en: 1           # FBL (S4): learned feedback linearization above 0.15 m, Omar controller below / on a fault
-        inner: 1        # stock rate-PID inner loop (paper hardware, docs/fbl/STOCK_INNER_LOOP_2026-10-24.md); 0 = Eq. 19 P-only as flown 2026-10-24
+        en: 1           # FBL (S4): learned feedback linearization, flies the whole flight (takeoff to landing; z_on/z_off, tilt_max, w_max defaults = no handover, no latch, no rate limit)
+        inner: 1        # stock rate-PID inner loop (paper hardware, docs/fbl/STOCK_INNER_LOOP_2026-10-24.md); 0 = old Eq. 19 P-only loop (flown 2026-10-24, yaw drift)
         nn_en: 1        # ROM + trained 4-neuron force network (paper hardware residual; KNODE on our flights, C_D 0.55); 0 = ROM only
         # gains and preset NOT set: firmware default preset 1 (position loop 0.25x of the authors'); the rate gains of preset 1 are unused with inner 1
         cd: 0.55        # ROM downwash strength (KNODE on our logs, decided 2026-10-22)
