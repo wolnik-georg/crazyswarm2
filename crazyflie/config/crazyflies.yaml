@@ -247,9 +247,9 @@ robots:
       ctrlFbl:
         en: 1           # FBL (S4): learned feedback linearization, flies the whole flight (takeoff to landing; z_on/z_off, tilt_max, w_max defaults = no handover, no latch, no rate limit)
         inner: 1        # stock rate-PID inner loop (paper hardware, docs/fbl/STOCK_INNER_LOOP_2026-10-24.md); 0 = old Eq. 19 P-only loop (flown 2026-10-24, yaw drift)
-        nn_en: 1        # ROM + trained 4-neuron force network (paper hardware residual; KNODE on our flights, C_D 0.55); 0 = ROM only
+        nn_en: 0        # block V ROM and block 3 (ours): cd 0.55, nn_en 0
         # gains and preset NOT set: firmware default preset 1 (position loop 0.25x of the authors'); the rate gains of preset 1 are unused with inner 1
-        cd: 0.55        # ROM downwash strength (KNODE on our logs, decided 2026-10-22)
+        cd: 0.55        # block V ROM and block 3 (ours): cd 0.55, nn_en 0
     # 2026-09-21: radio RPM on cf5 only (same rule as cf231_active had) -- motor.m*_rpm is
     # firmware_app-only; cf_second stock firmware must not inherit this topic.
     firmware_logging:
