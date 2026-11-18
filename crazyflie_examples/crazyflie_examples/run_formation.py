@@ -30,6 +30,7 @@ import numpy as np
 
 import json
 
+from . import usd_gate
 from .formations import poly4d, safety, scenarios
 
 DATA_DIR = Path(__file__).parent / 'data' / 'formations'
@@ -132,6 +133,10 @@ def build_parser():
                    help='study strategy id (required with --study)')
     s.add_argument('--session', default=None,
                    help='study session id (default: YYYY-MM-DD)')
+    s.add_argument('--no-usd-gate', action='store_true',
+                   help='skip the uSD start gate (2026-11-18: refuse takeoff / land if the decks are not '
+                        'provably writing). Needed in simulation (no usd params there). Flights flown '
+                        'with this flag are recorded as usd_gate skipped and are NOT usable for the fit')
     return p
 
 
@@ -546,6 +551,11 @@ def main():
         return allcfs.create_subscription(PoseStamped, f'/{name}/pose', cb, 10)
 
     _subs = [_sub(k, c.prefix.lstrip('/')) for k, c in enumerate(cfs)]
+    usd_names = [c.prefix.lstrip('/') for c in cfs]
+    usd_taps = None
+    if not args.no_usd_gate:
+        from crazyflie_interfaces.msg import LogDataGeneric
+        usd_taps = usd_gate.make_taps(allcfs, usd_names, LogDataGeneric)   # /<cf>/usd_status (yaml)
     th.sleep(2.0)
 
     stamp = time.strftime('%Y-%m-%d_%H-%M-%S')
@@ -768,6 +778,25 @@ def main():
             c.arm(False)
 
     usd_start = None
+    usd_gate_result = {'skipped': True} if usd_taps is None else {}
+
+    def _usd_print_fail(res):
+        print('\n[formation] ***** uSD GATE FAILED: the decks are NOT provably writing *****')
+        print(f'[formation] phase={res.get("phase")}  reason: {res.get("reason")}')
+        for n_, d_ in res.get('drones', {}).items():
+            print(f'[formation]   {n_}: {json.dumps(d_, sort_keys=True)}')
+        print(f'[formation]   broadcast set results: {res.get("broadcast")}  missing params: {res.get("missing_params")}')
+
+    if usd_taps is not None:
+        # GROUND check, motors idle, before anything else: usd params known to the server, usd_status
+        # alive on every drone, nobody already writing. Refuses takeoff.
+        pre = usd_gate.precheck(allcfs, usd_names, usd_taps, th.sleep, th.time)
+        print(f'[formation] uSD precheck (ground): passed={pre["passed"]}')
+        if not pre['passed']:
+            _usd_print_fail(pre)
+            sys.exit('[formation] uSD precheck failed on the ground: NOT taking off '
+                     '(fix the yaml usd_status topic / deck, or pass --no-usd-gate; such flights are not '
+                     'usable for the fit)')
     end_of_flight_poses = latest
     study_readback = {}
     study_identity = {}
@@ -991,15 +1020,39 @@ def main():
         # point (mid-flight, which is where it originally sat) destroys the high-level
         # commander's time base and crashes the vehicle within one control tick.
         run_tag = int(time.time())
-        try:
-            allcfs.setParam('usd.runTag', run_tag)
-            th.sleep(0.05)
-            allcfs.setParam('usd.logging', 1)
-            usd_start = time.monotonic()
-            print(f'[formation] uSD logging started (broadcast) at '
-                  f't={usd_start - log_t0:.3f}s')
-        except Exception as e:
-            print(f'[formation] uSD logging not started ({e}) -- radio logs only')
+        if usd_taps is None:
+            meta['usd_gate'] = json.dumps(usd_gate_result)
+            try:
+                allcfs.setParam('usd.runTag', run_tag)
+                th.sleep(0.05)
+                allcfs.setParam('usd.logging', 1)
+                usd_start = time.monotonic()
+                print(f'[formation] uSD logging started (broadcast, UNVERIFIED: --no-usd-gate) at '
+                      f't={usd_start - log_t0:.3f}s')
+            except Exception as e:
+                print(f'[formation] uSD logging not started ({e}) -- radio logs only')
+        else:
+            # 2026-11-18: start by broadcast, then PROVE it per drone (usd_status runTag + write rate);
+            # per-drone resend once on a miss. The start stays at this point of the flight (hover at
+            # slot height, immediately before the trajectory), as before.
+            usd_gate_result = usd_gate.start_and_verify(
+                allcfs, cfs, usd_names, usd_taps, run_tag, th.sleep, th.time, time.monotonic)
+            meta['usd_gate'] = json.dumps(usd_gate_result, sort_keys=True, separators=(',', ':'))
+            if usd_gate_result['passed']:
+                usd_start = usd_gate_result['t_start_monotonic']
+                print(f'[formation] uSD logging started and VERIFIED on {usd_names} (broadcast) at '
+                      f't={usd_start - log_t0:.3f}s  run_tag={run_tag}')
+            else:
+                _usd_print_fail(usd_gate_result)
+                try:
+                    usd_gate.stop_and_verify(allcfs, cfs, usd_names, usd_taps, th.sleep, th.time)
+                except Exception:
+                    pass
+                print('[formation] landing both drones, trajectory NOT started.')
+                end_of_flight_poses = [p_.copy() for p_ in latest]
+                _land_all()
+                sys.exit('[formation] uSD gate failed in the air: landed, trajectory not started '
+                         '(this flight has no uSD log)')
 
         # Record the exact simulation-clock instant the trajectory starts. Verification
         # afterwards needs the window, and guessing it from the recorded states is
@@ -1029,7 +1082,8 @@ def main():
                            'per_drone': effective,
                            'study': study_identity if args.study else None,
                            'study_readback': study_readback if args.study else None,
-                           'controller_variant': controller_variant}, fh, indent=2)
+                           'controller_variant': controller_variant,
+                           'usd_gate': usd_gate_result}, fh, indent=2)
             print(f'[formation] t_start(sim) = {t_start:.3f}s -> {sidecar.name}')
         except Exception as e:
             print(f'[formation] WARNING: metadata sidecar not written ({e}) -- '
@@ -1048,7 +1102,19 @@ def main():
         end_of_flight_poses = [p.copy() for p in latest]
 
         _land_all()
+        if usd_taps is not None and usd_gate_result.get('passed'):
+            try:   # report only, never blocks or raises
+                usd_stop = usd_gate.stop_and_verify(allcfs, cfs, usd_names, usd_taps, th.sleep, th.time)
+                meta['usd_gate_stop'] = json.dumps(usd_stop, sort_keys=True, separators=(',', ':'))
+                print(f'[formation] uSD stop verified: {usd_stop.get("passed")}')
+            except Exception as e:
+                print(f'[formation] uSD stop check skipped ({e})')
     finally:
+        if usd_start is not None:
+            try:   # every exit path: make sure the file is closed (idempotent with the stops above)
+                allcfs.setParam('usd.logging', 0)
+            except Exception:
+                pass
         for lg in loggers:
             lg.active = False
         if usd_start is not None:
