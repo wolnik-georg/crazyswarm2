@@ -59,6 +59,7 @@ from crazyflie_py import Crazyswarm
 from crazyflie_py.uav_trajectory import Trajectory
 
 from crazyflie_examples import flight as _f
+from crazyflie_examples import usd_gate
 
 DATA_DIR = Path(__file__).parent / 'data'
 
@@ -244,6 +245,12 @@ def main():
              'it is not the fault. Opt-in experiment only -- taking off directly in INDI has '
              'never been flown. See _pin_ramp_to_target().',
     )
+    parser.add_argument(
+        '--no-usd-gate', action='store_true',
+        help='skip the uSD start gate (2026-11-18: refuse takeoff / land if the decks are not '
+             'provably writing). Needed in simulation (no usd params there). Flights flown with '
+             'this flag are NOT usable for the fit.',
+    )
     args, _ = parser.parse_known_args()
 
     if args.kt is None:
@@ -287,6 +294,25 @@ def main():
     allcfs.create_subscription(
         LogDataGeneric, f'{cf_name}/indi_alp_notch', _f._indi_alp_notch_cb, 10
     )
+
+    # uSD gate (2026-11-18): /<cf>/usd_status subscriptions for every drone (yaml custom topic) and a
+    # GROUND precheck before the preflight reset / takeoff: usd params known, topic alive, nobody writing.
+    usd_names = [c.prefix.lstrip('/') for c in allcfs.crazyflies]
+    usd_taps = None
+    usd_gate_result = {'skipped': True}
+    usd_gate_failed = False
+    if not args.no_usd_gate:
+        usd_taps = usd_gate.make_taps(allcfs, usd_names, LogDataGeneric)
+        th.sleep(1.0)
+        pre = usd_gate.precheck(allcfs, usd_names, usd_taps, th.sleep, th.time)
+        print(f'[simple_flight] uSD precheck (ground): passed={pre["passed"]}')
+        if not pre['passed']:
+            print(f'[simple_flight] ***** uSD GATE FAILED (ground): {pre.get("reason")} *****')
+            for n_, d_ in pre.get('drones', {}).items():
+                print(f'[simple_flight]   {n_}: {d_}')
+            sys.exit('[simple_flight] uSD precheck failed on the ground: NOT taking off '
+                     '(fix the yaml usd_status topic / deck, or pass --no-usd-gate; such flights are '
+                     'not usable for the fit)')
 
     print('[simple_flight] Preflight: idle reset + Kalman pulse (place drone on pad)...')
     try:
@@ -433,19 +459,43 @@ def main():
         # NOTE: usec.reset is NOT sent here. It is broadcast once, on the ground, before
         # takeoff -- see the long comment above `_apply_flight_settings(..., 'takeoff', ...)`.
         run_tag = int(time.time())
-        try:
-            allcfs.setParam('usd.runTag', run_tag)
-            th.sleep(0.05)
-            allcfs.setParam('usd.logging', 1)
-            print(f'[simple_flight] uSD run_tag={run_tag} (broadcast)')
-        except Exception:
-            for c in allcfs.crazyflies:
+        if usd_taps is None:
+            try:
+                allcfs.setParam('usd.runTag', run_tag)
+                th.sleep(0.05)
+                allcfs.setParam('usd.logging', 1)
+                print(f'[simple_flight] uSD run_tag={run_tag} (broadcast, UNVERIFIED: --no-usd-gate)')
+            except Exception:
+                for c in allcfs.crazyflies:
+                    try:
+                        c.setParam('usd.logging', 1)
+                    except Exception:
+                        pass  # uSD deck not present -- skip silently
+        else:
+            # Start by broadcast, then PROVE it per drone (usd_status runTag + write rate); resend per
+            # drone once on a miss. Same point of the flight as before (hover, before the trajectory).
+            usd_gate_result = usd_gate.start_and_verify(
+                allcfs, list(allcfs.crazyflies), usd_names, usd_taps, run_tag,
+                th.sleep, th.time, time.monotonic)
+            if usd_gate_result['passed']:
+                print(f'[simple_flight] uSD logging started and VERIFIED on {usd_names} '
+                      f'run_tag={run_tag} (broadcast)')
+            else:
+                usd_gate_failed = True
+                print('[simple_flight] ***** uSD GATE FAILED: the decks are NOT provably writing *****')
+                print(f'[simple_flight] reason: {usd_gate_result.get("reason")}')
+                for n_, d_ in usd_gate_result.get('drones', {}).items():
+                    print(f'[simple_flight]   {n_}: {d_}')
                 try:
-                    c.setParam('usd.logging', 1)
+                    usd_gate.stop_and_verify(allcfs, list(allcfs.crazyflies), usd_names, usd_taps,
+                                             th.sleep, th.time)
                 except Exception:
-                    pass  # uSD deck not present -- skip silently
+                    pass
+                print('[simple_flight] landing, trajectory NOT started (this flight has no uSD log).')
 
-        if hover_mode:
+        if usd_gate_failed:
+            pass  # fall through to the normal landing below
+        elif hover_mode:
             print(f'[simple_flight] Hovering {args.duration:.0f}s ({n_drones} drones)...')
             th.sleep(args.duration)
         else:
@@ -534,6 +584,17 @@ def main():
             _append_full_gains_meta()
         else:
             print('[log] No rows collected — log not saved.')
+
+    if usd_taps is not None and usd_gate_result.get('passed'):
+        try:   # report only, after the normal landing and cleanup; never raises
+            usd_stop = usd_gate.stop_and_verify(allcfs, list(allcfs.crazyflies), usd_names, usd_taps,
+                                                th.sleep, th.time)
+            print(f'[simple_flight] uSD stop verified: {usd_stop.get("passed")}')
+        except Exception as exc:
+            print(f'[simple_flight] uSD stop check skipped ({exc})')
+    if usd_gate_failed:
+        sys.exit('[simple_flight] uSD gate failed in the air: landed, trajectory not started '
+                 '(this flight has no uSD log)')
 
 
 if __name__ == '__main__':
